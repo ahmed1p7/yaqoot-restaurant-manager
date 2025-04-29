@@ -2,6 +2,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/contexts/AppContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   ChefHat, 
   List, 
@@ -15,6 +16,7 @@ export const Sidebar = () => {
   const { user } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
   
   const isActive = (path: string) => location.pathname === path;
   
@@ -34,6 +36,29 @@ export const Sidebar = () => {
   ];
   
   const links = user?.role === 'admin' ? adminLinks : waiterLinks;
+
+  if (isMobile) {
+    return (
+      <div className="flex justify-around w-full">
+        {links.map((link) => (
+          <Button
+            key={link.path}
+            variant="ghost"
+            size="sm"
+            className={`flex flex-col items-center px-1 py-2 ${
+              isActive(link.path) 
+                ? 'text-restaurant-primary border-t-2 border-restaurant-primary' 
+                : 'text-gray-500'
+            }`}
+            onClick={() => navigate(link.path)}
+          >
+            {link.icon}
+            <span className="text-xs mt-1">{link.name}</span>
+          </Button>
+        ))}
+      </div>
+    );
+  }
   
   return (
     <aside className="w-64 bg-white border-r border-gray-200 shadow-sm p-4">

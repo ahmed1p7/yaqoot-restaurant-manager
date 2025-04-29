@@ -10,6 +10,7 @@ interface AppContextType {
   orders: Order[];
   tables: Table[];
   login: (username: string, password: string) => boolean;
+  loginAsWaiter: () => boolean;
   logout: () => void;
   addMenuItem: (item: Omit<MenuItem, 'id'>) => void;
   updateMenuItem: (item: MenuItem) => void;
@@ -29,20 +30,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [tables, setTables] = useState<Table[]>(mockTables);
 
   const login = (username: string, password: string): boolean => {
-    // In a real app, this would call an API and validate the password
-    const foundUser = mockUsers.find(u => u.username === username);
-    
-    if (foundUser) {
-      setUser(foundUser);
-      toast.success(`مرحباً ${foundUser.name}`, {
-        description: "تم تسجيل الدخول بنجاح"
-      });
-      return true;
+    // Only allow admin login with correct password
+    if (username === 'admin' && password === 'admin123') {
+      const adminUser = mockUsers.find(u => u.username === 'admin');
+      if (adminUser) {
+        setUser(adminUser);
+        toast.success(`مرحباً ${adminUser.name}`, {
+          description: "تم تسجيل الدخول بنجاح"
+        });
+        return true;
+      }
     }
     
     toast.error("فشل تسجيل الدخول", {
       description: "اسم المستخدم أو كلمة المرور غير صحيحة"
     });
+    return false;
+  };
+
+  // New function for quick waiter login
+  const loginAsWaiter = (): boolean => {
+    const waiterUser = mockUsers.find(u => u.username === 'waiter1');
+    if (waiterUser) {
+      setUser(waiterUser);
+      toast.success(`مرحباً ${waiterUser.name}`, {
+        description: "تم تسجيل الدخول بنجاح"
+      });
+      return true;
+    }
     return false;
   };
 
@@ -145,6 +160,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     orders,
     tables,
     login,
+    loginAsWaiter,
     logout,
     addMenuItem,
     updateMenuItem,
