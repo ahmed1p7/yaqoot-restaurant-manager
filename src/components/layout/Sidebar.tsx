@@ -9,7 +9,8 @@ import {
   User, 
   Settings, 
   FileText, 
-  Table 
+  Table,
+  Monitor
 } from "lucide-react";
 
 export const Sidebar = () => {
@@ -35,7 +36,18 @@ export const Sidebar = () => {
     { name: 'الطاولات', path: '/tables', icon: <Table className="w-5 h-5" /> },
   ];
   
-  const links = user?.role === 'admin' ? adminLinks : waiterLinks;
+  const screenLinks = [
+    { name: 'شاشة المطبخ', path: '/kitchen', icon: <Monitor className="w-5 h-5" /> },
+    { name: 'الطلبات', path: '/orders', icon: <FileText className="w-5 h-5" /> },
+  ];
+  
+  let links = adminLinks;
+  
+  if (user?.role === 'waiter') {
+    links = waiterLinks;
+  } else if (user?.role === 'screen') {
+    links = screenLinks;
+  }
 
   if (isMobile) {
     return (

@@ -13,6 +13,7 @@ import { Orders } from "./pages/Orders";
 import { Tables } from "./pages/Tables";
 import { Users } from "./pages/Users";
 import { Settings } from "./pages/Settings";
+import { KitchenScreen } from "./pages/KitchenScreen";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/tables" element={<Tables />} />
               <Route path="/users" element={<Users />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/kitchen" element={<KitchenScreen />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </MainLayout>

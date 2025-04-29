@@ -11,6 +11,7 @@ interface AppContextType {
   tables: Table[];
   login: (username: string, password: string) => boolean;
   loginAsWaiter: () => boolean;
+  loginAsScreen: () => boolean;
   logout: () => void;
   addMenuItem: (item: Omit<MenuItem, 'id'>) => void;
   updateMenuItem: (item: MenuItem) => void;
@@ -48,12 +49,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return false;
   };
 
-  // New function for quick waiter login
+  // Login for waiter
   const loginAsWaiter = (): boolean => {
     const waiterUser = mockUsers.find(u => u.username === 'waiter1');
     if (waiterUser) {
       setUser(waiterUser);
       toast.success(`مرحباً ${waiterUser.name}`, {
+        description: "تم تسجيل الدخول بنجاح"
+      });
+      return true;
+    }
+    return false;
+  };
+
+  // New function for quick screen login
+  const loginAsScreen = (): boolean => {
+    const screenUser = mockUsers.find(u => u.username === 'screen1');
+    if (screenUser) {
+      setUser(screenUser);
+      toast.success(`تم تشغيل شاشة المطبخ`, {
         description: "تم تسجيل الدخول بنجاح"
       });
       return true;
@@ -161,6 +175,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     tables,
     login,
     loginAsWaiter,
+    loginAsScreen,
     logout,
     addMenuItem,
     updateMenuItem,

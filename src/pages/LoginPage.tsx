@@ -4,13 +4,13 @@ import { useApp } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChefHat, User } from "lucide-react";
+import { ChefHat, User, Monitor } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { login, loginAsWaiter } = useApp();
+  const { login, loginAsWaiter, loginAsScreen } = useApp();
   const isMobile = useIsMobile();
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -20,6 +20,10 @@ export const LoginPage = () => {
 
   const handleWaiterLogin = () => {
     loginAsWaiter();
+  };
+  
+  const handleScreenLogin = () => {
+    loginAsScreen();
   };
   
   return (
@@ -76,20 +80,32 @@ export const LoginPage = () => {
               </div>
             </div>
             
-            <Button 
-              type="button" 
-              onClick={handleWaiterLogin}
-              variant="outline"
-              className={`w-full border-restaurant-primary text-restaurant-primary hover:bg-restaurant-primary hover:text-white ${isMobile ? 'text-sm py-1' : ''}`}
-            >
-              <User className="mr-2 h-4 w-4" />
-              دخول كنادل 1
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                type="button" 
+                onClick={handleWaiterLogin}
+                variant="outline"
+                className={`w-full border-restaurant-primary text-restaurant-primary hover:bg-restaurant-primary hover:text-white ${isMobile ? 'text-sm py-1' : ''}`}
+              >
+                <User className="mr-2 h-4 w-4" />
+                دخول كنادل 1
+              </Button>
+              
+              <Button 
+                type="button" 
+                onClick={handleScreenLogin}
+                variant="outline"
+                className={`w-full border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white ${isMobile ? 'text-sm py-1' : ''}`}
+              >
+                <Monitor className="mr-2 h-4 w-4" />
+                دخول كشاشة مطبخ
+              </Button>
+            </div>
             
             <div className={`text-sm text-center mt-4 text-gray-500 ${isMobile ? 'text-xs' : ''}`}>
               <p>للتجربة، استخدم:</p>
               <p className="font-medium">مدير: admin (كلمة المرور: admin123)</p>
-              <p className="font-medium">نادل: يمكن الدخول مباشرة بالضغط على زر نادل 1</p>
+              <p className="font-medium">نادل/شاشة: يمكن الدخول مباشرة بالضغط على الأزرار</p>
             </div>
           </form>
         </CardContent>

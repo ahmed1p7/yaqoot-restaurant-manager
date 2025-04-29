@@ -22,6 +22,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     if (user && user.role === 'waiter' && (location.pathname === '/' || location.pathname === '/dashboard')) {
       navigate('/tables');
     }
+    
+    // Redirect screen users to kitchen page if they're on the homepage
+    if (user && user.role === 'screen' && (location.pathname === '/' || location.pathname === '/dashboard')) {
+      navigate('/kitchen');
+    }
   }, [user, location.pathname, navigate]);
   
   if (!user) {

@@ -1,18 +1,36 @@
 
 import { useApp } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
-import { ChefHat } from "lucide-react";
+import { ChefHat, Monitor } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Header = () => {
   const { user, logout } = useApp();
   const isMobile = useIsMobile();
 
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'admin': return 'مدير';
+      case 'waiter': return 'نادل';
+      case 'screen': return 'شاشة مطبخ';
+      default: return role;
+    }
+  };
+
+  const getHeaderIcon = () => {
+    if (user?.role === 'screen') {
+      return <Monitor className={`${isMobile ? 'h-6 w-6 mr-1' : 'h-8 w-8 mr-2'} text-white`} />;
+    }
+    return <ChefHat className={`${isMobile ? 'h-6 w-6 mr-1' : 'h-8 w-8 mr-2'} text-white`} />;
+  };
+
   return (
-    <header className="bg-restaurant-primary text-white p-4 flex justify-between items-center shadow-md">
+    <header className={`${user?.role === 'screen' ? 'bg-blue-600' : 'bg-restaurant-primary'} text-white p-4 flex justify-between items-center shadow-md`}>
       <div className="flex items-center">
-        <ChefHat className={`${isMobile ? 'h-6 w-6 mr-1' : 'h-8 w-8 mr-2'}`} />
-        <h1 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold`}>نظام إدارة المطعم</h1>
+        {getHeaderIcon()}
+        <h1 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold`}>
+          {user?.role === 'screen' ? 'شاشة المطبخ' : 'نظام إدارة المطعم'}
+        </h1>
       </div>
       
       {user && (
@@ -20,8 +38,8 @@ export const Header = () => {
           {!isMobile && (
             <>
               <span className="font-medium">مرحباً، {user.name}</span>
-              <span className="text-xs bg-restaurant-accent text-restaurant-dark px-2 py-1 rounded-full">
-                {user.role === 'admin' ? 'مدير' : 'نادل'}
+              <span className={`text-xs ${user.role === 'screen' ? 'bg-blue-400' : 'bg-restaurant-accent'} text-white px-2 py-1 rounded-full`}>
+                {getRoleLabel(user.role)}
               </span>
             </>
           )}
@@ -29,7 +47,7 @@ export const Header = () => {
             variant="outline" 
             size={isMobile ? "sm" : "default"}
             onClick={logout}
-            className={`text-white border-white hover:bg-restaurant-primary-dark ${isMobile ? 'text-xs px-2' : ''}`}
+            className={`text-white border-white hover:bg-opacity-20 hover:bg-white ${isMobile ? 'text-xs px-2' : ''}`}
           >
             {isMobile ? 'خروج' : 'تسجيل الخروج'}
           </Button>
