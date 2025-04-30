@@ -8,6 +8,12 @@ export interface User {
   role: UserRole;
 }
 
+export interface UserWithDetails extends User {
+  email: string;
+  department?: string;
+  access?: string[];
+}
+
 export type MenuCategory = 
   | 'appetizers' 
   | 'main_dishes'

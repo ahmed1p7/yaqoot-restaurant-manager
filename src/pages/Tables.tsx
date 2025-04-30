@@ -15,8 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { MenuItem, OrderItem } from "@/types";
-import { Table as TableIcon, ArrowRight, ChefHat } from "lucide-react";
+import { MenuItem, OrderItem, MenuCategory } from "@/types";
+import { Table as TableIcon, ArrowRight, ChefHat, Plus, Utensils, Drink } from "lucide-react";
 
 export const Tables = () => {
   const { tables, menuItems, createOrder, user, orders } = useApp();
@@ -120,13 +120,22 @@ export const Tables = () => {
     return total;
   };
   
-  // Filter menu items by category
-  const getMenuByCategory = (category: string) => {
+  // Get menu items by category
+  const getMenuByCategory = (category: MenuCategory) => {
     return menuItems.filter(item => 
       item.isAvailable && 
       item.category === category
     );
   };
+
+  // Get all drinks
+  const drinks = getMenuByCategory('drinks');
+  
+  // Get all food items (non-drinks)
+  const foodItems = menuItems.filter(item => 
+    item.isAvailable && 
+    item.category !== 'drinks'
+  );
   
   // Get order for a specific table
   const getTableOrder = (tableId: number) => {
@@ -182,7 +191,7 @@ export const Tables = () => {
                     <Button 
                       size="sm"
                       className="mt-3 w-full"
-                      disabled={user?.role !== 'waiter'}
+                      disabled={user?.role !== 'waiter' && user?.role !== 'admin'}
                     >
                       {table.isOccupied ? 'عرض الطلب' : 'طلب جديد'}
                     </Button>
@@ -204,109 +213,146 @@ export const Tables = () => {
           
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1">
-              <h3 className="font-medium mb-3">قائمة الطعام</h3>
-              
-              <Tabs defaultValue="appetizers">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="appetizers">مقبلات</TabsTrigger>
-                  <TabsTrigger value="main_dishes">رئيسي</TabsTrigger>
-                  <TabsTrigger value="desserts">حلويات</TabsTrigger>
-                  <TabsTrigger value="drinks">مشروبات</TabsTrigger>
-                  <TabsTrigger value="sides">جانبي</TabsTrigger>
-                </TabsList>
+              <div className="mb-6">
+                <h3 className="font-medium mb-2 flex items-center gap-2 text-lg pb-2 border-b">
+                  <Drink className="w-5 h-5 text-blue-500" />
+                  <span>المشروبات</span>
+                </h3>
                 
-                <div className="max-h-[400px] overflow-y-auto pr-2">
-                  <TabsContent value="appetizers" className="mt-0 space-y-2">
-                    {getMenuByCategory('appetizers').map((item) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2">
+                  {drinks.length > 0 ? (
+                    drinks.map((item) => (
                       <Card 
                         key={item.id}
-                        className="cursor-pointer hover:bg-gray-50"
+                        className="cursor-pointer hover:bg-gray-50 border-blue-100"
                         onClick={() => handleSelectMenuItem(item)}
                       >
                         <CardContent className="p-3 flex justify-between items-center">
                           <div>
                             <h4 className="font-medium">{item.name}</h4>
-                            <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
+                            <p className="text-xs text-gray-500 line-clamp-1">{item.price} ريال</p>
                           </div>
-                          <span className="font-medium">{item.price} ريال</span>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
+                            <Plus className="h-4 w-4" />
+                          </Button>
                         </CardContent>
                       </Card>
-                    ))}
-                  </TabsContent>
-                  
-                  <TabsContent value="main_dishes" className="mt-0 space-y-2">
-                    {getMenuByCategory('main_dishes').map((item) => (
-                      <Card 
-                        key={item.id}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleSelectMenuItem(item)}
-                      >
-                        <CardContent className="p-3 flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium">{item.name}</h4>
-                            <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
-                          </div>
-                          <span className="font-medium">{item.price} ريال</span>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </TabsContent>
-                  
-                  <TabsContent value="desserts" className="mt-0 space-y-2">
-                    {getMenuByCategory('desserts').map((item) => (
-                      <Card 
-                        key={item.id}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleSelectMenuItem(item)}
-                      >
-                        <CardContent className="p-3 flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium">{item.name}</h4>
-                            <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
-                          </div>
-                          <span className="font-medium">{item.price} ريال</span>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </TabsContent>
-                  
-                  <TabsContent value="drinks" className="mt-0 space-y-2">
-                    {getMenuByCategory('drinks').map((item) => (
-                      <Card 
-                        key={item.id}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleSelectMenuItem(item)}
-                      >
-                        <CardContent className="p-3 flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium">{item.name}</h4>
-                            <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
-                          </div>
-                          <span className="font-medium">{item.price} ريال</span>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </TabsContent>
-                  
-                  <TabsContent value="sides" className="mt-0 space-y-2">
-                    {getMenuByCategory('sides').map((item) => (
-                      <Card 
-                        key={item.id}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleSelectMenuItem(item)}
-                      >
-                        <CardContent className="p-3 flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium">{item.name}</h4>
-                            <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
-                          </div>
-                          <span className="font-medium">{item.price} ريال</span>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </TabsContent>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-center py-2">لا توجد مشروبات متاحة</p>
+                  )}
                 </div>
-              </Tabs>
+              </div>
+              
+              <div>
+                <h3 className="font-medium mb-2 flex items-center gap-2 text-lg pb-2 border-b">
+                  <Utensils className="w-5 h-5 text-restaurant-primary" />
+                  <span>الأطباق</span>
+                </h3>
+                
+                <Tabs defaultValue="appetizers">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="appetizers">مقبلات</TabsTrigger>
+                    <TabsTrigger value="main_dishes">رئيسي</TabsTrigger>
+                    <TabsTrigger value="desserts">حلويات</TabsTrigger>
+                    <TabsTrigger value="sides">جانبي</TabsTrigger>
+                  </TabsList>
+                  
+                  <div className="max-h-[300px] overflow-y-auto pr-2">
+                    <TabsContent value="appetizers" className="mt-0 space-y-2">
+                      {getMenuByCategory('appetizers').map((item) => (
+                        <Card 
+                          key={item.id}
+                          className="cursor-pointer hover:bg-gray-50"
+                          onClick={() => handleSelectMenuItem(item)}
+                        >
+                          <CardContent className="p-3 flex justify-between items-center">
+                            <div>
+                              <h4 className="font-medium">{item.name}</h4>
+                              <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{item.price} ريال</span>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </TabsContent>
+                    
+                    <TabsContent value="main_dishes" className="mt-0 space-y-2">
+                      {getMenuByCategory('main_dishes').map((item) => (
+                        <Card 
+                          key={item.id}
+                          className="cursor-pointer hover:bg-gray-50"
+                          onClick={() => handleSelectMenuItem(item)}
+                        >
+                          <CardContent className="p-3 flex justify-between items-center">
+                            <div>
+                              <h4 className="font-medium">{item.name}</h4>
+                              <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{item.price} ريال</span>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </TabsContent>
+                    
+                    <TabsContent value="desserts" className="mt-0 space-y-2">
+                      {getMenuByCategory('desserts').map((item) => (
+                        <Card 
+                          key={item.id}
+                          className="cursor-pointer hover:bg-gray-50"
+                          onClick={() => handleSelectMenuItem(item)}
+                        >
+                          <CardContent className="p-3 flex justify-between items-center">
+                            <div>
+                              <h4 className="font-medium">{item.name}</h4>
+                              <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{item.price} ريال</span>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </TabsContent>
+                    
+                    <TabsContent value="sides" className="mt-0 space-y-2">
+                      {getMenuByCategory('sides').map((item) => (
+                        <Card 
+                          key={item.id}
+                          className="cursor-pointer hover:bg-gray-50"
+                          onClick={() => handleSelectMenuItem(item)}
+                        >
+                          <CardContent className="p-3 flex justify-between items-center">
+                            <div>
+                              <h4 className="font-medium">{item.name}</h4>
+                              <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{item.price} ريال</span>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </TabsContent>
+                  </div>
+                </Tabs>
+              </div>
             </div>
             
             <div className="md:w-80 flex flex-col">

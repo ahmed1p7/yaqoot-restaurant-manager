@@ -3,7 +3,15 @@ import { useEffect, useState } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OrderStatus } from "@/types";
-import { ChefHat, FileText, Clock, User } from "lucide-react";
+import { ChefHat, FileText, Clock, DollarSign, PieChart } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 // Simple chart component for this demo
 const SimpleBarChart = ({ data }: { data: { name: string; value: number }[] }) => {
@@ -79,60 +87,55 @@ export const Dashboard = () => {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">لوحة التحكم</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="dashboard-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <FileText className="w-5 h-5 text-restaurant-primary" />
-              <span>إجمالي الطلبات</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats.totalOrders}</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="dashboard-card shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-restaurant-primary">
+          <CardContent className="p-4 flex flex-col items-center">
+            <div className="mb-2 rounded-full bg-restaurant-primary/10 p-3">
+              <FileText className="w-6 h-6 text-restaurant-primary" />
+            </div>
+            <h3 className="text-lg font-medium">إجمالي الطلبات</h3>
+            <p className="text-3xl font-bold mt-1">{stats.totalOrders}</p>
           </CardContent>
         </Card>
         
-        <Card className="dashboard-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Clock className="w-5 h-5 text-restaurant-primary" />
-              <span>طلبات معلقة</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats.pendingOrders}</p>
+        <Card className="dashboard-card shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-yellow-500">
+          <CardContent className="p-4 flex flex-col items-center">
+            <div className="mb-2 rounded-full bg-yellow-500/10 p-3">
+              <Clock className="w-6 h-6 text-yellow-500" />
+            </div>
+            <h3 className="text-lg font-medium">طلبات معلقة</h3>
+            <p className="text-3xl font-bold mt-1">{stats.pendingOrders}</p>
           </CardContent>
         </Card>
         
-        <Card className="dashboard-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <ChefHat className="w-5 h-5 text-restaurant-primary" />
-              <span>قيد التحضير</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats.preparingOrders}</p>
+        <Card className="dashboard-card shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-blue-500">
+          <CardContent className="p-4 flex flex-col items-center">
+            <div className="mb-2 rounded-full bg-blue-500/10 p-3">
+              <ChefHat className="w-6 h-6 text-blue-500" />
+            </div>
+            <h3 className="text-lg font-medium">قيد التحضير</h3>
+            <p className="text-3xl font-bold mt-1">{stats.preparingOrders}</p>
           </CardContent>
         </Card>
         
-        <Card className="dashboard-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <User className="w-5 h-5 text-restaurant-primary" />
-              <span>الإيرادات</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats.totalRevenue} ريال</p>
+        <Card className="dashboard-card shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-green-500">
+          <CardContent className="p-4 flex flex-col items-center">
+            <div className="mb-2 rounded-full bg-green-500/10 p-3">
+              <DollarSign className="w-6 h-6 text-green-500" />
+            </div>
+            <h3 className="text-lg font-medium">الإيرادات</h3>
+            <p className="text-3xl font-bold mt-1">{stats.totalRevenue} ريال</p>
           </CardContent>
         </Card>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="dashboard-card">
+        <Card className="dashboard-card shadow-md">
           <CardHeader>
-            <CardTitle>الأطباق الأكثر مبيعاً</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <PieChart className="h-5 w-5 text-restaurant-primary" />
+              <span>الأطباق الأكثر مبيعاً</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {stats.topItems.length > 0 ? (
@@ -143,9 +146,12 @@ export const Dashboard = () => {
           </CardContent>
         </Card>
         
-        <Card className="dashboard-card">
+        <Card className="dashboard-card shadow-md">
           <CardHeader>
-            <CardTitle>حالة الطلبات</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-restaurant-primary" />
+              <span>حالة الطلبات</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -179,6 +185,41 @@ export const Dashboard = () => {
                 );
               })}
             </div>
+            
+            <Table className="mt-4">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>رقم الطلب</TableHead>
+                  <TableHead>الطاولة</TableHead>
+                  <TableHead>المبلغ</TableHead>
+                  <TableHead>الحالة</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orders.slice(0, 5).map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">#{order.id.slice(-4)}</TableCell>
+                    <TableCell>{order.tableNumber}</TableCell>
+                    <TableCell>{order.totalAmount} ريال</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        order.status === 'preparing' ? 'bg-blue-100 text-blue-800' :
+                        order.status === 'ready' ? 'bg-green-100 text-green-800' :
+                        order.status === 'delivered' ? 'bg-gray-100 text-gray-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {
+                          order.status === 'pending' ? 'معلق' : 
+                          order.status === 'preparing' ? 'قيد التحضير' : 
+                          order.status === 'ready' ? 'جاهز' : 
+                          order.status === 'delivered' ? 'تم التسليم' : 'ملغي'
+                        }
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
