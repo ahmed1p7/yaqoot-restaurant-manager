@@ -1,27 +1,15 @@
 
-export type UserRole = 'admin' | 'waiter' | 'screen';
-
-export interface User {
+export type User = {
   id: string;
-  username: string;
   name: string;
-  role: UserRole;
-}
+  username: string;
+  role: 'admin' | 'waiter' | 'screen';
+  avatar?: string;
+};
 
-export interface UserWithDetails extends User {
-  email: string;
-  department?: string;
-  access?: string[];
-}
+export type MenuCategory = 'appetizers' | 'main_dishes' | 'sides' | 'desserts' | 'drinks';
 
-export type MenuCategory = 
-  | 'appetizers' 
-  | 'main_dishes'
-  | 'desserts'
-  | 'drinks'
-  | 'sides';
-
-export interface MenuItem {
+export type MenuItem = {
   id: string;
   name: string;
   description: string;
@@ -29,61 +17,50 @@ export interface MenuItem {
   category: MenuCategory;
   image?: string;
   isAvailable: boolean;
-}
+};
 
-export type OrderStatus = 
-  | 'pending' 
-  | 'preparing'
-  | 'ready'
-  | 'delivered'
-  | 'cancelled';
-
-export interface OrderItem {
+export type OrderItem = {
   menuItemId: string;
   name: string;
   price: number;
   quantity: number;
   notes?: string;
-  completed?: boolean; // Track if this specific item has been prepared
-}
+  completed: boolean;
+  canceled?: boolean;
+};
 
-export interface Order {
+export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered' | 'canceled';
+
+export type Order = {
   id: string;
   tableNumber: number;
-  peopleCount: number; // Number of people at the table
   items: OrderItem[];
   status: OrderStatus;
+  createdAt: Date;
+  updatedAt?: Date;
   totalAmount: number;
   waiterId: string;
   waiterName: string;
-  createdAt: Date;
-  updatedAt?: Date;
   notes?: string;
-}
+  peopleCount?: number;
+  delayed?: boolean;
+  delayReason?: string;
+};
 
-export interface Table {
+export type Table = {
   id: number;
   name: string;
+  capacity: number;
   isOccupied: boolean;
   currentOrderId?: string;
-  peopleCount?: number; // Store the people count with the table
-}
+  peopleCount?: number;
+  emergency?: boolean;
+};
 
-export interface DepartmentType {
-  id: string;
-  name: string;
-  description?: string;
-}
-
-export interface Stats {
-  totalOrders: number;
-  totalRevenue: number;
-  avgOrderValue: number;
-  topSellingItems: { name: string; count: number }[];
-  busyHours: { hour: number; count: number }[];
-}
-
-export interface SystemSettings {
-  perSeatCharge: number; // Amount charged per person
+export type SystemSettings = {
+  perSeatCharge: number;
   enablePerSeatCharge: boolean;
-}
+  emergencyMode?: boolean;
+  backupPrinterEnabled?: boolean;
+  backupPhoneEnabled?: boolean;
+};

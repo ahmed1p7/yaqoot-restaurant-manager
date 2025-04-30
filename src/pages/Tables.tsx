@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,16 +17,58 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { MenuItem, OrderItem, MenuCategory } from "@/types";
-import { Table as TableIcon, ArrowRight, ChefHat, Plus, Utensils, Wine, User } from "lucide-react";
+import { 
+  Table as TableIcon, 
+  ArrowRight, 
+  ChefHat, 
+  Plus, 
+  Utensils, 
+  Wine, 
+  User, 
+  Search, 
+  MessageCircle,
+  AlertTriangle,
+  Coffee,
+  Clock
+} from "lucide-react";
+import { toast } from "sonner";
 
 export const Tables = () => {
-  const { tables, menuItems, createOrder, user, orders, systemSettings, updateTablePeopleCount } = useApp();
+  const { 
+    tables, 
+    menuItems, 
+    createOrder, 
+    user, 
+    orders, 
+    systemSettings, 
+    updateTablePeopleCount,
+    getMostOrderedItems
+  } = useApp();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isPeopleDialogOpen, setIsPeopleDialogOpen] = useState(false);
+  const [isEmergencyDialogOpen, setIsEmergencyDialogOpen] = useState(false);
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
   const [selectedMenuItems, setSelectedMenuItems] = useState<Map<string, { quantity: number; notes: string }>>(new Map());
   const [activeTab, setActiveTab] = useState<string>("all");
   const [peopleCount, setPeopleCount] = useState<number>(1);
+  const [emergencyMessage, setEmergencyMessage] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [popularNotes, setPopularNotes] = useState<string[]>([
+    "بدون ملح",
+    "حار",
+    "بدون بصل",
+    "تقطيع شرائح",
+    "بدون توابل"
+  ]);
+  const [quickOrderItems, setQuickOrderItems] = useState<MenuItem[]>([]);
+  const longPressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Set quick order items on component mount
+  useEffect(() => {
+    // Get top 5 most ordered items
+    const topItems = getMostOrderedItems(5);
+    setQuickOrderItems(topItems);
+  }, [getMostOrderedItems]);
   
   const handleOpenDialog = (tableId: number) => {
     const table = tables.find(t => t.id === tableId);
@@ -47,6 +89,39 @@ export const Tables = () => {
         setPeopleCount(table.peopleCount);
       }
     }
+  };
+  
+  const handleMouseDown = (tableId: number) => {
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+    }
+    
+    longPressTimeoutRef.current = setTimeout(() => {
+      handleEmergencyAlert(tableId);
+    }, 1000); // 1 second long press
+  };
+  
+  const handleMouseUp = () => {
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+  };
+  
+  const handleEmergencyAlert = (tableId: number) => {
+    setSelectedTable(tableId);
+    setIsEmergencyDialogOpen(true);
+  };
+  
+  const handleSendEmergency = () => {
+    if (!selectedTable) return;
+    
+    toast.error(`تنبيه طارئ للطاولة ${selectedTable}`, {
+      description: emergencyMessage || "يحتاج النادل مساعدة عاجلة"
+    });
+    
+    setIsEmergencyDialogOpen(false);
+    setEmergencyMessage("");
   };
   
   const handleConfirmPeopleCount = () => {
@@ -96,6 +171,19 @@ export const Tables = () => {
     setSelectedMenuItems(updatedItems);
   };
   
+  const handleAddNoteTemplate = (itemId: string, note: string) => {
+    const updatedItems = new Map(selectedMenuItems);
+    const existingItem = updatedItems.get(itemId)!;
+    const currentNotes = existingItem.notes || '';
+    
+    // Check if note is already included
+    if (!currentNotes.includes(note)) {
+      const newNotes = currentNotes ? `${currentNotes}, ${note}` : note;
+      updatedItems.set(itemId, { ...existingItem, notes: newNotes });
+      setSelectedMenuItems(updatedItems);
+    }
+  };
+  
   const handleCreateOrder = () => {
     if (!selectedTable || !user) return;
     
@@ -107,6 +195,16 @@ export const Tables = () => {
       if (menuItem) {
         const itemTotal = menuItem.price * value.quantity;
         totalAmount += itemTotal;
+        
+        // Check for allergy warnings in notes
+        const notes = value.notes || '';
+        const hasAllergyWarning = /(مكسرات|جلوتين|حساسية|لاكتوز|بيض|حليب)/i.test(notes);
+        
+        if (hasAllergyWarning) {
+          toast.warning("تحذير: مكونات مسببة للحساسية", {
+            description: `${menuItem.name}: ${notes}`
+          });
+        }
         
         orderItems.push({
           menuItemId: menuItem.id,
@@ -168,7 +266,8 @@ export const Tables = () => {
   const getMenuByCategory = (category: MenuCategory) => {
     return menuItems.filter(item => 
       item.isAvailable && 
-      item.category === category
+      item.category === category &&
+      (searchQuery === '' || item.name.includes(searchQuery) || (item.description && item.description.includes(searchQuery)))
     );
   };
 
@@ -178,7 +277,8 @@ export const Tables = () => {
   // Get all food items (non-drinks)
   const foodItems = menuItems.filter(item => 
     item.isAvailable && 
-    item.category !== 'drinks'
+    item.category !== 'drinks' &&
+    (searchQuery === '' || item.name.includes(searchQuery) || (item.description && item.description.includes(searchQuery)))
   );
   
   // Get order for a specific table
@@ -191,7 +291,41 @@ export const Tables = () => {
   
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">الطاولات</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">الطاولات</h1>
+        {user?.role === 'waiter' && quickOrderItems.length > 0 && (
+          <div className="hidden md:flex gap-2 overflow-x-auto pb-2 bg-white p-2 rounded-lg shadow-sm border">
+            {quickOrderItems.map((item) => (
+              <Button 
+                key={item.id}
+                variant="outline"
+                size="sm"
+                className="flex-nowrap whitespace-nowrap border-restaurant-primary text-restaurant-primary hover:bg-restaurant-primary hover:text-white"
+                onClick={() => {
+                  if (!selectedTable) {
+                    toast.info("يرجى اختيار طاولة أولاً");
+                    return;
+                  }
+                  handleSelectMenuItem(item);
+                }}
+              >
+                {item.category === 'drinks' ? <Coffee className="mr-2 h-3 w-3" /> : 
+                 item.category === 'main_dishes' ? <Utensils className="mr-2 h-3 w-3" /> :
+                 <ChefHat className="mr-2 h-3 w-3" />}
+                {item.name}
+              </Button>
+            ))}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-nowrap whitespace-nowrap text-gray-500"
+            >
+              <Search className="mr-2 h-3 w-3" />
+              بحث
+            </Button>
+          </div>
+        )}
+      </div>
       
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-4">
@@ -204,17 +338,24 @@ export const Tables = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {filteredTables.map((table) => {
               const tableOrder = getTableOrder(table.id);
+              const hasDelayedOrder = tableOrder?.delayed;
               
               return (
                 <Card 
                   key={table.id}
                   className={`cursor-pointer transition-all hover:shadow-md ${
+                    table.isOccupied && hasDelayedOrder ? 'border-red-500 border-2' :
                     table.isOccupied ? 'border-restaurant-primary border-2' : ''
-                  }`}
+                  } ${table.emergency ? 'animate-pulse bg-red-50' : ''}`}
                   onClick={() => handleOpenDialog(table.id)}
+                  onMouseDown={() => handleMouseDown(table.id)}
+                  onMouseUp={handleMouseUp}
+                  onTouchStart={() => handleMouseDown(table.id)}
+                  onTouchEnd={handleMouseUp}
                 >
                   <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                     <TableIcon className={`w-10 h-10 mb-2 ${
+                      table.isOccupied && hasDelayedOrder ? 'text-red-500' :
                       table.isOccupied ? 'text-restaurant-primary' : 'text-gray-400'
                     }`} />
                     
@@ -227,24 +368,42 @@ export const Tables = () => {
                       </div>
                     )}
                     
+                    {hasDelayedOrder && (
+                      <div className="mt-1">
+                        <Badge variant="destructive" className="flex items-center gap-1 animate-pulse">
+                          <MessageCircle className="h-3 w-3" />
+                          ملاحظة من المطبخ
+                        </Badge>
+                      </div>
+                    )}
+                    
                     {table.isOccupied ? (
-                      <Badge className="mt-2 bg-restaurant-primary">مشغولة</Badge>
+                      <Badge className={`mt-2 ${hasDelayedOrder ? 'bg-red-500' : 'bg-restaurant-primary'}`}>مشغولة</Badge>
                     ) : (
                       <Badge className="mt-2 bg-green-500">متاحة</Badge>
                     )}
                     
                     {tableOrder && (
                       <div className="mt-2 text-xs text-gray-500">
-                        طلب {tableOrder.id.slice(-4)} - {tableOrder.items.length} عناصر
+                        <div>طلب {tableOrder.id.slice(-4)} - {tableOrder.items.length} عناصر</div>
+                        {tableOrder.createdAt && (
+                          <div className="flex items-center justify-center gap-1 mt-1">
+                            <Clock className="w-3 h-3" />
+                            {new Date(tableOrder.createdAt).toLocaleTimeString('ar-SA', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </div>
+                        )}
                       </div>
                     )}
                     
                     <Button 
                       size="sm"
-                      className="mt-3 w-full"
+                      className={`mt-3 w-full ${hasDelayedOrder ? 'bg-red-500 hover:bg-red-600' : 'bg-restaurant-primary hover:bg-restaurant-primary-dark'}`}
                       disabled={user?.role !== 'waiter' && user?.role !== 'admin'}
                     >
-                      {table.isOccupied ? 'عرض الطلب' : 'طلب جديد'}
+                      {table.isOccupied ? (hasDelayedOrder ? 'عرض الملاحظات' : 'عرض الطلب') : 'طلب جديد'}
                     </Button>
                   </CardContent>
                 </Card>
@@ -312,6 +471,44 @@ export const Tables = () => {
         </DialogContent>
       </Dialog>
       
+      {/* Emergency Alert Dialog */}
+      <Dialog open={isEmergencyDialogOpen} onOpenChange={setIsEmergencyDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-500">
+              <AlertTriangle className="w-5 h-5" />
+              تنبيه طارئ
+            </DialogTitle>
+            <DialogDescription>
+              إرسال تنبيه عاجل للإدارة بخصوص هذه الطاولة
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <Textarea 
+              placeholder="رسالة التنبيه (اختياري)"
+              value={emergencyMessage}
+              onChange={(e) => setEmergencyMessage(e.target.value)}
+            />
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEmergencyDialogOpen(false)}
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={handleSendEmergency}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              إرسال تنبيه عاجل
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {/* Order Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-4xl">
@@ -331,6 +528,32 @@ export const Tables = () => {
               )}
             </DialogTitle>
           </DialogHeader>
+          
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex gap-2 overflow-x-auto">
+              {quickOrderItems.map((item) => (
+                <Button 
+                  key={item.id}
+                  variant="outline"
+                  size="sm"
+                  className="flex-nowrap whitespace-nowrap border-restaurant-primary text-restaurant-primary hover:bg-restaurant-primary hover:text-white"
+                  onClick={() => handleSelectMenuItem(item)}
+                >
+                  <ChefHat className="mr-2 h-3 w-3" />
+                  {item.name}
+                </Button>
+              ))}
+            </div>
+            <div className="relative w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="بحث في القائمة..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
           
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1">
@@ -360,7 +583,9 @@ export const Tables = () => {
                       </Card>
                     ))
                   ) : (
-                    <p className="text-gray-500 text-center py-2">لا توجد مشروبات متاحة</p>
+                    <p className="text-gray-500 text-center py-2">
+                      {searchQuery ? "لا توجد نتائج للبحث" : "لا توجد مشروبات متاحة"}
+                    </p>
                   )}
                 </div>
               </div>
@@ -381,95 +606,119 @@ export const Tables = () => {
                   
                   <div className="max-h-[300px] overflow-y-auto pr-2">
                     <TabsContent value="appetizers" className="mt-0 space-y-2">
-                      {getMenuByCategory('appetizers').map((item) => (
-                        <Card 
-                          key={item.id}
-                          className="cursor-pointer hover:bg-gray-50"
-                          onClick={() => handleSelectMenuItem(item)}
-                        >
-                          <CardContent className="p-3 flex justify-between items-center">
-                            <div>
-                              <h4 className="font-medium">{item.name}</h4>
-                              <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{item.price} ريال</span>
-                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                      {getMenuByCategory('appetizers').length > 0 ? (
+                        getMenuByCategory('appetizers').map((item) => (
+                          <Card 
+                            key={item.id}
+                            className="cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleSelectMenuItem(item)}
+                          >
+                            <CardContent className="p-3 flex justify-between items-center">
+                              <div>
+                                <h4 className="font-medium">{item.name}</h4>
+                                <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{item.price} ريال</span>
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 text-center py-2">
+                          {searchQuery ? "لا توجد نتائج للبحث" : "لا توجد مقبلات متاحة"}
+                        </p>
+                      )}
                     </TabsContent>
                     
                     <TabsContent value="main_dishes" className="mt-0 space-y-2">
-                      {getMenuByCategory('main_dishes').map((item) => (
-                        <Card 
-                          key={item.id}
-                          className="cursor-pointer hover:bg-gray-50"
-                          onClick={() => handleSelectMenuItem(item)}
-                        >
-                          <CardContent className="p-3 flex justify-between items-center">
-                            <div>
-                              <h4 className="font-medium">{item.name}</h4>
-                              <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{item.price} ريال</span>
-                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                      {getMenuByCategory('main_dishes').length > 0 ? (
+                        getMenuByCategory('main_dishes').map((item) => (
+                          <Card 
+                            key={item.id}
+                            className="cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleSelectMenuItem(item)}
+                          >
+                            <CardContent className="p-3 flex justify-between items-center">
+                              <div>
+                                <h4 className="font-medium">{item.name}</h4>
+                                <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{item.price} ريال</span>
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 text-center py-2">
+                          {searchQuery ? "لا توجد نتائج للبحث" : "لا توجد أطباق رئيسية متاحة"}
+                        </p>
+                      )}
                     </TabsContent>
                     
                     <TabsContent value="desserts" className="mt-0 space-y-2">
-                      {getMenuByCategory('desserts').map((item) => (
-                        <Card 
-                          key={item.id}
-                          className="cursor-pointer hover:bg-gray-50"
-                          onClick={() => handleSelectMenuItem(item)}
-                        >
-                          <CardContent className="p-3 flex justify-between items-center">
-                            <div>
-                              <h4 className="font-medium">{item.name}</h4>
-                              <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{item.price} ريال</span>
-                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                      {getMenuByCategory('desserts').length > 0 ? (
+                        getMenuByCategory('desserts').map((item) => (
+                          <Card 
+                            key={item.id}
+                            className="cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleSelectMenuItem(item)}
+                          >
+                            <CardContent className="p-3 flex justify-between items-center">
+                              <div>
+                                <h4 className="font-medium">{item.name}</h4>
+                                <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{item.price} ريال</span>
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 text-center py-2">
+                          {searchQuery ? "لا توجد نتائج للبحث" : "لا توجد حلويات متاحة"}
+                        </p>
+                      )}
                     </TabsContent>
                     
                     <TabsContent value="sides" className="mt-0 space-y-2">
-                      {getMenuByCategory('sides').map((item) => (
-                        <Card 
-                          key={item.id}
-                          className="cursor-pointer hover:bg-gray-50"
-                          onClick={() => handleSelectMenuItem(item)}
-                        >
-                          <CardContent className="p-3 flex justify-between items-center">
-                            <div>
-                              <h4 className="font-medium">{item.name}</h4>
-                              <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{item.price} ريال</span>
-                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                      {getMenuByCategory('sides').length > 0 ? (
+                        getMenuByCategory('sides').map((item) => (
+                          <Card 
+                            key={item.id}
+                            className="cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleSelectMenuItem(item)}
+                          >
+                            <CardContent className="p-3 flex justify-between items-center">
+                              <div>
+                                <h4 className="font-medium">{item.name}</h4>
+                                <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{item.price} ريال</span>
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 text-center py-2">
+                          {searchQuery ? "لا توجد نتائج للبحث" : "لا توجد أطباق جانبية متاحة"}
+                        </p>
+                      )}
                     </TabsContent>
                   </div>
                 </Tabs>
@@ -535,6 +784,19 @@ export const Tables = () => {
                               onChange={(e) => handleUpdateNotes(menuItemId, e.target.value)}
                               rows={1}
                             />
+                            
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {popularNotes.map((note) => (
+                                <Badge 
+                                  key={note} 
+                                  variant="outline" 
+                                  className="cursor-pointer hover:bg-gray-100"
+                                  onClick={() => handleAddNoteTemplate(menuItemId, note)}
+                                >
+                                  {note}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       );

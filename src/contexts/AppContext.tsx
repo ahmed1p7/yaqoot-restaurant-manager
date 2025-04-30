@@ -27,6 +27,9 @@ interface AppContextType {
   clearNewOrdersNotification: () => void;
   updatePerSeatCharge: (amount: number) => void;
   togglePerSeatChargeEnabled: (enabled: boolean) => void;
+  delayOrder: (orderId: string, reason: string) => void;
+  cancelOrderItem: (orderId: string, menuItemId: string) => void;
+  getMostOrderedItems: (count?: number) => MenuItem[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -43,8 +46,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [hasNewOrders, setHasNewOrders] = useState<boolean>(false);
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({
     perSeatCharge: 2,
-    enablePerSeatCharge: false
+    enablePerSeatCharge: false,
+    emergencyMode: false,
+    backupPrinterEnabled: false,
+    backupPhoneEnabled: false
   });
+  const [orderStats, setOrderStats] = useState<{[key: string]: number}>({});
+
+  // Calculate order statistics on mount and when orders change
+  useEffect(() => {
+    const stats: {[key: string]: number} = {};
+    
+    // Count all ordered menu items
+    orders.forEach(order => {
+      order.items.forEach(item => {
+        if (!stats[item.menuItemId]) {
+          stats[item.menuItemId] = 0;
+        }
+        stats[item.menuItemId] += item.quantity;
+      });
+    });
+    
+    setOrderStats(stats);
+  }, [orders]);
 
   // Function to clear new orders notification
   const clearNewOrdersNotification = () => {
@@ -58,6 +82,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (adminUser) {
         setUser(adminUser);
         toast.success(`مرحباً ${adminUser.name}`, {
+          description: "تم تسجيل الدخول بنجاح"
+        });
+        return true;
+      }
+    }
+    
+    // Allow waiter login with PIN
+    const waiterMatch = /^10[0-9]$/.exec(username);
+    if (waiterMatch && password === "0000") {
+      const waiterNumber = parseInt(username.substring(2));
+      const waiterUser = mockUsers.find(u => u.username === `waiter${waiterNumber}`);
+      
+      if (waiterUser) {
+        setUser(waiterUser);
+        toast.success(`مرحباً ${waiterUser.name}`, {
           description: "تم تسجيل الدخول بنجاح"
         });
         return true;
@@ -149,7 +188,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       createdAt: new Date(),
       waiterName: waiter.name,
       items: orderItemsWithCompletionStatus,
-      peopleCount: orderData.peopleCount || tables.find(t => t.id === orderData.tableNumber)?.peopleCount || 1
+      peopleCount: orderData.peopleCount || tables.find(t => t.id === orderData.tableNumber)?.peopleCount || 1,
+      delayed: false
     };
     
     setOrders([...orders, newOrder]);
@@ -172,6 +212,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     toast.success("تم إنشاء الطلب بنجاح", {
       description: `طلب جديد للطاولة ${orderData.tableNumber}`
     });
+    
+    // If emergency mode is on, handle backup procedures
+    if (systemSettings.emergencyMode) {
+      if (systemSettings.backupPrinterEnabled) {
+        toast.info("تم إرسال الطلب إلى الطابعة الاحتياطية", {
+          description: "نظام الطوارئ مفعل"
+        });
+      }
+      
+      if (systemSettings.backupPhoneEnabled) {
+        toast.info("تم إرسال إشعار إلى تطبيق الطهاة", {
+          description: "نظام الطوارئ مفعل"
+        });
+      }
+    }
   };
 
   const updateOrderStatus = (orderId: string, status: Order['status']) => {
@@ -225,6 +280,46 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     toast.success(completed ? "تم الانتهاء من تحضير العنصر" : "تمت إعادة العنصر للتحضير");
   };
 
+  // New function to delay an order
+  const delayOrder = (orderId: string, reason: string) => {
+    setOrders(orders.map(order => 
+      order.id === orderId 
+        ? { ...order, delayed: true, delayReason: reason, updatedAt: new Date() } 
+        : order
+    ));
+    
+    toast.info("تم تحديث حالة الطلب", {
+      description: "تم تأجيل الطلب وإرسال إشعار للنادل"
+    });
+  };
+  
+  // New function to cancel a specific order item
+  const cancelOrderItem = (orderId: string, menuItemId: string) => {
+    setOrders(orders.map(order => {
+      if (order.id === orderId) {
+        // Filter out the canceled item
+        const updatedItems = order.items.filter(item => item.menuItemId !== menuItemId);
+        
+        // If no items are left, mark order as canceled
+        if (updatedItems.length === 0) {
+          // Free up the table if this is the current order
+          setTables(tables.map(table => 
+            table.currentOrderId === orderId
+              ? { ...table, isOccupied: false, currentOrderId: undefined }
+              : table
+          ));
+          
+          return { ...order, status: 'canceled', items: [], updatedAt: new Date() };
+        }
+        
+        return { ...order, items: updatedItems, updatedAt: new Date() };
+      }
+      return order;
+    }));
+    
+    toast.success("تم إلغاء العنصر من الطلب");
+  };
+  
   const updateTablePeopleCount = (tableId: number, peopleCount: number) => {
     setTables(tables.map(table => 
       table.id === tableId 
@@ -247,6 +342,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     
     toast.success(`تم تحديث عدد الأشخاص للطاولة ${tableId} إلى ${peopleCount}`);
+  };
+
+  // Get most ordered menu items
+  const getMostOrderedItems = (count: number = 5): MenuItem[] => {
+    // Create array of [menuItemId, orderCount] pairs
+    const orderedItemsArray = Object.entries(orderStats);
+    
+    // Sort by count in descending order
+    const sortedItems = orderedItemsArray.sort((a, b) => b[1] - a[1]);
+    
+    // Get the top N item IDs
+    const topItemIds = sortedItems.slice(0, count).map(item => item[0]);
+    
+    // Return the actual MenuItem objects
+    return menuItems
+      .filter(item => topItemIds.includes(item.id))
+      .sort((a, b) => {
+        // Sort by the same order as topItemIds
+        return orderStats[b.id] - orderStats[a.id];
+      })
+      .slice(0, count);
   };
 
   // System settings functions
@@ -289,7 +405,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     updateTablePeopleCount,
     clearNewOrdersNotification,
     updatePerSeatCharge,
-    togglePerSeatChargeEnabled
+    togglePerSeatChargeEnabled,
+    delayOrder,
+    cancelOrderItem,
+    getMostOrderedItems
   };
 
   return (

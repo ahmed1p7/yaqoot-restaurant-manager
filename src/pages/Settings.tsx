@@ -1,134 +1,205 @@
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserRole } from "@/types";
+import { Printer, AlertTriangle, Smartphone, DollarSign } from "lucide-react";
+import { toast } from "sonner";
 
 export const Settings = () => {
-  const { user, systemSettings, updatePerSeatCharge, togglePerSeatChargeEnabled } = useApp();
-  const [perSeatCharge, setPerSeatCharge] = useState<number>(systemSettings.perSeatCharge);
-  const [enablePerSeatCharge, setEnablePerSeatCharge] = useState<boolean>(systemSettings.enablePerSeatCharge);
+  const { systemSettings, updatePerSeatCharge, togglePerSeatChargeEnabled, user } = useApp();
+  const [perSeatCharge, setPerSeatCharge] = useState(systemSettings.perSeatCharge);
+  const [emergencyMode, setEmergencyMode] = useState(systemSettings.emergencyMode || false);
+  const [backupPrinterEnabled, setBackupPrinterEnabled] = useState(systemSettings.backupPrinterEnabled || false);
+  const [backupPhoneEnabled, setBackupPhoneEnabled] = useState(systemSettings.backupPhoneEnabled || false);
 
-  useEffect(() => {
-    setPerSeatCharge(systemSettings.perSeatCharge);
-    setEnablePerSeatCharge(systemSettings.enablePerSeatCharge);
-  }, [systemSettings]);
-
-  const handleUpdatePerSeatCharge = () => {
-    updatePerSeatCharge(perSeatCharge);
-  };
-
-  const handleTogglePerSeatCharge = (checked: boolean) => {
-    setEnablePerSeatCharge(checked);
-    togglePerSeatChargeEnabled(checked);
-  };
-
-  // Only admins can access settings
+  // If not admin, show access denied
   if (user?.role !== 'admin') {
     return (
       <div className="flex justify-center items-center h-64">
         <p className="text-lg text-gray-500">
-          هذه الصفحة مخصصة للمشرفين فقط
+          هذه الصفحة مخصصة للمشرف فقط
         </p>
       </div>
     );
   }
 
+  const handleUpdatePerSeatCharge = () => {
+    updatePerSeatCharge(perSeatCharge);
+  };
+
+  const handleTogglePerSeatCharge = (enabled: boolean) => {
+    togglePerSeatChargeEnabled(enabled);
+  };
+
+  const handleToggleEmergencyMode = (enabled: boolean) => {
+    setEmergencyMode(enabled);
+    // In a real app, we would update the system settings
+    // For now, just show a toast notification
+    toast.info(enabled ? "تم تفعيل وضع الطوارئ" : "تم إيقاف وضع الطوارئ");
+  };
+
+  const handleToggleBackupPrinter = (enabled: boolean) => {
+    setBackupPrinterEnabled(enabled);
+    toast.info(enabled ? "تم تفعيل الطابعة الاحتياطية" : "تم إيقاف الطابعة الاحتياطية");
+  };
+
+  const handleToggleBackupPhone = (enabled: boolean) => {
+    setBackupPhoneEnabled(enabled);
+    toast.info(enabled ? "تم تفعيل إشعارات الجوال" : "تم إيقاف إشعارات الجوال");
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">الإعدادات</h1>
-      
+
       <Tabs defaultValue="general">
-        <TabsList>
-          <TabsTrigger value="general">إعدادات عامة</TabsTrigger>
-          <TabsTrigger value="advanced">إعدادات متقدمة</TabsTrigger>
+        <TabsList className="mb-4">
+          <TabsTrigger value="general">عام</TabsTrigger>
+          <TabsTrigger value="pricing">التسعير</TabsTrigger>
+          <TabsTrigger value="emergency" className="flex items-center gap-1">
+            <AlertTriangle className="w-4 h-4" />
+            وضع الطوارئ
+          </TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="general" className="space-y-6 mt-4">
+
+        <TabsContent value="general" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>إعدادات الحساب</CardTitle>
-              <CardDescription>
-                تعديل إعدادات النظام الأساسية
-              </CardDescription>
+              <CardTitle>الإعدادات العامة</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="restaurantName">اسم المطعم</Label>
-                <Input id="restaurantName" defaultValue="مطعمنا" />
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="restaurant-name">اسم المطعم</Label>
+                  <Input 
+                    id="restaurant-name" 
+                    className="w-[250px]" 
+                    defaultValue="مطعم الشرق" 
+                  />
+                </div>
               </div>
-              
               <div className="space-y-2">
-                <Label htmlFor="currency">العملة</Label>
-                <Input id="currency" defaultValue="ريال" />
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="restaurant-phone">رقم الهاتف</Label>
+                  <Input 
+                    id="restaurant-phone" 
+                    className="w-[250px]" 
+                    defaultValue="0123456789" 
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button className="bg-restaurant-primary">حفظ التغييرات</Button>
               </div>
             </CardContent>
-            <CardFooter>
-              <Button>حفظ التغييرات</Button>
-            </CardFooter>
           </Card>
         </TabsContent>
-        
-        <TabsContent value="advanced" className="space-y-6 mt-4">
+
+        <TabsContent value="pricing" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>رسوم إضافية</CardTitle>
-              <CardDescription>
-                إعدادات الرسوم الإضافية للطاولات
-              </CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="w-5 h-5" />
+                رسوم المقعد
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between space-x-2">
-                <Label htmlFor="perSeatCharge" className="flex flex-col space-y-1">
-                  <span>تفعيل رسوم لكل مقعد</span>
-                  <span className="font-normal text-sm text-gray-500">
-                    يتم إضافة رسوم لكل شخص عند إنشاء طلب
-                  </span>
-                </Label>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="per-seat-charge-enabled">تفعيل رسوم المقعد</Label>
                 <Switch 
-                  id="perSeatCharge" 
-                  checked={enablePerSeatCharge}
+                  id="per-seat-charge-enabled"
+                  checked={systemSettings.enablePerSeatCharge}
                   onCheckedChange={handleTogglePerSeatCharge}
                 />
               </div>
-              
               <div className="space-y-2">
-                <Label htmlFor="perSeatAmount">مقدار الرسوم لكل مقعد (ريال)</Label>
-                <div className="flex items-center space-x-2">
+                <Label htmlFor="per-seat-charge">رسوم المقعد (ريال)</Label>
+                <div className="flex items-center gap-2">
                   <Input 
-                    id="perSeatAmount" 
+                    id="per-seat-charge" 
                     type="number"
                     value={perSeatCharge}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      if (!isNaN(val) && val >= 0) {
-                        setPerSeatCharge(val);
-                      }
-                    }}
-                    min="0"
-                    step="0.5"
-                    disabled={!enablePerSeatCharge}
+                    onChange={(e) => setPerSeatCharge(Number(e.target.value))}
                   />
                   <Button 
                     onClick={handleUpdatePerSeatCharge}
-                    disabled={!enablePerSeatCharge || perSeatCharge === systemSettings.perSeatCharge}
+                    className="bg-restaurant-primary"
                   >
                     تحديث
                   </Button>
                 </div>
+                <p className="text-xs text-gray-500">
+                  يتم إضافة هذا المبلغ لكل شخص في الطاولة
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="emergency" className="space-y-4">
+          <Card>
+            <CardHeader className="bg-red-50">
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="w-5 h-5" />
+                وضع الطوارئ
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label htmlFor="emergency-mode" className="text-lg font-bold">تفعيل وضع الطوارئ</Label>
+                  <p className="text-sm text-gray-500">
+                    عند تعطل شاشة المطبخ، سيتم إرسال الطلبات تلقائياً إلى الأنظمة الاحتياطية
+                  </p>
+                </div>
+                <Switch 
+                  id="emergency-mode"
+                  checked={emergencyMode}
+                  onCheckedChange={handleToggleEmergencyMode}
+                />
+              </div>
+              
+              <div className="border-t pt-4">
+                <h3 className="font-medium mb-4">أنظمة الطوارئ الاحتياطية</h3>
                 
-                {enablePerSeatCharge && (
-                  <div className="mt-4 p-4 bg-gray-50 rounded-md">
-                    <p className="text-sm text-gray-600">
-                      <strong>مثال:</strong> طاولة بها 4 أشخاص ستتكلف {perSeatCharge * 4} ريال إضافية
-                    </p>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Printer className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <Label htmlFor="backup-printer" className="font-medium">الطابعة الاحتياطية</Label>
+                        <p className="text-xs text-gray-500">طباعة الطلبات تلقائياً عند استلامها</p>
+                      </div>
+                    </div>
+                    <Switch 
+                      id="backup-printer"
+                      disabled={!emergencyMode}
+                      checked={backupPrinterEnabled && emergencyMode}
+                      onCheckedChange={handleToggleBackupPrinter}
+                    />
                   </div>
-                )}
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Smartphone className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <Label htmlFor="backup-phone" className="font-medium">إشعارات الجوال</Label>
+                        <p className="text-xs text-gray-500">إرسال إشعارات إلى تطبيق الطهاة</p>
+                      </div>
+                    </div>
+                    <Switch 
+                      id="backup-phone"
+                      disabled={!emergencyMode}
+                      checked={backupPhoneEnabled && emergencyMode}
+                      onCheckedChange={handleToggleBackupPhone}
+                    />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

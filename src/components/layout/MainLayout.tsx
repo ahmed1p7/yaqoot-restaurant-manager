@@ -12,7 +12,7 @@ interface MainLayoutProps {
 }
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
-  const { user } = useApp();
+  const { user, loginAsScreen } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -30,6 +30,13 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       }
     }
   }, [user, location.pathname, navigate]);
+  
+  // Auto login for screen role if path is /kitchen
+  useEffect(() => {
+    if (!user && location.pathname === '/kitchen') {
+      loginAsScreen();
+    }
+  }, [user, location.pathname, loginAsScreen]);
   
   if (!user) {
     return <LoginPage />;
