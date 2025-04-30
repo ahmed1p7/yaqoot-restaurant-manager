@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { User, MenuItem, Order, Table, OrderItem, SystemSettings } from '../types';
-import { mockUsers, mockMenuItems, mockOrders, mockTables } from '../data/mockData';
+import { User, MenuItem, Order, Table, OrderItem, SystemSettings, PrinterType } from '../types';
+import { mockUsers, mockMenuItems, mockOrders, mockTables, mockDepartments, mockPrinters } from '../data/mockData';
 import { toast } from "sonner";
 
 interface AppContextType {
@@ -9,6 +8,7 @@ interface AppContextType {
   menuItems: MenuItem[];
   orders: Order[];
   tables: Table[];
+  printers: PrinterType[];
   hasNewOrders: boolean;
   systemSettings: SystemSettings;
   login: (username: string, password: string) => boolean;
@@ -30,6 +30,10 @@ interface AppContextType {
   delayOrder: (orderId: string, reason: string) => void;
   cancelOrderItem: (orderId: string, menuItemId: string) => void;
   getMostOrderedItems: (count?: number) => MenuItem[];
+  markTableAsPaid: (tableId: number) => void;
+  toggleTableReservation: (tableId: number, isReserved: boolean) => void;
+  updatePrinterSettings: (printer: PrinterType) => void;
+  getOrdersByTable: () => Record<number, Order[]>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -43,6 +47,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     items: order.items.map(item => ({ ...item, completed: false }))
   })));
   const [tables, setTables] = useState<Table[]>(mockTables);
+  const [printers, setPrinters] = useState<PrinterType[]>(mockPrinters);
   const [hasNewOrders, setHasNewOrders] = useState<boolean>(false);
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({
     perSeatCharge: 2,
@@ -115,7 +120,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (waiterUser) {
       setUser(waiterUser);
       toast.success(`مرحباً ${waiterUser.name}`, {
-        description: "تم تسجيل الدخول بنجاح"
+        description: "ت�� تسجيل الدخول بنجاح"
       });
       return true;
     }
@@ -189,7 +194,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       waiterName: waiter.name,
       items: orderItemsWithCompletionStatus,
       peopleCount: orderData.peopleCount || tables.find(t => t.id === orderData.tableNumber)?.peopleCount || 1,
-      delayed: false
+      delayed: false,
+      isPaid: false
     };
     
     setOrders([...orders, newOrder]);
@@ -343,6 +349,54 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     toast.success(`تم تحديث عدد الأشخاص للطاولة ${tableId} إلى ${peopleCount}`);
   };
+  
+  // New function to mark a table order as paid
+  const markTableAsPaid = (tableId: number) => {
+    // Find the active order for this table
+    const tableOrder = orders.find(o => 
+      o.tableNumber === tableId && 
+      (o.status === 'pending' || o.status === 'preparing' || o.status === 'ready' || o.status === 'delivered')
+    );
+    
+    if (tableOrder) {
+      // Update the order to mark it as paid
+      setOrders(orders.map(order => 
+        order.id === tableOrder.id 
+          ? { ...order, isPaid: true } 
+          : order
+      ));
+      
+      toast.success(`تم تسجيل الدفع للطاولة ${tableId}`);
+    } else {
+      toast.error(`لا يوجد طلب نشط للطاولة ${tableId}`);
+    }
+  };
+  
+  // New function to toggle table reservation
+  const toggleTableReservation = (tableId: number, isReserved: boolean) => {
+    setTables(tables.map(table => 
+      table.id === tableId 
+        ? { ...table, isReserved } 
+        : table
+    ));
+    
+    if (isReserved) {
+      toast.success(`تم حجز الطاولة ${tableId}`);
+    } else {
+      toast.success(`تم إلغاء حجز الطاولة ${tableId}`);
+    }
+  };
+  
+  // New function to update printer settings
+  const updatePrinterSettings = (printer: PrinterType) => {
+    setPrinters(printers.map(p => 
+      p.id === printer.id 
+        ? printer
+        : p
+    ));
+    
+    toast.success(`تم تحديث إعدادات الطابعة ${printer.name}`);
+  };
 
   // Get most ordered menu items
   const getMostOrderedItems = (count: number = 5): MenuItem[] => {
@@ -388,6 +442,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     menuItems,
     orders,
     tables,
+    printers,
     hasNewOrders,
     systemSettings,
     login,
@@ -408,7 +463,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     togglePerSeatChargeEnabled,
     delayOrder,
     cancelOrderItem,
-    getMostOrderedItems
+    getMostOrderedItems,
+    markTableAsPaid,
+    toggleTableReservation,
+    updatePrinterSettings,
+    getOrdersByTable
   };
 
   return (

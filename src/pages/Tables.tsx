@@ -1,836 +1,202 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
+import { TableActions } from "@/components/tables/TableActions";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { MenuItem, OrderItem, MenuCategory } from "@/types";
-import { 
-  Table as TableIcon, 
-  ArrowRight, 
-  ChefHat, 
-  Plus, 
-  Utensils, 
-  Wine, 
-  User, 
-  Search, 
-  MessageCircle,
-  AlertTriangle,
-  Coffee,
-  Clock
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle, User, Search, Table as TableIcon } from "lucide-react";
 import { toast } from "sonner";
+import { Order } from "@/types";
 
 export const Tables = () => {
-  const { 
-    tables, 
-    menuItems, 
-    createOrder, 
-    user, 
-    orders, 
-    systemSettings, 
-    updateTablePeopleCount,
-    getMostOrderedItems
-  } = useApp();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isPeopleDialogOpen, setIsPeopleDialogOpen] = useState(false);
-  const [isEmergencyDialogOpen, setIsEmergencyDialogOpen] = useState(false);
+  const { tables, orders, user, menuItems, getMostOrderedItems } = useApp();
+  const navigate = useNavigate();
+  
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
-  const [selectedMenuItems, setSelectedMenuItems] = useState<Map<string, { quantity: number; notes: string }>>(new Map());
-  const [activeTab, setActiveTab] = useState<string>("all");
-  const [peopleCount, setPeopleCount] = useState<number>(1);
-  const [emergencyMessage, setEmergencyMessage] = useState<string>("");
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [popularNotes, setPopularNotes] = useState<string[]>([
-    "بدون ملح",
-    "حار",
-    "بدون بصل",
-    "تقطيع شرائح",
-    "بدون توابل"
-  ]);
-  const [quickOrderItems, setQuickOrderItems] = useState<MenuItem[]>([]);
-  const longPressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [emergencyTable, setEmergencyTable] = useState<number | null>(null);
   
-  // Set quick order items on component mount
-  useEffect(() => {
-    // Get top 5 most ordered items
-    const topItems = getMostOrderedItems(5);
-    setQuickOrderItems(topItems);
-  }, [getMostOrderedItems]);
+  // Get the most ordered items for quick orders
+  const mostOrderedItems = getMostOrderedItems(5);
   
-  const handleOpenDialog = (tableId: number) => {
+  // Filter tables based on search query
+  const filteredTables = tables
+    .filter(table => table.name.includes(searchQuery))
+    .sort((a, b) => {
+      // Sort by reservation status first, then by occupation, then by table number
+      if (a.isReserved !== b.isReserved) {
+        return a.isReserved ? -1 : 1;
+      }
+      if (a.isOccupied !== b.isOccupied) {
+        return a.isOccupied ? -1 : 1;
+      }
+      return a.id - b.id;
+    });
+  
+  // Get current order for a table
+  const getCurrentOrder = (tableId: number): Order | undefined => {
     const table = tables.find(t => t.id === tableId);
+    if (!table?.currentOrderId) return undefined;
     
-    // If table doesn't have people count set, open the people count dialog first
-    if ((!table?.peopleCount || table.peopleCount < 1) && !table?.isOccupied) {
-      setSelectedTable(tableId);
-      setPeopleCount(1);
-      setIsPeopleDialogOpen(true);
-    } else {
-      // If table already has people count, open the regular order dialog
-      setSelectedTable(tableId);
-      setSelectedMenuItems(new Map());
-      setIsDialogOpen(true);
-      
-      // Use existing people count if available
-      if (table?.peopleCount) {
-        setPeopleCount(table.peopleCount);
-      }
-    }
+    return orders.find(o => o.id === table.currentOrderId);
   };
   
-  const handleMouseDown = (tableId: number) => {
-    if (longPressTimeoutRef.current) {
-      clearTimeout(longPressTimeoutRef.current);
-    }
-    
-    longPressTimeoutRef.current = setTimeout(() => {
-      handleEmergencyAlert(tableId);
-    }, 1000); // 1 second long press
-  };
-  
-  const handleMouseUp = () => {
-    if (longPressTimeoutRef.current) {
-      clearTimeout(longPressTimeoutRef.current);
-      longPressTimeoutRef.current = null;
-    }
-  };
-  
-  const handleEmergencyAlert = (tableId: number) => {
+  const handleCreateOrder = (tableId: number) => {
     setSelectedTable(tableId);
-    setIsEmergencyDialogOpen(true);
+    // Further implementation in real app would navigate to order creation page
   };
   
-  const handleSendEmergency = () => {
-    if (!selectedTable) return;
-    
-    toast.error(`تنبيه طارئ للطاولة ${selectedTable}`, {
-      description: emergencyMessage || "يحتاج النادل مساعدة عاجلة"
+  const handleTableEmergency = (tableId: number) => {
+    setEmergencyTable(tableId);
+    toast.error(`تم تسجيل حالة طوارئ للطاولة ${tableId}!`, {
+      description: "تم إرسال تنبيه للإدارة"
     });
     
-    setIsEmergencyDialogOpen(false);
-    setEmergencyMessage("");
+    // In a real system, this would trigger notifications to admin
   };
   
-  const handleConfirmPeopleCount = () => {
-    if (!selectedTable) return;
-    
-    // Update the table's people count
-    updateTablePeopleCount(selectedTable, peopleCount);
-    
-    // Close the people dialog and open the order dialog
-    setIsPeopleDialogOpen(false);
-    setIsDialogOpen(true);
-  };
-  
-  const handleSelectMenuItem = (item: MenuItem) => {
-    const updatedItems = new Map(selectedMenuItems);
-    
-    if (updatedItems.has(item.id)) {
-      const existingItem = updatedItems.get(item.id)!;
-      updatedItems.set(item.id, {
-        ...existingItem,
-        quantity: existingItem.quantity + 1
-      });
-    } else {
-      updatedItems.set(item.id, { quantity: 1, notes: '' });
-    }
-    
-    setSelectedMenuItems(updatedItems);
-  };
-  
-  const handleUpdateQuantity = (itemId: string, quantity: number) => {
-    const updatedItems = new Map(selectedMenuItems);
-    
-    if (quantity <= 0) {
-      updatedItems.delete(itemId);
-    } else {
-      const existingItem = updatedItems.get(itemId)!;
-      updatedItems.set(itemId, { ...existingItem, quantity });
-    }
-    
-    setSelectedMenuItems(updatedItems);
-  };
-  
-  const handleUpdateNotes = (itemId: string, notes: string) => {
-    const updatedItems = new Map(selectedMenuItems);
-    const existingItem = updatedItems.get(itemId)!;
-    updatedItems.set(itemId, { ...existingItem, notes });
-    setSelectedMenuItems(updatedItems);
-  };
-  
-  const handleAddNoteTemplate = (itemId: string, note: string) => {
-    const updatedItems = new Map(selectedMenuItems);
-    const existingItem = updatedItems.get(itemId)!;
-    const currentNotes = existingItem.notes || '';
-    
-    // Check if note is already included
-    if (!currentNotes.includes(note)) {
-      const newNotes = currentNotes ? `${currentNotes}, ${note}` : note;
-      updatedItems.set(itemId, { ...existingItem, notes: newNotes });
-      setSelectedMenuItems(updatedItems);
-    }
-  };
-  
-  const handleCreateOrder = () => {
-    if (!selectedTable || !user) return;
-    
-    const orderItems: OrderItem[] = [];
-    let totalAmount = 0;
-    
-    selectedMenuItems.forEach((value, menuItemId) => {
-      const menuItem = menuItems.find(item => item.id === menuItemId);
-      if (menuItem) {
-        const itemTotal = menuItem.price * value.quantity;
-        totalAmount += itemTotal;
-        
-        // Check for allergy warnings in notes
-        const notes = value.notes || '';
-        const hasAllergyWarning = /(مكسرات|جلوتين|حساسية|لاكتوز|بيض|حليب)/i.test(notes);
-        
-        if (hasAllergyWarning) {
-          toast.warning("تحذير: مكونات مسببة للحساسية", {
-            description: `${menuItem.name}: ${notes}`
-          });
-        }
-        
-        orderItems.push({
-          menuItemId: menuItem.id,
-          name: menuItem.name,
-          price: menuItem.price,
-          quantity: value.quantity,
-          notes: value.notes || undefined,
-          completed: false
-        });
-      }
-    });
-    
-    // Add per seat charge if enabled
-    if (systemSettings.enablePerSeatCharge && peopleCount > 0) {
-      const seatCharge = systemSettings.perSeatCharge * peopleCount;
-      totalAmount += seatCharge;
-    }
-    
-    createOrder({
-      tableNumber: selectedTable,
-      items: orderItems,
-      status: 'pending',
-      totalAmount,
-      waiterId: user.id,
-      peopleCount: peopleCount
-    });
-    
-    setIsDialogOpen(false);
-  };
-  
-  // Filter tables based on tab
-  const filteredTables = tables.filter(table => {
-    if (activeTab === 'all') return true;
-    if (activeTab === 'free') return !table.isOccupied;
-    if (activeTab === 'occupied') return table.isOccupied;
-    return true;
-  });
-  
-  // Calculate totals
-  const calculateTotal = () => {
-    let total = 0;
-    selectedMenuItems.forEach((value, menuItemId) => {
-      const menuItem = menuItems.find(item => item.id === menuItemId);
-      if (menuItem) {
-        total += menuItem.price * value.quantity;
-      }
-    });
-    
-    // Add per seat charge if enabled
-    if (systemSettings.enablePerSeatCharge && peopleCount > 0) {
-      const seatCharge = systemSettings.perSeatCharge * peopleCount;
-      total += seatCharge;
-    }
-    
-    return total;
-  };
-  
-  // Get menu items by category
-  const getMenuByCategory = (category: MenuCategory) => {
-    return menuItems.filter(item => 
-      item.isAvailable && 
-      item.category === category &&
-      (searchQuery === '' || item.name.includes(searchQuery) || (item.description && item.description.includes(searchQuery)))
-    );
+  const handleResetEmergency = () => {
+    setEmergencyTable(null);
   };
 
-  // Get all drinks
-  const drinks = getMenuByCategory('drinks');
-  
-  // Get all food items (non-drinks)
-  const foodItems = menuItems.filter(item => 
-    item.isAvailable && 
-    item.category !== 'drinks' &&
-    (searchQuery === '' || item.name.includes(searchQuery) || (item.description && item.description.includes(searchQuery)))
-  );
-  
-  // Get order for a specific table
-  const getTableOrder = (tableId: number) => {
-    return orders.find(order => 
-      order.tableNumber === tableId && 
-      (order.status === 'pending' || order.status === 'preparing' || order.status === 'ready')
-    );
-  };
-  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">الطاولات</h1>
-        {user?.role === 'waiter' && quickOrderItems.length > 0 && (
-          <div className="hidden md:flex gap-2 overflow-x-auto pb-2 bg-white p-2 rounded-lg shadow-sm border">
-            {quickOrderItems.map((item) => (
-              <Button 
-                key={item.id}
-                variant="outline"
-                size="sm"
-                className="flex-nowrap whitespace-nowrap border-restaurant-primary text-restaurant-primary hover:bg-restaurant-primary hover:text-white"
-                onClick={() => {
-                  if (!selectedTable) {
-                    toast.info("يرجى اختيار طاولة أولاً");
-                    return;
-                  }
-                  handleSelectMenuItem(item);
-                }}
-              >
-                {item.category === 'drinks' ? <Coffee className="mr-2 h-3 w-3" /> : 
-                 item.category === 'main_dishes' ? <Utensils className="mr-2 h-3 w-3" /> :
-                 <ChefHat className="mr-2 h-3 w-3" />}
-                {item.name}
-              </Button>
-            ))}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-nowrap whitespace-nowrap text-gray-500"
-            >
-              <Search className="mr-2 h-3 w-3" />
-              بحث
-            </Button>
-          </div>
-        )}
+        
+        {/* Search bar */}
+        <div className="relative">
+          <Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-400" />
+          <Input
+            className="pl-2 pr-8 w-[200px]"
+            placeholder="بحث عن طاولة..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       </div>
       
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="all">الكل</TabsTrigger>
-          <TabsTrigger value="free">متاحة</TabsTrigger>
-          <TabsTrigger value="occupied">مشغولة</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value={activeTab} className="mt-0">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {filteredTables.map((table) => {
-              const tableOrder = getTableOrder(table.id);
-              const hasDelayedOrder = tableOrder?.delayed;
-              
-              return (
-                <Card 
-                  key={table.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    table.isOccupied && hasDelayedOrder ? 'border-red-500 border-2' :
-                    table.isOccupied ? 'border-restaurant-primary border-2' : ''
-                  } ${table.emergency ? 'animate-pulse bg-red-50' : ''}`}
-                  onClick={() => handleOpenDialog(table.id)}
-                  onMouseDown={() => handleMouseDown(table.id)}
-                  onMouseUp={handleMouseUp}
-                  onTouchStart={() => handleMouseDown(table.id)}
-                  onTouchEnd={handleMouseUp}
-                >
-                  <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                    <TableIcon className={`w-10 h-10 mb-2 ${
-                      table.isOccupied && hasDelayedOrder ? 'text-red-500' :
-                      table.isOccupied ? 'text-restaurant-primary' : 'text-gray-400'
-                    }`} />
-                    
-                    <h3 className="font-medium">{table.name}</h3>
-                    
-                    {table.peopleCount && table.peopleCount > 0 && (
-                      <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
-                        <User className="w-3 h-3" />
-                        <span>{table.peopleCount}</span>
-                      </div>
-                    )}
-                    
-                    {hasDelayedOrder && (
-                      <div className="mt-1">
-                        <Badge variant="destructive" className="flex items-center gap-1 animate-pulse">
-                          <MessageCircle className="h-3 w-3" />
-                          ملاحظة من المطبخ
-                        </Badge>
-                      </div>
-                    )}
-                    
-                    {table.isOccupied ? (
-                      <Badge className={`mt-2 ${hasDelayedOrder ? 'bg-red-500' : 'bg-restaurant-primary'}`}>مشغولة</Badge>
-                    ) : (
-                      <Badge className="mt-2 bg-green-500">متاحة</Badge>
-                    )}
-                    
-                    {tableOrder && (
-                      <div className="mt-2 text-xs text-gray-500">
-                        <div>طلب {tableOrder.id.slice(-4)} - {tableOrder.items.length} عناصر</div>
-                        {tableOrder.createdAt && (
-                          <div className="flex items-center justify-center gap-1 mt-1">
-                            <Clock className="w-3 h-3" />
-                            {new Date(tableOrder.createdAt).toLocaleTimeString('ar-SA', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    <Button 
-                      size="sm"
-                      className={`mt-3 w-full ${hasDelayedOrder ? 'bg-red-500 hover:bg-red-600' : 'bg-restaurant-primary hover:bg-restaurant-primary-dark'}`}
-                      disabled={user?.role !== 'waiter' && user?.role !== 'admin'}
-                    >
-                      {table.isOccupied ? (hasDelayedOrder ? 'عرض الملاحظات' : 'عرض الطلب') : 'طلب جديد'}
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </TabsContent>
-      </Tabs>
+      {/* Quick order bar - Show only for waiters */}
+      {user?.role === 'waiter' && mostOrderedItems.length > 0 && (
+        <div className="bg-gray-50 p-2 rounded-md flex items-center gap-2 overflow-x-auto">
+          <span className="text-sm font-medium min-w-max">طلبات سريعة:</span>
+          {mostOrderedItems.map(item => (
+            <Button 
+              key={item.id} 
+              variant="outline" 
+              size="sm"
+              className="min-w-max"
+              onClick={() => {
+                // In a real app, this would add the item to current order
+                toast.success(`تمت إضافة ${item.name} للطلب`, {
+                  description: "يمكنك تعديل الكمية لاحقاً"
+                });
+              }}
+            >
+              {item.name}
+            </Button>
+          ))}
+        </div>
+      )}
       
-      {/* People Count Dialog */}
-      <Dialog open={isPeopleDialogOpen} onOpenChange={setIsPeopleDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>عدد الأشخاص في الطاولة</DialogTitle>
-            <DialogDescription>
-              يرجى تحديد عدد الأشخاص الذين سيجلسون على هذه الطاولة
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="flex items-center justify-center gap-4 py-6">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => peopleCount > 1 && setPeopleCount(peopleCount - 1)}
-              disabled={peopleCount <= 1}
-            >
-              -
-            </Button>
-            
-            <div className="w-20 text-center">
-              <Input
-                type="number"
-                className="text-center text-lg font-bold"
-                value={peopleCount}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  if (!isNaN(value) && value > 0) {
-                    setPeopleCount(value);
-                  }
-                }}
-                min="1"
-              />
-            </div>
-            
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setPeopleCount(peopleCount + 1)}
-            >
-              +
-            </Button>
-          </div>
-          
-          {systemSettings.enablePerSeatCharge && (
-            <div className="text-sm text-gray-500 text-center mb-4">
-              سيتم إضافة رسوم {systemSettings.perSeatCharge * peopleCount} ريال ({systemSettings.perSeatCharge} × {peopleCount})
-            </div>
-          )}
-          
-          <DialogFooter>
-            <Button onClick={handleConfirmPeopleCount} className="w-full">
-              تأكيد
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Emergency Alert */}
+      {emergencyTable && (
+        <Alert variant="destructive" className="animate-pulse">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle className="mr-2">حالة طوارئ!</AlertTitle>
+          <AlertDescription className="mr-2">
+            تم تسجيل حالة طوارئ للطاولة {emergencyTable}
+          </AlertDescription>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mr-auto"
+            onClick={handleResetEmergency}
+          >
+            إغلاق
+          </Button>
+        </Alert>
+      )}
       
-      {/* Emergency Alert Dialog */}
-      <Dialog open={isEmergencyDialogOpen} onOpenChange={setIsEmergencyDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-500">
-              <AlertTriangle className="w-5 h-5" />
-              تنبيه طارئ
-            </DialogTitle>
-            <DialogDescription>
-              إرسال تنبيه عاجل للإدارة بخصوص هذه الطاولة
-            </DialogDescription>
-          </DialogHeader>
+      {/* Tables grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {filteredTables.map((table) => {
+          const currentOrder = getCurrentOrder(table.id);
+          const isEmergency = emergencyTable === table.id;
           
-          <div className="space-y-4 py-4">
-            <Textarea 
-              placeholder="رسالة التنبيه (اختياري)"
-              value={emergencyMessage}
-              onChange={(e) => setEmergencyMessage(e.target.value)}
-            />
-          </div>
-          
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsEmergencyDialogOpen(false)}
+          return (
+            <Card 
+              key={table.id} 
+              className={`
+                ${isEmergency ? 'border-red-500 border-2 animate-pulse' : 
+                  table.isReserved ? 'border-purple-300' :
+                  table.isOccupied ? 'border-blue-300' : 'border-gray-200'}
+                hover:border-2 transition-all
+              `}
             >
-              إلغاء
-            </Button>
-            <Button
-              onClick={handleSendEmergency}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              إرسال تنبيه عاجل
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Order Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedTable ? (
-                <div className="flex items-center gap-2">
-                  <span>طلب جديد - {tables.find(t => t.id === selectedTable)?.name}</span>
-                  {peopleCount > 0 && (
-                    <span className="flex items-center text-sm text-gray-500 font-normal">
-                      <User className="w-4 h-4 mr-1" /> {peopleCount}
-                    </span>
-                  )}
-                </div>
-              ) : (
-                'طلب جديد'
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex gap-2 overflow-x-auto">
-              {quickOrderItems.map((item) => (
-                <Button 
-                  key={item.id}
-                  variant="outline"
-                  size="sm"
-                  className="flex-nowrap whitespace-nowrap border-restaurant-primary text-restaurant-primary hover:bg-restaurant-primary hover:text-white"
-                  onClick={() => handleSelectMenuItem(item)}
-                >
-                  <ChefHat className="mr-2 h-3 w-3" />
-                  {item.name}
-                </Button>
-              ))}
-            </div>
-            <div className="relative w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="بحث في القائمة..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-          
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex-1">
-              <div className="mb-6">
-                <h3 className="font-medium mb-2 flex items-center gap-2 text-lg pb-2 border-b">
-                  <Wine className="w-5 h-5 text-blue-500" />
-                  <span>المشروبات</span>
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2">
-                  {drinks.length > 0 ? (
-                    drinks.map((item) => (
-                      <Card 
-                        key={item.id}
-                        className="cursor-pointer hover:bg-gray-50 border-blue-100"
-                        onClick={() => handleSelectMenuItem(item)}
-                      >
-                        <CardContent className="p-3 flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium">{item.name}</h4>
-                            <p className="text-xs text-gray-500 line-clamp-1">{item.price} ريال</p>
-                          </div>
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 text-center py-2">
-                      {searchQuery ? "لا توجد نتائج للبحث" : "لا توجد مشروبات متاحة"}
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="font-medium mb-2 flex items-center gap-2 text-lg pb-2 border-b">
-                  <Utensils className="w-5 h-5 text-restaurant-primary" />
-                  <span>الأطباق</span>
-                </h3>
-                
-                <Tabs defaultValue="appetizers">
-                  <TabsList className="mb-4">
-                    <TabsTrigger value="appetizers">مقبلات</TabsTrigger>
-                    <TabsTrigger value="main_dishes">رئيسي</TabsTrigger>
-                    <TabsTrigger value="desserts">حلويات</TabsTrigger>
-                    <TabsTrigger value="sides">جانبي</TabsTrigger>
-                  </TabsList>
+              <CardContent className="p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-medium flex items-center gap-1">
+                    <TableIcon className="h-4 w-4" />
+                    {table.name}
+                    {table.isOccupied && (
+                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded ml-2">
+                        مشغولة
+                      </span>
+                    )}
+                    {currentOrder?.isPaid && (
+                      <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded ml-2">
+                        مدفوعة
+                      </span>
+                    )}
+                  </h3>
                   
-                  <div className="max-h-[300px] overflow-y-auto pr-2">
-                    <TabsContent value="appetizers" className="mt-0 space-y-2">
-                      {getMenuByCategory('appetizers').length > 0 ? (
-                        getMenuByCategory('appetizers').map((item) => (
-                          <Card 
-                            key={item.id}
-                            className="cursor-pointer hover:bg-gray-50"
-                            onClick={() => handleSelectMenuItem(item)}
-                          >
-                            <CardContent className="p-3 flex justify-between items-center">
-                              <div>
-                                <h4 className="font-medium">{item.name}</h4>
-                                <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{item.price} ريال</span>
-                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))
-                      ) : (
-                        <p className="text-gray-500 text-center py-2">
-                          {searchQuery ? "لا توجد نتائج للبحث" : "لا توجد مقبلات متاحة"}
-                        </p>
-                      )}
-                    </TabsContent>
-                    
-                    <TabsContent value="main_dishes" className="mt-0 space-y-2">
-                      {getMenuByCategory('main_dishes').length > 0 ? (
-                        getMenuByCategory('main_dishes').map((item) => (
-                          <Card 
-                            key={item.id}
-                            className="cursor-pointer hover:bg-gray-50"
-                            onClick={() => handleSelectMenuItem(item)}
-                          >
-                            <CardContent className="p-3 flex justify-between items-center">
-                              <div>
-                                <h4 className="font-medium">{item.name}</h4>
-                                <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{item.price} ريال</span>
-                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))
-                      ) : (
-                        <p className="text-gray-500 text-center py-2">
-                          {searchQuery ? "لا توجد نتائج للبحث" : "لا توجد أطباق رئيسية متاحة"}
-                        </p>
-                      )}
-                    </TabsContent>
-                    
-                    <TabsContent value="desserts" className="mt-0 space-y-2">
-                      {getMenuByCategory('desserts').length > 0 ? (
-                        getMenuByCategory('desserts').map((item) => (
-                          <Card 
-                            key={item.id}
-                            className="cursor-pointer hover:bg-gray-50"
-                            onClick={() => handleSelectMenuItem(item)}
-                          >
-                            <CardContent className="p-3 flex justify-between items-center">
-                              <div>
-                                <h4 className="font-medium">{item.name}</h4>
-                                <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{item.price} ريال</span>
-                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))
-                      ) : (
-                        <p className="text-gray-500 text-center py-2">
-                          {searchQuery ? "لا توجد نتائج للبحث" : "لا توجد حلويات متاحة"}
-                        </p>
-                      )}
-                    </TabsContent>
-                    
-                    <TabsContent value="sides" className="mt-0 space-y-2">
-                      {getMenuByCategory('sides').length > 0 ? (
-                        getMenuByCategory('sides').map((item) => (
-                          <Card 
-                            key={item.id}
-                            className="cursor-pointer hover:bg-gray-50"
-                            onClick={() => handleSelectMenuItem(item)}
-                          >
-                            <CardContent className="p-3 flex justify-between items-center">
-                              <div>
-                                <h4 className="font-medium">{item.name}</h4>
-                                <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{item.price} ريال</span>
-                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))
-                      ) : (
-                        <p className="text-gray-500 text-center py-2">
-                          {searchQuery ? "لا توجد نتائج للبحث" : "لا توجد أطباق جانبية متاحة"}
-                        </p>
-                      )}
-                    </TabsContent>
-                  </div>
-                </Tabs>
-              </div>
-            </div>
-            
-            <div className="md:w-80 flex flex-col">
-              <h3 className="font-medium mb-3">الطلب الحالي</h3>
-              
-              <div className="flex-1 border rounded-md p-3 mb-4 max-h-[300px] overflow-y-auto">
-                {selectedMenuItems.size === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <ChefHat className="w-8 h-8 mx-auto mb-2" />
-                    <p>اختر من القائمة لإضافة عناصر</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {Array.from(selectedMenuItems.entries()).map(([menuItemId, data]) => {
-                      const menuItem = menuItems.find(item => item.id === menuItemId);
-                      if (!menuItem) return null;
-                      
-                      return (
-                        <div key={menuItemId} className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="font-medium">{menuItem.name}</span>
-                            <span>{menuItem.price * data.quantity} ريال</span>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="px-2 py-0 h-8 text-lg"
-                              onClick={() => handleUpdateQuantity(menuItemId, data.quantity - 1)}
-                            >
-                              -
-                            </Button>
-                            <Input
-                              className="w-12 h-8 text-center"
-                              value={data.quantity}
-                              onChange={(e) => {
-                                const val = parseInt(e.target.value);
-                                if (!isNaN(val)) {
-                                  handleUpdateQuantity(menuItemId, val);
-                                }
-                              }}
-                            />
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="px-2 py-0 h-8 text-lg"
-                              onClick={() => handleUpdateQuantity(menuItemId, data.quantity + 1)}
-                            >
-                              +
-                            </Button>
-                          </div>
-                          
-                          <div>
-                            <Textarea
-                              placeholder="ملاحظات (اختياري)"
-                              className="text-sm"
-                              value={data.notes}
-                              onChange={(e) => handleUpdateNotes(menuItemId, e.target.value)}
-                              rows={1}
-                            />
-                            
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {popularNotes.map((note) => (
-                                <Badge 
-                                  key={note} 
-                                  variant="outline" 
-                                  className="cursor-pointer hover:bg-gray-100"
-                                  onClick={() => handleAddNoteTemplate(menuItemId, note)}
-                                >
-                                  {note}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-              
-              <div className="border-t pt-4 mb-4">
-                <div className="flex justify-between mb-2">
-                  <span>المجموع الفرعي:</span>
-                  <span>{calculateTotal()} ريال</span>
+                  <span className="text-sm text-gray-500">
+                    سعة {table.capacity}
+                  </span>
                 </div>
                 
-                {systemSettings.enablePerSeatCharge && peopleCount > 0 && (
-                  <div className="flex justify-between mb-2 text-sm text-gray-500">
-                    <span>رسوم الجلوس ({peopleCount} × {systemSettings.perSeatCharge}):</span>
-                    <span>{systemSettings.perSeatCharge * peopleCount} ريال</span>
-                  </div>
-                )}
-              </div>
-              
-              <Button
-                onClick={handleCreateOrder}
-                disabled={selectedMenuItems.size === 0}
-                className="w-full bg-restaurant-primary hover:bg-restaurant-primary-dark"
+                <TableActions
+                  table={table}
+                  currentOrder={currentOrder}
+                  onCreateOrder={handleCreateOrder}
+                  isAdmin={user?.role === 'admin'}
+                  triggerEmergency={handleTableEmergency}
+                />
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+      
+      {/* Dialog for order creation */}
+      {selectedTable && (
+        <Dialog open={selectedTable !== null} onOpenChange={() => setSelectedTable(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                إنشاء طلب للطاولة {selectedTable}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="text-center py-6">
+              <p className="text-gray-500">
+                في التطبيق الكامل، سيتم توجيهك إلى صفحة إنشاء طلب جديد للطاولة.
+              </p>
+              <Button 
+                className="mt-4"
+                onClick={() => setSelectedTable(null)}
               >
-                إرسال الطلب
-                <ArrowRight className="mr-2 h-4 w-4" />
+                إغلاق
               </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -23,6 +22,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { OrdersByTable } from "@/components/kitchen/OrdersByTable";
 
 export const KitchenScreen = () => {
   const { 
@@ -34,9 +34,10 @@ export const KitchenScreen = () => {
     hasNewOrders, 
     clearNewOrdersNotification,
     delayOrder,
-    cancelOrderItem
+    cancelOrderItem,
+    getOrdersByTable
   } = useApp();
-  const [activeTab, setActiveTab] = useState<"tables" | "items">("tables");
+  const [activeTab, setActiveTab] = useState<"tables" | "items" | "by-table">("tables");
   const [pendingOrders, setPendingOrders] = useState<any[]>([]);
   const [preparingOrders, setPreparingOrders] = useState<any[]>([]);
   const [readyOrders, setReadyOrders] = useState<any[]>([]);
@@ -49,6 +50,7 @@ export const KitchenScreen = () => {
   );
   const blinkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
+  const ordersByTable = getOrdersByTable();
   
   // Clear notification when screen is opened
   useEffect(() => {
@@ -271,7 +273,7 @@ export const KitchenScreen = () => {
         </div>
       )}
       
-      <Tabs defaultValue="tables" value={activeTab} onValueChange={(v) => setActiveTab(v as "tables" | "items")}>
+      <Tabs defaultValue="tables" value={activeTab} onValueChange={(v) => setActiveTab(v as "tables" | "items" | "by-table")}>
         <TabsList className="mb-4">
           <TabsTrigger value="tables" className="flex items-center gap-1">
             <AlarmClock className="w-4 h-4" />
@@ -283,6 +285,10 @@ export const KitchenScreen = () => {
             {hasNewOrders && (
               <Bell className="w-4 h-4 text-yellow-500 animate-bounce" />
             )}
+          </TabsTrigger>
+          <TabsTrigger value="by-table" className="flex items-center gap-1">
+            <ChefHat className="w-4 h-4" />
+            الطلبات حسب الطاولة
           </TabsTrigger>
         </TabsList>
         
@@ -560,6 +566,16 @@ export const KitchenScreen = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+        
+        <TabsContent value="by-table" className="mt-0">
+          <OrdersByTable 
+            ordersByTable={ordersByTable}
+            formatTimeDiff={formatTimeDiff}
+            handleItemCompletion={handleItemCompletion}
+            handleCancelItem={handleCancelItem}
+            openDelayDialog={openDelayDialog}
+          />
         </TabsContent>
       </Tabs>
       

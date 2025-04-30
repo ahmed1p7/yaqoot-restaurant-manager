@@ -47,6 +47,7 @@ export type Order = {
   peopleCount?: number;
   delayed?: boolean;
   delayReason?: string;
+  isPaid?: boolean; // New field to track payment status
 };
 
 export type Table = {
@@ -57,6 +58,7 @@ export type Table = {
   currentOrderId?: string;
   peopleCount?: number;
   emergency?: boolean;
+  isReserved?: boolean; // New field to track reservation status
 };
 
 export type SystemSettings = {
@@ -71,4 +73,13 @@ export type DepartmentType = {
   id: string;
   name: string;
   description: string;
+};
+
+export type PrinterType = {
+  id: string;
+  name: string;
+  ip: string;
+  isActive: boolean;
+  departmentId?: string;
+  isBackup?: boolean;
 };

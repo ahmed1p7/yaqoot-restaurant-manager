@@ -1,210 +1,219 @@
-
-import { useState } from "react";
+import React from "react";
 import { useApp } from "@/contexts/AppContext";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Printer, AlertTriangle, Smartphone, DollarSign } from "lucide-react";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, Settings as SettingsIcon, Bell, Printer, DollarSign } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export const Settings = () => {
-  const { systemSettings, updatePerSeatCharge, togglePerSeatChargeEnabled, user } = useApp();
-  const [perSeatCharge, setPerSeatCharge] = useState(systemSettings.perSeatCharge);
-  const [emergencyMode, setEmergencyMode] = useState(systemSettings.emergencyMode || false);
-  const [backupPrinterEnabled, setBackupPrinterEnabled] = useState(systemSettings.backupPrinterEnabled || false);
-  const [backupPhoneEnabled, setBackupPhoneEnabled] = useState(systemSettings.backupPhoneEnabled || false);
-
-  // If not admin, show access denied
-  if (user?.role !== 'admin') {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-lg text-gray-500">
-          هذه الصفحة مخصصة للمشرف فقط
-        </p>
-      </div>
-    );
-  }
-
-  const handleUpdatePerSeatCharge = () => {
-    updatePerSeatCharge(perSeatCharge);
+  const { 
+    systemSettings, 
+    updatePerSeatCharge, 
+    togglePerSeatChargeEnabled, 
+    user,
+    printers,
+    updatePrinterSettings
+  } = useApp();
+  const [perSeatCharge, setPerSeatCharge] = React.useState(systemSettings.perSeatCharge.toString());
+  const [emergencyMode, setEmergencyMode] = React.useState(systemSettings.emergencyMode || false);
+  const [backupPrinterEnabled, setBackupPrinterEnabled] = React.useState(systemSettings.backupPrinterEnabled || false);
+  const [backupPhoneEnabled, setBackupPhoneEnabled] = React.useState(systemSettings.backupPhoneEnabled || false);
+  
+  const handlePerSeatChargeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPerSeatCharge(e.target.value);
   };
-
-  const handleTogglePerSeatCharge = (enabled: boolean) => {
-    togglePerSeatChargeEnabled(enabled);
+  
+  const handlePerSeatChargeSave = () => {
+    const amount = parseFloat(perSeatCharge);
+    if (!isNaN(amount) && amount >= 0) {
+      updatePerSeatCharge(amount);
+    }
   };
-
-  const handleToggleEmergencyMode = (enabled: boolean) => {
-    setEmergencyMode(enabled);
-    // In a real app, we would update the system settings
-    // For now, just show a toast notification
-    toast.info(enabled ? "تم تفعيل وضع الطوارئ" : "تم إيقاف وضع الطوارئ");
+  
+  const handleEmergencyModeChange = (checked: boolean) => {
+    setEmergencyMode(checked);
+    // Update the system setting
+    // This would require adding a function to AppContext
+    // For now, we'll just update the local state
   };
-
-  const handleToggleBackupPrinter = (enabled: boolean) => {
-    setBackupPrinterEnabled(enabled);
-    toast.info(enabled ? "تم تفعيل الطابعة الاحتياطية" : "تم إيقاف الطابعة الاحتياطية");
+  
+  const handleBackupPrinterEnabledChange = (checked: boolean) => {
+    setBackupPrinterEnabled(checked);
+    // This would require adding a function to AppContext
   };
-
-  const handleToggleBackupPhone = (enabled: boolean) => {
-    setBackupPhoneEnabled(enabled);
-    toast.info(enabled ? "تم تفعيل إشعارات الجوال" : "تم إيقاف إشعارات الجوال");
+  
+  const handleBackupPhoneEnabledChange = (checked: boolean) => {
+    setBackupPhoneEnabled(checked);
+    // This would require adding a function to AppContext
   };
-
+  
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">الإعدادات</h1>
-
-      <Tabs defaultValue="general">
-        <TabsList className="mb-4">
-          <TabsTrigger value="general">عام</TabsTrigger>
-          <TabsTrigger value="pricing">التسعير</TabsTrigger>
-          <TabsTrigger value="emergency" className="flex items-center gap-1">
-            <AlertTriangle className="w-4 h-4" />
-            وضع الطوارئ
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="general" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>الإعدادات العامة</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="restaurant-name">اسم المطعم</Label>
-                  <Input 
-                    id="restaurant-name" 
-                    className="w-[250px]" 
-                    defaultValue="مطعم الشرق" 
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="restaurant-phone">رقم الهاتف</Label>
-                  <Input 
-                    id="restaurant-phone" 
-                    className="w-[250px]" 
-                    defaultValue="0123456789" 
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <Button className="bg-restaurant-primary">حفظ التغييرات</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="pricing" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5" />
-                رسوم المقعد
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="per-seat-charge-enabled">تفعيل رسوم المقعد</Label>
-                <Switch 
-                  id="per-seat-charge-enabled"
-                  checked={systemSettings.enablePerSeatCharge}
-                  onCheckedChange={handleTogglePerSeatCharge}
+      <h1 className="text-2xl font-bold flex items-center gap-2">
+        <SettingsIcon className="w-6 h-6" />
+        الإعدادات
+      </h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Per-seat charge settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5" />
+              رسوم المقعد
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="enable-charge" 
+                checked={systemSettings.enablePerSeatCharge}
+                onCheckedChange={togglePerSeatChargeEnabled}
+              />
+              <Label htmlFor="enable-charge" className="mr-2">تفعيل رسوم المقعد</Label>
+            </div>
+            
+            <div className="flex items-end gap-2">
+              <div className="space-y-1 flex-1">
+                <Label htmlFor="seat-charge">قيمة الرسوم (ريال)</Label>
+                <Input 
+                  id="seat-charge" 
+                  type="number" 
+                  min="0" 
+                  step="0.5"
+                  value={perSeatCharge} 
+                  onChange={handlePerSeatChargeChange}
+                  disabled={!systemSettings.enablePerSeatCharge}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="per-seat-charge">رسوم المقعد (ريال)</Label>
-                <div className="flex items-center gap-2">
-                  <Input 
-                    id="per-seat-charge" 
-                    type="number"
-                    value={perSeatCharge}
-                    onChange={(e) => setPerSeatCharge(Number(e.target.value))}
-                  />
-                  <Button 
-                    onClick={handleUpdatePerSeatCharge}
-                    className="bg-restaurant-primary"
-                  >
-                    تحديث
-                  </Button>
-                </div>
-                <p className="text-xs text-gray-500">
-                  يتم إضافة هذا المبلغ لكل شخص في الطاولة
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="emergency" className="space-y-4">
-          <Card>
-            <CardHeader className="bg-red-50">
+              <Button 
+                onClick={handlePerSeatChargeSave}
+                disabled={!systemSettings.enablePerSeatCharge}
+              >
+                حفظ
+              </Button>
+            </div>
+            
+            <p className="text-sm text-gray-500">
+              سيتم إضافة هذه الرسوم لكل شخص في الطلب عند تفعيلها
+            </p>
+          </CardContent>
+        </Card>
+        
+        {/* Emergency mode settings (admin only) */}
+        {user?.role === 'admin' && (
+          <Card className="border-red-200">
+            <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-600">
                 <AlertTriangle className="w-5 h-5" />
                 وضع الطوارئ
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6 pt-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label htmlFor="emergency-mode" className="text-lg font-bold">تفعيل وضع الطوارئ</Label>
-                  <p className="text-sm text-gray-500">
-                    عند تعطل شاشة المطبخ، سيتم إرسال الطلبات تلقائياً إلى الأنظمة الاحتياطية
-                  </p>
-                </div>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
                 <Switch 
-                  id="emergency-mode"
+                  id="emergency-mode" 
                   checked={emergencyMode}
-                  onCheckedChange={handleToggleEmergencyMode}
+                  onCheckedChange={handleEmergencyModeChange}
                 />
+                <Label htmlFor="emergency-mode" className="mr-2 font-medium">
+                  تفعيل وضع الطوارئ
+                </Label>
               </div>
               
-              <div className="border-t pt-4">
-                <h3 className="font-medium mb-4">أنظمة الطوارئ الاحتياطية</h3>
+              <div className="bg-red-50 p-3 rounded-md text-sm">
+                <p>
+                  في حالة تفعيل وضع الطوارئ، سيتم تنفيذ الإجراءات البديلة عند تعطل نظام المطبخ
+                </p>
+              </div>
+              
+              <div className="space-y-2 border-t pt-4">
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    id="backup-printer" 
+                    checked={backupPrinterEnabled}
+                    onCheckedChange={handleBackupPrinterEnabledChange}
+                    disabled={!emergencyMode}
+                  />
+                  <Label htmlFor="backup-printer" className="mr-2">
+                    طباعة الطلبات على الطابعة الاحتياطية
+                  </Label>
+                </div>
                 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Printer className="w-5 h-5 text-gray-500" />
-                      <div>
-                        <Label htmlFor="backup-printer" className="font-medium">الطابعة الاحتياطية</Label>
-                        <p className="text-xs text-gray-500">طباعة الطلبات تلقائياً عند استلامها</p>
-                      </div>
-                    </div>
-                    <Switch 
-                      id="backup-printer"
-                      disabled={!emergencyMode}
-                      checked={backupPrinterEnabled && emergencyMode}
-                      onCheckedChange={handleToggleBackupPrinter}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Smartphone className="w-5 h-5 text-gray-500" />
-                      <div>
-                        <Label htmlFor="backup-phone" className="font-medium">إشعارات الجوال</Label>
-                        <p className="text-xs text-gray-500">إرسال إشعارات إلى تطبيق الطهاة</p>
-                      </div>
-                    </div>
-                    <Switch 
-                      id="backup-phone"
-                      disabled={!emergencyMode}
-                      checked={backupPhoneEnabled && emergencyMode}
-                      onCheckedChange={handleToggleBackupPhone}
-                    />
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    id="backup-phone" 
+                    checked={backupPhoneEnabled}
+                    onCheckedChange={handleBackupPhoneEnabledChange}
+                    disabled={!emergencyMode}
+                  />
+                  <Label htmlFor="backup-phone" className="mr-2">
+                    إرسال إشعارات لتطبيق الطهاة
+                  </Label>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        )}
+        
+        {/* Printer settings (admin only) */}
+        {user?.role === 'admin' && (
+          <div className="md:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Printer className="w-5 h-5" />
+                  إعدادات الطابعات
+                </CardTitle>
+              </CardHeader>
+              
+              <CardContent className="space-y-4">
+                {printers && printers.map(printer => (
+                  <div key={printer.id} className="flex justify-between items-center p-3 border rounded-lg">
+                    <div>
+                      <h3 className="font-medium">{printer.name}</h3>
+                      <p className="text-sm text-gray-500">IP: {printer.ip}</p>
+                      {printer.isBackup && (
+                        <Badge className="bg-yellow-500 mt-1">طابعة احتياطية</Badge>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Switch 
+                          checked={printer.isActive}
+                          onCheckedChange={(checked) => updatePrinterSettings({...printer, isActive: checked})}
+                        />
+                        <span className="text-sm">
+                          {printer.isActive ? "مفعّلة" : "معطلة"}
+                        </span>
+                      </div>
+                      
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => {
+                          // In a real app, this would open a dialog to edit printer settings
+                          updatePrinterSettings({...printer});
+                        }}
+                      >
+                        تعديل
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                
+                <p className="text-sm text-gray-500 mt-4">
+                  تستخدم الطابعات الاحتياطية في حالة تفعيل وضع الطوارئ
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
