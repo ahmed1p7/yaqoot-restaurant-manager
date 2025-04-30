@@ -1,3 +1,4 @@
+
 import { User, MenuItem, Order, Table, DepartmentType } from '../types';
 
 export const mockUsers: User[] = [
@@ -5,25 +6,29 @@ export const mockUsers: User[] = [
     id: '1',
     username: 'admin',
     name: 'محمد المدير',
-    role: 'admin'
+    role: 'admin',
+    pin: '1234'
   },
   {
     id: '2',
     username: 'waiter1',
     name: 'أحمد النادل',
-    role: 'waiter'
+    role: 'waiter',
+    pin: '101'
   },
   {
     id: '3',
     username: 'waiter2',
     name: 'خالد النادل',
-    role: 'waiter'
+    role: 'waiter',
+    pin: '102'
   },
   {
     id: '4',
     username: 'screen1',
     name: 'شاشة المطبخ',
-    role: 'screen'
+    role: 'screen',
+    pin: '999'
   }
 ];
 
@@ -35,7 +40,8 @@ export const mockMenuItems: MenuItem[] = [
     price: 25,
     category: 'appetizers',
     image: '/placeholder.svg',
-    isAvailable: true
+    isAvailable: true,
+    departmentId: '1'
   },
   {
     id: '2',
@@ -44,7 +50,8 @@ export const mockMenuItems: MenuItem[] = [
     price: 15,
     category: 'appetizers',
     image: '/placeholder.svg',
-    isAvailable: true
+    isAvailable: true,
+    departmentId: '1'
   },
   {
     id: '3',
@@ -53,7 +60,8 @@ export const mockMenuItems: MenuItem[] = [
     price: 18,
     category: 'appetizers',
     image: '/placeholder.svg',
-    isAvailable: true
+    isAvailable: true,
+    departmentId: '1'
   },
   {
     id: '4',
@@ -62,7 +70,8 @@ export const mockMenuItems: MenuItem[] = [
     price: 85,
     category: 'main_dishes',
     image: '/placeholder.svg',
-    isAvailable: true
+    isAvailable: true,
+    departmentId: '1'
   },
   {
     id: '5',
@@ -71,7 +80,8 @@ export const mockMenuItems: MenuItem[] = [
     price: 65,
     category: 'main_dishes',
     image: '/placeholder.svg',
-    isAvailable: true
+    isAvailable: true,
+    departmentId: '1'
   },
   {
     id: '6',
@@ -80,7 +90,8 @@ export const mockMenuItems: MenuItem[] = [
     price: 90,
     category: 'main_dishes',
     image: '/placeholder.svg',
-    isAvailable: true
+    isAvailable: true,
+    departmentId: '1'
   },
   {
     id: '7',
@@ -89,7 +100,8 @@ export const mockMenuItems: MenuItem[] = [
     price: 30,
     category: 'desserts',
     image: '/placeholder.svg',
-    isAvailable: true
+    isAvailable: true,
+    departmentId: '3'
   },
   {
     id: '8',
@@ -98,7 +110,8 @@ export const mockMenuItems: MenuItem[] = [
     price: 25,
     category: 'desserts',
     image: '/placeholder.svg',
-    isAvailable: true
+    isAvailable: true,
+    departmentId: '3'
   },
   {
     id: '9',
@@ -107,7 +120,8 @@ export const mockMenuItems: MenuItem[] = [
     price: 15,
     category: 'drinks',
     image: '/placeholder.svg',
-    isAvailable: true
+    isAvailable: true,
+    departmentId: '2'
   },
   {
     id: '10',
@@ -116,7 +130,8 @@ export const mockMenuItems: MenuItem[] = [
     price: 10,
     category: 'drinks',
     image: '/placeholder.svg',
-    isAvailable: true
+    isAvailable: true,
+    departmentId: '2'
   },
   {
     id: '11',
@@ -125,7 +140,8 @@ export const mockMenuItems: MenuItem[] = [
     price: 8,
     category: 'drinks',
     image: '/placeholder.svg',
-    isAvailable: true
+    isAvailable: true,
+    departmentId: '2'
   },
   {
     id: '12',
@@ -134,13 +150,15 @@ export const mockMenuItems: MenuItem[] = [
     price: 18,
     category: 'sides',
     image: '/placeholder.svg',
-    isAvailable: true
+    isAvailable: true,
+    departmentId: '1'
   }
 ];
 
 export const mockTables: Table[] = Array.from({ length: 15 }, (_, i) => ({
   id: i + 1,
   name: `طاولة ${i + 1}`,
+  capacity: Math.floor(Math.random() * 6) + 2, // Capacity between 2-8
   isOccupied: Math.random() > 0.7,
   currentOrderId: Math.random() > 0.7 ? `order-${i+1}` : undefined,
   peopleCount: Math.floor(Math.random() * 5) + 1 // Add random people count between 1-5
@@ -150,11 +168,11 @@ export const mockOrders: Order[] = [
   {
     id: 'order-1',
     tableNumber: 3,
-    peopleCount: 4, // Adding the required peopleCount
+    peopleCount: 4,
     items: [
-      { menuItemId: '1', name: 'سلطة البيت', price: 25, quantity: 1 },
-      { menuItemId: '4', name: 'مشاوي مشكلة', price: 85, quantity: 2, notes: 'بدون بصل' },
-      { menuItemId: '9', name: 'عصير برتقال', price: 15, quantity: 2 }
+      { menuItemId: '1', name: 'سلطة البيت', price: 25, quantity: 1, completed: false },
+      { menuItemId: '4', name: 'مشاوي مشكلة', price: 85, quantity: 2, notes: 'بدون بصل', completed: false },
+      { menuItemId: '9', name: 'عصير برتقال', price: 15, quantity: 2, completed: false }
     ],
     status: 'preparing',
     totalAmount: 25 + (85 * 2) + (15 * 2),
@@ -166,11 +184,11 @@ export const mockOrders: Order[] = [
   {
     id: 'order-2',
     tableNumber: 5,
-    peopleCount: 2, // Adding the required peopleCount
+    peopleCount: 2,
     items: [
-      { menuItemId: '2', name: 'حمص', price: 15, quantity: 1 },
-      { menuItemId: '5', name: 'دجاج مشوي', price: 65, quantity: 1 },
-      { menuItemId: '11', name: 'شاي', price: 8, quantity: 2 }
+      { menuItemId: '2', name: 'حمص', price: 15, quantity: 1, completed: false },
+      { menuItemId: '5', name: 'دجاج مشوي', price: 65, quantity: 1, completed: false },
+      { menuItemId: '11', name: 'شاي', price: 8, quantity: 2, completed: false }
     ],
     status: 'ready',
     totalAmount: 15 + 65 + (8 * 2),
@@ -181,11 +199,11 @@ export const mockOrders: Order[] = [
   {
     id: 'order-3',
     tableNumber: 8,
-    peopleCount: 1, // Adding the required peopleCount
+    peopleCount: 1,
     items: [
-      { menuItemId: '6', name: 'سمك مشوي', price: 90, quantity: 1 },
-      { menuItemId: '12', name: 'بطاطا مقلية', price: 18, quantity: 1 },
-      { menuItemId: '9', name: 'عصير برتقال', price: 15, quantity: 1 }
+      { menuItemId: '6', name: 'سمك مشوي', price: 90, quantity: 1, completed: false },
+      { menuItemId: '12', name: 'بطاطا مقلية', price: 18, quantity: 1, completed: false },
+      { menuItemId: '9', name: 'عصير برتقال', price: 15, quantity: 1, completed: false }
     ],
     status: 'delivered',
     totalAmount: 90 + 18 + 15,
@@ -197,10 +215,10 @@ export const mockOrders: Order[] = [
   {
     id: 'order-4',
     tableNumber: 10,
-    peopleCount: 3, // Adding the required peopleCount
+    peopleCount: 3,
     items: [
-      { menuItemId: '7', name: 'كنافة', price: 30, quantity: 2 },
-      { menuItemId: '10', name: 'قهوة عربية', price: 10, quantity: 2 }
+      { menuItemId: '7', name: 'كنافة', price: 30, quantity: 2, completed: false },
+      { menuItemId: '10', name: 'قهوة عربية', price: 10, quantity: 2, completed: false }
     ],
     status: 'pending',
     totalAmount: (30 * 2) + (10 * 2),

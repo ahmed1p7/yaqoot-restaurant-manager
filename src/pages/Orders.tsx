@@ -14,7 +14,7 @@ const translateStatus = (status: OrderStatus): string => {
     case "preparing": return "قيد التحضير";
     case "ready": return "جاهز";
     case "delivered": return "تم التسليم";
-    case "cancelled": return "ملغي";
+    case "canceled": return "ملغي";
     default: return status;
   }
 };
@@ -25,7 +25,7 @@ const getStatusColor = (status: OrderStatus): string => {
     case "preparing": return "bg-blue-500";
     case "ready": return "bg-green-500";
     case "delivered": return "bg-restaurant-primary";
-    case "cancelled": return "bg-red-500";
+    case "canceled": return "bg-red-500";
     default: return "bg-gray-500";
   }
 };
@@ -50,7 +50,7 @@ export const Orders = () => {
       preparing: 1,
       ready: 2,
       delivered: 3,
-      cancelled: 4,
+      canceled: 4,
     };
     
     // Sort by status first, then by creation time (newest first for same status)
@@ -90,7 +90,7 @@ export const Orders = () => {
     // Waiters and admins can update any status
     if ((user?.role === 'admin' || order.waiterId === user?.id)) {
       // Don't show buttons for cancelled or delivered orders
-      if (order.status === 'cancelled' || order.status === 'delivered') {
+      if (order.status === 'canceled' || order.status === 'delivered') {
         return null;
       }
       
@@ -104,7 +104,7 @@ export const Orders = () => {
           if (newStatus === 'preparing') {
             buttonText = 'بدء التحضير';
             buttonStyle = 'bg-blue-500 hover:bg-blue-600';
-          } else if (newStatus === 'cancelled') {
+          } else if (newStatus === 'canceled') {
             buttonText = 'إلغاء الطلب';
             buttonStyle = 'bg-red-500 hover:bg-red-600';
           }
@@ -113,7 +113,7 @@ export const Orders = () => {
           if (newStatus === 'ready') {
             buttonText = 'جاهز للتقديم';
             buttonStyle = 'bg-green-500 hover:bg-green-600';
-          } else if (newStatus === 'cancelled') {
+          } else if (newStatus === 'canceled') {
             buttonText = 'إلغاء الطلب';
             buttonStyle = 'bg-red-500 hover:bg-red-600';
           }
@@ -151,14 +151,14 @@ export const Orders = () => {
           <TabsTrigger value="preparing">قيد التحضير</TabsTrigger>
           <TabsTrigger value="ready">جاهز</TabsTrigger>
           <TabsTrigger value="delivered">تم التسليم</TabsTrigger>
-          <TabsTrigger value="cancelled">ملغي</TabsTrigger>
+          <TabsTrigger value="canceled">ملغي</TabsTrigger>
         </TabsList>
         
         <TabsContent value={activeTab} className="mt-0 space-y-4">
           {sortedOrders.length > 0 ? (
             sortedOrders.map((order) => (
               <Card key={order.id} className={`overflow-hidden ${
-                order.status === 'cancelled' ? 'opacity-60' : ''
+                order.status === 'canceled' ? 'opacity-60' : ''
               }`}>
                 <CardContent className="p-4">
                   <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
@@ -193,7 +193,7 @@ export const Orders = () => {
                       {renderStatusButton(order, 'preparing')}
                       {renderStatusButton(order, 'ready')}
                       {renderStatusButton(order, 'delivered')}
-                      {renderStatusButton(order, 'cancelled')}
+                      {renderStatusButton(order, 'canceled')}
                     </div>
                   </div>
                   

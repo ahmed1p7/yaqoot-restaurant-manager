@@ -5,6 +5,7 @@ export type User = {
   username: string;
   role: 'admin' | 'waiter' | 'screen';
   avatar?: string;
+  pin?: string; // Added PIN for login
 };
 
 export type MenuCategory = 'appetizers' | 'main_dishes' | 'sides' | 'desserts' | 'drinks';
@@ -17,6 +18,7 @@ export type MenuItem = {
   category: MenuCategory;
   image?: string;
   isAvailable: boolean;
+  departmentId?: string; // Which department prepares this item
 };
 
 export type OrderItem = {
@@ -63,4 +65,10 @@ export type SystemSettings = {
   emergencyMode?: boolean;
   backupPrinterEnabled?: boolean;
   backupPhoneEnabled?: boolean;
+};
+
+export type DepartmentType = {
+  id: string;
+  name: string;
+  description: string;
 };
