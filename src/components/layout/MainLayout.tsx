@@ -18,14 +18,16 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const isMobile = useIsMobile();
   
   useEffect(() => {
-    // Redirect waiters to tables page if they're on the homepage
-    if (user && user.role === 'waiter' && (location.pathname === '/' || location.pathname === '/dashboard')) {
-      navigate('/tables');
-    }
-    
-    // Redirect screen users to kitchen page if they're on the homepage
-    if (user && user.role === 'screen' && (location.pathname === '/' || location.pathname === '/dashboard')) {
-      navigate('/kitchen');
+    if (user) {
+      // Redirect waiters to tables page if they're on the homepage
+      if (user.role === 'waiter' && (location.pathname === '/' || location.pathname === '/dashboard')) {
+        navigate('/tables');
+      }
+      
+      // Redirect screen users to kitchen page if they're on the homepage
+      if (user.role === 'screen' && (location.pathname === '/' || location.pathname === '/dashboard')) {
+        navigate('/kitchen');
+      }
     }
   }, [user, location.pathname, navigate]);
   

@@ -6,24 +6,32 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChefHat, User, Monitor } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 
 export const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const { login, loginAsWaiter, loginAsScreen } = useApp();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login(username, password);
+    if (login(username, password)) {
+      navigate('/dashboard');
+    }
   };
 
   const handleWaiterLogin = () => {
-    loginAsWaiter();
+    if (loginAsWaiter()) {
+      navigate('/tables');
+    }
   };
   
   const handleScreenLogin = () => {
-    loginAsScreen();
+    if (loginAsScreen()) {
+      navigate('/kitchen');
+    }
   };
   
   return (
@@ -88,7 +96,7 @@ export const LoginPage = () => {
                 className={`w-full border-restaurant-primary text-restaurant-primary hover:bg-restaurant-primary hover:text-white ${isMobile ? 'text-sm py-1' : ''}`}
               >
                 <User className="mr-2 h-4 w-4" />
-                دخول كنادل 1
+                دخول كنادل
               </Button>
               
               <Button 

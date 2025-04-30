@@ -8,6 +8,7 @@ import { OrderStatus } from "@/types";
 import { Clock, Check, Bell, User, ChefHat } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 export const KitchenScreen = () => {
   const { 
@@ -23,6 +24,7 @@ export const KitchenScreen = () => {
   const [pendingOrders, setPendingOrders] = useState<any[]>([]);
   const [preparingOrders, setPreparingOrders] = useState<any[]>([]);
   const [readyOrders, setReadyOrders] = useState<any[]>([]);
+  const navigate = useNavigate();
   
   // Clear notification when screen is opened
   useEffect(() => {
@@ -40,7 +42,14 @@ export const KitchenScreen = () => {
     setReadyOrders(filteredReadyOrders);
   }, [orders]);
   
-  // If not screen user, redirect or show access denied
+  // If not screen user, redirect to login
+  useEffect(() => {
+    if (user && user.role !== 'screen') {
+      navigate('/');
+    }
+  }, [user, navigate]);
+  
+  // If not screen user, show access denied
   if (user?.role !== 'screen') {
     return (
       <div className="flex justify-center items-center h-64">
@@ -141,9 +150,9 @@ export const KitchenScreen = () => {
                         <div>
                           <h3 className="text-lg font-bold flex items-center gap-2">
                             طاولة {table.name}
-                            {table.peopleCount && (
+                            {tableOrder.peopleCount && (
                               <span className="text-sm text-gray-500 flex items-center">
-                                <User className="w-3 h-3 mr-1" />{table.peopleCount}
+                                <User className="w-3 h-3 mr-1" />{tableOrder.peopleCount}
                               </span>
                             )}
                           </h3>

@@ -1,4 +1,3 @@
-
 import { User, MenuItem, Order, Table, DepartmentType } from '../types';
 
 export const mockUsers: User[] = [
@@ -19,6 +18,12 @@ export const mockUsers: User[] = [
     username: 'waiter2',
     name: 'خالد النادل',
     role: 'waiter'
+  },
+  {
+    id: '4',
+    username: 'screen1',
+    name: 'شاشة المطبخ',
+    role: 'screen'
   }
 ];
 
@@ -137,13 +142,15 @@ export const mockTables: Table[] = Array.from({ length: 15 }, (_, i) => ({
   id: i + 1,
   name: `طاولة ${i + 1}`,
   isOccupied: Math.random() > 0.7,
-  currentOrderId: Math.random() > 0.7 ? `order-${i+1}` : undefined
+  currentOrderId: Math.random() > 0.7 ? `order-${i+1}` : undefined,
+  peopleCount: Math.floor(Math.random() * 5) + 1 // Add random people count between 1-5
 }));
 
 export const mockOrders: Order[] = [
   {
     id: 'order-1',
     tableNumber: 3,
+    peopleCount: 4, // Adding the required peopleCount
     items: [
       { menuItemId: '1', name: 'سلطة البيت', price: 25, quantity: 1 },
       { menuItemId: '4', name: 'مشاوي مشكلة', price: 85, quantity: 2, notes: 'بدون بصل' },
@@ -159,6 +166,7 @@ export const mockOrders: Order[] = [
   {
     id: 'order-2',
     tableNumber: 5,
+    peopleCount: 2, // Adding the required peopleCount
     items: [
       { menuItemId: '2', name: 'حمص', price: 15, quantity: 1 },
       { menuItemId: '5', name: 'دجاج مشوي', price: 65, quantity: 1 },
@@ -173,6 +181,7 @@ export const mockOrders: Order[] = [
   {
     id: 'order-3',
     tableNumber: 8,
+    peopleCount: 1, // Adding the required peopleCount
     items: [
       { menuItemId: '6', name: 'سمك مشوي', price: 90, quantity: 1 },
       { menuItemId: '12', name: 'بطاطا مقلية', price: 18, quantity: 1 },
@@ -188,6 +197,7 @@ export const mockOrders: Order[] = [
   {
     id: 'order-4',
     tableNumber: 10,
+    peopleCount: 3, // Adding the required peopleCount
     items: [
       { menuItemId: '7', name: 'كنافة', price: 30, quantity: 2 },
       { menuItemId: '10', name: 'قهوة عربية', price: 10, quantity: 2 }
@@ -217,4 +227,3 @@ export const mockDepartments: DepartmentType[] = [
     description: 'تحضير الحلويات والتحلية'
   }
 ];
-
