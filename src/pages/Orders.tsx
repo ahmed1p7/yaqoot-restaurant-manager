@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { OrderStatus } from "@/types";
-import { ChefHat, FileText, Table as TableIcon, Clock } from "lucide-react";
+import { ChefHat, FileText, Table as TableIcon, Clock, User, Check } from "lucide-react";
 
 const translateStatus = (status: OrderStatus): string => {
   switch (status) {
@@ -31,7 +31,7 @@ const getStatusColor = (status: OrderStatus): string => {
 };
 
 export const Orders = () => {
-  const { orders, updateOrderStatus, user } = useApp();
+  const { orders, updateOrderStatus, user, updateItemCompletionStatus } = useApp();
   const [activeTab, setActiveTab] = useState<OrderStatus | "all">("all");
   
   const filteredOrders = activeTab === "all"
@@ -53,6 +53,10 @@ export const Orders = () => {
       cancelled: 4,
     };
     
+    // Sort by status first, then by creation time (newest first for same status)
+    if (statusPriority[a.status] === statusPriority[b.status]) {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
     return statusPriority[a.status] - statusPriority[b.status];
   });
   
@@ -60,57 +64,80 @@ export const Orders = () => {
     updateOrderStatus(orderId, newStatus);
   };
   
+  const handleItemCompletion = (orderId: string, menuItemId: string, completed: boolean) => {
+    if (user?.role === 'screen') {
+      updateItemCompletionStatus(orderId, menuItemId, !completed);
+    }
+  };
+  
   const renderStatusButton = (order: any, newStatus: OrderStatus) => {
-    if (user?.role !== 'admin' && order.waiterId !== user?.id) {
+    // Screen users can only update to delivered status
+    if (user?.role === 'screen') {
+      if (newStatus === 'delivered' && order.status === 'ready') {
+        return (
+          <Button
+            size="sm"
+            className="bg-restaurant-primary hover:bg-restaurant-primary-dark"
+            onClick={() => handleUpdateStatus(order.id, newStatus)}
+          >
+            تم التسليم
+          </Button>
+        );
+      }
       return null;
     }
     
-    // Don't show buttons for cancelled or delivered orders
-    if (order.status === 'cancelled' || order.status === 'delivered') {
-      return null;
+    // Waiters and admins can update any status
+    if ((user?.role === 'admin' || order.waiterId === user?.id)) {
+      // Don't show buttons for cancelled or delivered orders
+      if (order.status === 'cancelled' || order.status === 'delivered') {
+        return null;
+      }
+      
+      // Button text based on current and new status
+      let buttonText = '';
+      let buttonStyle = '';
+      
+      // Show appropriate next state button based on current state
+      switch (order.status) {
+        case 'pending':
+          if (newStatus === 'preparing') {
+            buttonText = 'بدء التحضير';
+            buttonStyle = 'bg-blue-500 hover:bg-blue-600';
+          } else if (newStatus === 'cancelled') {
+            buttonText = 'إلغاء الطلب';
+            buttonStyle = 'bg-red-500 hover:bg-red-600';
+          }
+          break;
+        case 'preparing':
+          if (newStatus === 'ready') {
+            buttonText = 'جاهز للتقديم';
+            buttonStyle = 'bg-green-500 hover:bg-green-600';
+          } else if (newStatus === 'cancelled') {
+            buttonText = 'إلغاء الطلب';
+            buttonStyle = 'bg-red-500 hover:bg-red-600';
+          }
+          break;
+        case 'ready':
+          if (newStatus === 'delivered') {
+            buttonText = 'تم التسليم';
+            buttonStyle = 'bg-restaurant-primary hover:bg-restaurant-primary-dark';
+          }
+          break;
+      }
+      
+      return buttonText ? (
+        <Button
+          size="sm"
+          className={buttonStyle}
+          onClick={() => handleUpdateStatus(order.id, newStatus)}
+        >
+          {buttonText}
+        </Button>
+      ) : null;
     }
     
-    // Button text based on current and new status
-    let buttonText = '';
-    let buttonStyle = '';
-    
-    // Show appropriate next state button based on current state
-    switch (order.status) {
-      case 'pending':
-        if (newStatus === 'preparing') {
-          buttonText = 'بدء التحضير';
-          buttonStyle = 'bg-blue-500 hover:bg-blue-600';
-        } else if (newStatus === 'cancelled') {
-          buttonText = 'إلغاء الطلب';
-          buttonStyle = 'bg-red-500 hover:bg-red-600';
-        }
-        break;
-      case 'preparing':
-        if (newStatus === 'ready') {
-          buttonText = 'جاهز للتقديم';
-          buttonStyle = 'bg-green-500 hover:bg-green-600';
-        } else if (newStatus === 'cancelled') {
-          buttonText = 'إلغاء الطلب';
-          buttonStyle = 'bg-red-500 hover:bg-red-600';
-        }
-        break;
-      case 'ready':
-        if (newStatus === 'delivered') {
-          buttonText = 'تم التسليم';
-          buttonStyle = 'bg-restaurant-primary hover:bg-restaurant-primary-dark';
-        }
-        break;
-    }
-    
-    return buttonText ? (
-      <Button
-        size="sm"
-        className={buttonStyle}
-        onClick={() => handleUpdateStatus(order.id, newStatus)}
-      >
-        {buttonText}
-      </Button>
-    ) : null;
+    return null;
   };
   
   return (
@@ -139,6 +166,11 @@ export const Orders = () => {
                       <div className="flex items-center gap-2 mb-2">
                         <TableIcon className="w-5 h-5 text-restaurant-primary" />
                         <span className="font-medium">طاولة {order.tableNumber}</span>
+                        {order.peopleCount > 0 && (
+                          <span className="text-sm text-gray-500 flex items-center">
+                            <User className="w-3 h-3 mr-1" />{order.peopleCount}
+                          </span>
+                        )}
                         <Badge className={getStatusColor(order.status)}>
                           {translateStatus(order.status)}
                         </Badge>
@@ -167,16 +199,30 @@ export const Orders = () => {
                   
                   <div className="mt-4 space-y-2">
                     {order.items.map((item: any, idx: number) => (
-                      <div key={idx} className="order-item">
+                      <div 
+                        key={idx} 
+                        className={`flex justify-between items-center p-2 rounded-md ${
+                          item.completed ? 'bg-green-50' : 'bg-gray-50'
+                        }`}
+                        onClick={() => user?.role === 'screen' && handleItemCompletion(order.id, item.menuItemId, item.completed)}
+                      >
                         <div className="flex items-center gap-2">
-                          <span className="text-restaurant-primary font-medium">
+                          <span className={`font-medium ${item.completed ? 'text-green-500' : 'text-restaurant-primary'}`}>
                             {item.quantity}×
                           </span>
-                          <span>{item.name}</span>
+                          <span className={item.completed ? 'text-gray-500' : ''}>
+                            {item.name}
+                          </span>
                           {item.notes && (
                             <span className="text-xs bg-gray-100 px-2 py-1 rounded">
                               {item.notes}
                             </span>
+                          )}
+                          
+                          {item.completed && user?.role === 'screen' && (
+                            <Badge className="bg-green-500 ml-2">
+                              <Check className="w-3 h-3 mr-1" /> تم التحضير
+                            </Badge>
                           )}
                         </div>
                         <span>{item.price * item.quantity} ريال</span>

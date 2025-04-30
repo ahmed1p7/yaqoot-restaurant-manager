@@ -1,6 +1,6 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { User, MenuItem, Order, Table } from '../types';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { User, MenuItem, Order, Table, OrderItem, SystemSettings } from '../types';
 import { mockUsers, mockMenuItems, mockOrders, mockTables } from '../data/mockData';
 import { toast } from "sonner";
 
@@ -9,6 +9,8 @@ interface AppContextType {
   menuItems: MenuItem[];
   orders: Order[];
   tables: Table[];
+  hasNewOrders: boolean;
+  systemSettings: SystemSettings;
   login: (username: string, password: string) => boolean;
   loginAsWaiter: () => boolean;
   loginAsScreen: () => boolean;
@@ -18,8 +20,13 @@ interface AppContextType {
   deleteMenuItem: (id: string) => void;
   createOrder: (order: Omit<Order, 'id' | 'createdAt' | 'waiterName'>) => void;
   updateOrderStatus: (orderId: string, status: Order['status']) => void;
+  updateItemCompletionStatus: (orderId: string, menuItemId: string, completed: boolean) => void;
   getFilteredOrders: (status?: Order['status']) => Order[];
   getTablesStatus: () => Table[];
+  updateTablePeopleCount: (tableId: number, peopleCount: number) => void;
+  clearNewOrdersNotification: () => void;
+  updatePerSeatCharge: (amount: number) => void;
+  togglePerSeatChargeEnabled: (enabled: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -27,8 +34,22 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(mockMenuItems);
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<Order[]>(mockOrders.map(order => ({
+    ...order,
+    peopleCount: order.peopleCount || 1,
+    items: order.items.map(item => ({ ...item, completed: false }))
+  })));
   const [tables, setTables] = useState<Table[]>(mockTables);
+  const [hasNewOrders, setHasNewOrders] = useState<boolean>(false);
+  const [systemSettings, setSystemSettings] = useState<SystemSettings>({
+    perSeatCharge: 2,
+    enablePerSeatCharge: false
+  });
+
+  // Function to clear new orders notification
+  const clearNewOrdersNotification = () => {
+    setHasNewOrders(false);
+  };
 
   const login = (username: string, password: string): boolean => {
     // Only allow admin login with correct password
@@ -62,7 +83,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return false;
   };
 
-  // New function for quick screen login
+  // Screen login function
   const loginAsScreen = (): boolean => {
     const screenUser = mockUsers.find(u => u.username === 'screen1');
     if (screenUser) {
@@ -116,21 +137,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const waiter = mockUsers.find(u => u.id === orderData.waiterId);
     if (!waiter) return;
     
+    // Add completed: false to each order item
+    const orderItemsWithCompletionStatus = orderData.items.map(item => ({
+      ...item,
+      completed: false
+    }));
+    
     const newOrder: Order = {
       ...orderData,
       id: `order-${Date.now()}`,
       createdAt: new Date(),
-      waiterName: waiter.name
+      waiterName: waiter.name,
+      items: orderItemsWithCompletionStatus,
+      peopleCount: orderData.peopleCount || tables.find(t => t.id === orderData.tableNumber)?.peopleCount || 1
     };
     
     setOrders([...orders, newOrder]);
     
-    // Update table status
+    // Update table status and people count
     setTables(tables.map(table => 
       table.id === orderData.tableNumber 
-        ? { ...table, isOccupied: true, currentOrderId: newOrder.id }
+        ? { 
+            ...table, 
+            isOccupied: true, 
+            currentOrderId: newOrder.id,
+            peopleCount: orderData.peopleCount || table.peopleCount || 1
+          }
         : table
     ));
+    
+    // Set notification for screen users
+    setHasNewOrders(true);
     
     toast.success("تم إنشاء الطلب بنجاح", {
       description: `طلب جديد للطاولة ${orderData.tableNumber}`
@@ -161,6 +198,68 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
   };
 
+  // New function to update item completion status
+  const updateItemCompletionStatus = (orderId: string, menuItemId: string, completed: boolean) => {
+    setOrders(orders.map(order => {
+      if (order.id === orderId) {
+        const updatedItems = order.items.map(item => 
+          item.menuItemId === menuItemId ? { ...item, completed } : item
+        );
+        
+        // Check if all items are completed
+        const allCompleted = updatedItems.every(item => item.completed);
+        
+        // If all items are completed, automatically set order status to ready
+        const newStatus = allCompleted ? 'ready' : order.status;
+        
+        return { 
+          ...order, 
+          items: updatedItems,
+          status: newStatus === 'pending' ? 'preparing' : newStatus,
+          updatedAt: new Date()
+        };
+      }
+      return order;
+    }));
+    
+    toast.success(completed ? "تم الانتهاء من تحضير العنصر" : "تمت إعادة العنصر للتحضير");
+  };
+
+  const updateTablePeopleCount = (tableId: number, peopleCount: number) => {
+    setTables(tables.map(table => 
+      table.id === tableId 
+        ? { ...table, peopleCount } 
+        : table
+    ));
+
+    // Also update any active order for this table
+    const tableOrder = orders.find(o => 
+      o.tableNumber === tableId && 
+      (o.status === 'pending' || o.status === 'preparing' || o.status === 'ready')
+    );
+
+    if (tableOrder) {
+      setOrders(orders.map(order => 
+        order.id === tableOrder.id 
+          ? { ...order, peopleCount } 
+          : order
+      ));
+    }
+    
+    toast.success(`تم تحديث عدد الأشخاص للطاولة ${tableId} إلى ${peopleCount}`);
+  };
+
+  // System settings functions
+  const updatePerSeatCharge = (amount: number) => {
+    setSystemSettings({...systemSettings, perSeatCharge: amount});
+    toast.success(`تم تحديث رسوم المقعد إلى ${amount} ريال`);
+  };
+
+  const togglePerSeatChargeEnabled = (enabled: boolean) => {
+    setSystemSettings({...systemSettings, enablePerSeatCharge: enabled});
+    toast.success(enabled ? "تم تفعيل رسوم المقعد" : "تم إيقاف رسوم المقعد");
+  };
+
   const getFilteredOrders = (status?: Order['status']) => {
     if (!status) return orders;
     return orders.filter(order => order.status === status);
@@ -173,6 +272,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     menuItems,
     orders,
     tables,
+    hasNewOrders,
+    systemSettings,
     login,
     loginAsWaiter,
     loginAsScreen,
@@ -182,8 +283,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     deleteMenuItem,
     createOrder,
     updateOrderStatus,
+    updateItemCompletionStatus,
     getFilteredOrders,
-    getTablesStatus
+    getTablesStatus,
+    updateTablePeopleCount,
+    clearNewOrdersNotification,
+    updatePerSeatCharge,
+    togglePerSeatChargeEnabled
   };
 
   return (

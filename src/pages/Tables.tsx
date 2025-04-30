@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,18 +17,46 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { MenuItem, OrderItem, MenuCategory } from "@/types";
-import { Table as TableIcon, ArrowRight, ChefHat, Plus, Utensils, Wine } from "lucide-react";
+import { Table as TableIcon, ArrowRight, ChefHat, Plus, Utensils, Wine, User } from "lucide-react";
 
 export const Tables = () => {
-  const { tables, menuItems, createOrder, user, orders } = useApp();
+  const { tables, menuItems, createOrder, user, orders, systemSettings, updateTablePeopleCount } = useApp();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPeopleDialogOpen, setIsPeopleDialogOpen] = useState(false);
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
   const [selectedMenuItems, setSelectedMenuItems] = useState<Map<string, { quantity: number; notes: string }>>(new Map());
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [peopleCount, setPeopleCount] = useState<number>(1);
   
   const handleOpenDialog = (tableId: number) => {
-    setSelectedTable(tableId);
-    setSelectedMenuItems(new Map());
+    const table = tables.find(t => t.id === tableId);
+    
+    // If table doesn't have people count set, open the people count dialog first
+    if ((!table?.peopleCount || table.peopleCount < 1) && !table?.isOccupied) {
+      setSelectedTable(tableId);
+      setPeopleCount(1);
+      setIsPeopleDialogOpen(true);
+    } else {
+      // If table already has people count, open the regular order dialog
+      setSelectedTable(tableId);
+      setSelectedMenuItems(new Map());
+      setIsDialogOpen(true);
+      
+      // Use existing people count if available
+      if (table?.peopleCount) {
+        setPeopleCount(table.peopleCount);
+      }
+    }
+  };
+  
+  const handleConfirmPeopleCount = () => {
+    if (!selectedTable) return;
+    
+    // Update the table's people count
+    updateTablePeopleCount(selectedTable, peopleCount);
+    
+    // Close the people dialog and open the order dialog
+    setIsPeopleDialogOpen(false);
     setIsDialogOpen(true);
   };
   
@@ -84,9 +114,16 @@ export const Tables = () => {
           price: menuItem.price,
           quantity: value.quantity,
           notes: value.notes || undefined,
+          completed: false
         });
       }
     });
+    
+    // Add per seat charge if enabled
+    if (systemSettings.enablePerSeatCharge && peopleCount > 0) {
+      const seatCharge = systemSettings.perSeatCharge * peopleCount;
+      totalAmount += seatCharge;
+    }
     
     createOrder({
       tableNumber: selectedTable,
@@ -94,6 +131,7 @@ export const Tables = () => {
       status: 'pending',
       totalAmount,
       waiterId: user.id,
+      peopleCount: peopleCount
     });
     
     setIsDialogOpen(false);
@@ -116,6 +154,13 @@ export const Tables = () => {
         total += menuItem.price * value.quantity;
       }
     });
+    
+    // Add per seat charge if enabled
+    if (systemSettings.enablePerSeatCharge && peopleCount > 0) {
+      const seatCharge = systemSettings.perSeatCharge * peopleCount;
+      total += seatCharge;
+    }
+    
     return total;
   };
   
@@ -175,6 +220,13 @@ export const Tables = () => {
                     
                     <h3 className="font-medium">{table.name}</h3>
                     
+                    {table.peopleCount && table.peopleCount > 0 && (
+                      <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                        <User className="w-3 h-3" />
+                        <span>{table.peopleCount}</span>
+                      </div>
+                    )}
+                    
                     {table.isOccupied ? (
                       <Badge className="mt-2 bg-restaurant-primary">مشغولة</Badge>
                     ) : (
@@ -202,11 +254,81 @@ export const Tables = () => {
         </TabsContent>
       </Tabs>
       
+      {/* People Count Dialog */}
+      <Dialog open={isPeopleDialogOpen} onOpenChange={setIsPeopleDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>عدد الأشخاص في الطاولة</DialogTitle>
+            <DialogDescription>
+              يرجى تحديد عدد الأشخاص الذين سيجلسون على هذه الطاولة
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex items-center justify-center gap-4 py-6">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => peopleCount > 1 && setPeopleCount(peopleCount - 1)}
+              disabled={peopleCount <= 1}
+            >
+              -
+            </Button>
+            
+            <div className="w-20 text-center">
+              <Input
+                type="number"
+                className="text-center text-lg font-bold"
+                value={peopleCount}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  if (!isNaN(value) && value > 0) {
+                    setPeopleCount(value);
+                  }
+                }}
+                min="1"
+              />
+            </div>
+            
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setPeopleCount(peopleCount + 1)}
+            >
+              +
+            </Button>
+          </div>
+          
+          {systemSettings.enablePerSeatCharge && (
+            <div className="text-sm text-gray-500 text-center mb-4">
+              سيتم إضافة رسوم {systemSettings.perSeatCharge * peopleCount} ريال ({systemSettings.perSeatCharge} × {peopleCount})
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button onClick={handleConfirmPeopleCount} className="w-full">
+              تأكيد
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Order Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedTable ? `طلب جديد - ${tables.find(t => t.id === selectedTable)?.name}` : 'طلب جديد'}
+              {selectedTable ? (
+                <div className="flex items-center gap-2">
+                  <span>طلب جديد - {tables.find(t => t.id === selectedTable)?.name}</span>
+                  {peopleCount > 0 && (
+                    <span className="flex items-center text-sm text-gray-500 font-normal">
+                      <User className="w-4 h-4 mr-1" /> {peopleCount}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                'طلب جديد'
+              )}
             </DialogTitle>
           </DialogHeader>
           
@@ -426,6 +548,13 @@ export const Tables = () => {
                   <span>المجموع الفرعي:</span>
                   <span>{calculateTotal()} ريال</span>
                 </div>
+                
+                {systemSettings.enablePerSeatCharge && peopleCount > 0 && (
+                  <div className="flex justify-between mb-2 text-sm text-gray-500">
+                    <span>رسوم الجلوس ({peopleCount} × {systemSettings.perSeatCharge}):</span>
+                    <span>{systemSettings.perSeatCharge * peopleCount} ريال</span>
+                  </div>
+                )}
               </div>
               
               <Button

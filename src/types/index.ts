@@ -44,11 +44,13 @@ export interface OrderItem {
   price: number;
   quantity: number;
   notes?: string;
+  completed?: boolean; // Track if this specific item has been prepared
 }
 
 export interface Order {
   id: string;
   tableNumber: number;
+  peopleCount: number; // Number of people at the table
   items: OrderItem[];
   status: OrderStatus;
   totalAmount: number;
@@ -64,6 +66,7 @@ export interface Table {
   name: string;
   isOccupied: boolean;
   currentOrderId?: string;
+  peopleCount?: number; // Store the people count with the table
 }
 
 export interface DepartmentType {
@@ -78,4 +81,9 @@ export interface Stats {
   avgOrderValue: number;
   topSellingItems: { name: string; count: number }[];
   busyHours: { hour: number; count: number }[];
+}
+
+export interface SystemSettings {
+  perSeatCharge: number; // Amount charged per person
+  enablePerSeatCharge: boolean;
 }
