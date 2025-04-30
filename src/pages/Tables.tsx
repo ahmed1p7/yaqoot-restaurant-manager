@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { MenuItem, OrderItem, MenuCategory } from "@/types";
-import { Table as TableIcon, ArrowRight, ChefHat, Plus, Utensils, Drink } from "lucide-react";
+import { Table as TableIcon, ArrowRight, ChefHat, Plus, Utensils, Wine } from "lucide-react";
 
 export const Tables = () => {
   const { tables, menuItems, createOrder, user, orders } = useApp();
@@ -215,7 +214,7 @@ export const Tables = () => {
             <div className="flex-1">
               <div className="mb-6">
                 <h3 className="font-medium mb-2 flex items-center gap-2 text-lg pb-2 border-b">
-                  <Drink className="w-5 h-5 text-blue-500" />
+                  <Wine className="w-5 h-5 text-blue-500" />
                   <span>المشروبات</span>
                 </h3>
                 
