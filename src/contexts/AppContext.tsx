@@ -437,6 +437,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const getTablesStatus = () => tables;
 
+  // New function to get orders grouped by table
+  const getOrdersByTable = (): Record<number, Order[]> => {
+    const tableOrders: Record<number, Order[]> = {};
+    
+    // Group orders by table number
+    orders.forEach(order => {
+      if (!tableOrders[order.tableNumber]) {
+        tableOrders[order.tableNumber] = [];
+      }
+      tableOrders[order.tableNumber].push(order);
+    });
+    
+    return tableOrders;
+  };
+
   const contextValue: AppContextType = {
     user,
     menuItems,
