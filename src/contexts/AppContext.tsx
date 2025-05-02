@@ -1,5 +1,6 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { User, MenuItem, Order, Table, OrderItem, SystemSettings, PrinterType } from '../types';
+import { User, MenuItem, Order, Table, OrderItem, SystemSettings, PrinterType, Department } from '../types';
 import { mockUsers, mockMenuItems, mockOrders, mockTables, mockDepartments, mockPrinters } from '../data/mockData';
 import { toast } from "sonner";
 
@@ -9,6 +10,7 @@ interface AppContextType {
   orders: Order[];
   tables: Table[];
   printers: PrinterType[];
+  departments: Department[]; // Add this line
   hasNewOrders: boolean;
   systemSettings: SystemSettings;
   login: (username: string, password: string) => boolean;
@@ -50,6 +52,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   })));
   const [tables, setTables] = useState<Table[]>(mockTables);
   const [printers, setPrinters] = useState<PrinterType[]>(mockPrinters);
+  const [departments, setDepartments] = useState<Department[]>(mockDepartments); // Add this line
   const [hasNewOrders, setHasNewOrders] = useState<boolean>(false);
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({
     perSeatCharge: 2,
@@ -553,6 +556,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     orders,
     tables,
     printers,
+    departments, // Add this line
     hasNewOrders,
     systemSettings,
     login,

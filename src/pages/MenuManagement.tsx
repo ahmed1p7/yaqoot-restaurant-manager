@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
@@ -42,7 +41,7 @@ export const MenuManagement = () => {
     category: "main_dishes",
     image: "/placeholder.svg",
     isAvailable: true,
-    departmentId: "1" // Default to first department
+    departmentId: departments && departments.length > 0 ? departments[0].id : "1"
   });
   
   const handleOpenDialog = (item?: MenuItem) => {
@@ -224,6 +223,23 @@ export const MenuManagement = () => {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="department">القسم</Label>
+              <Select
+                value={formData.departmentId}
+                onValueChange={(value) => setFormData({ ...formData, departmentId: value })}
+              >
+                <SelectTrigger id="department">
+                  <SelectValue placeholder="اختر القسم" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments.map((dept) => (
+                    <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="flex items-center justify-between">
