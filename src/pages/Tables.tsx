@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,7 +13,7 @@ import { toast } from "sonner";
 import { Order } from "@/types";
 
 export const Tables = () => {
-  const { tables, orders, user, menuItems, getMostOrderedItems, getOrdersByTable } = useApp();
+  const { tables, orders, user, menuItems, getMostOrderedItems, getOrdersByTable, resetTable } = useApp();
   const navigate = useNavigate();
   
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
@@ -74,8 +73,19 @@ export const Tables = () => {
   };
   
   const handleCreateOrder = (tableId: number) => {
+    // Check if the table has a completed order (isPaid) and reset it first
+    const currentOrder = getCurrentOrder(tableId);
+    if (currentOrder?.isPaid) {
+      resetTable(tableId);
+      toast.success(`تم إعادة تهيئة الطاولة ${tableId} للاستخدام`);
+    }
+    
+    // Store the selected table ID and navigate to the order creation page
     setSelectedTable(tableId);
-    // Further implementation in real app would navigate to order creation page
+    
+    // In a real app, we would navigate to the order creation page
+    // For now, we'll show a dialog that provides more information
+    // navigate(`/orders/new?table=${tableId}`);
   };
   
   const handleTableEmergency = (tableId: number) => {
@@ -173,6 +183,7 @@ export const Tables = () => {
         {filteredTables.map((table) => {
           const currentOrder = getCurrentOrder(table.id);
           const isEmergency = emergencyTable === table.id;
+          const isPaid = currentOrder?.isPaid;
           
           return (
             <Card 
@@ -180,7 +191,7 @@ export const Tables = () => {
               className={`
                 ${isEmergency ? 'border-red-500 border-2 animate-pulse' : 
                   table.isReserved ? 'border-purple-300' :
-                  table.isOccupied ? 'border-blue-300' : 'border-gray-200'}
+                  table.isOccupied && !isPaid ? 'border-blue-300' : 'border-gray-200'}
                 hover:border-2 transition-all
               `}
             >
@@ -194,15 +205,15 @@ export const Tables = () => {
                         محجوزة
                       </Badge>
                     )}
-                    {table.isOccupied && (
-                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded ml-2">
+                    {table.isOccupied && !isPaid && (
+                      <Badge variant="outline" className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded ml-2">
                         مشغولة
-                      </span>
+                      </Badge>
                     )}
-                    {currentOrder?.isPaid && (
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded ml-2">
+                    {isPaid && (
+                      <Badge variant="outline" className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded ml-2">
                         مدفوعة
-                      </span>
+                      </Badge>
                     )}
                   </h3>
                   
@@ -248,18 +259,33 @@ export const Tables = () => {
               <DialogTitle>
                 إنشاء طلب للطاولة {selectedTable}
               </DialogTitle>
+              <DialogDescription>
+                سيتم إنشاء طلب جديد للطاولة {selectedTable}
+              </DialogDescription>
             </DialogHeader>
             
             <div className="text-center py-6">
-              <p className="text-gray-500">
-                في التطبيق الكامل، سيتم توجيهك إلى صفحة إنشاء طلب جديد للطاولة.
+              <p className="text-gray-500 mb-4">
+                اختر أحد الإجراءات التالية للاستمرار:
               </p>
-              <Button 
-                className="mt-4"
-                onClick={() => setSelectedTable(null)}
-              >
-                إغلاق
-              </Button>
+              <div className="flex flex-col space-y-2">
+                <Button 
+                  onClick={() => {
+                    toast.success(`تم إنشاء طلب جديد للطاولة ${selectedTable}`);
+                    setSelectedTable(null);
+                    // In a real app, this would navigate to the order creation page
+                    // navigate(`/orders/new?table=${selectedTable}`);
+                  }}
+                >
+                  إنشاء طلب جديد
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setSelectedTable(null)}
+                >
+                  إلغاء
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

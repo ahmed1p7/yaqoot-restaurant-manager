@@ -34,6 +34,7 @@ interface AppContextType {
   toggleTableReservation: (tableId: number, isReserved: boolean) => void;
   updatePrinterSettings: (printer: PrinterType) => void;
   getOrdersByTable: () => Record<number, Order[]>;
+  resetTable: (tableId: number) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -350,6 +351,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     toast.success(`تم تحديث عدد الأشخاص للطاولة ${tableId} إلى ${peopleCount}`);
   };
   
+  // New function to reset a table after it has been paid
+  const resetTable = (tableId: number) => {
+    // Reset the table status
+    setTables(tables.map(table => 
+      table.id === tableId 
+        ? { 
+            ...table, 
+            isOccupied: false, 
+            currentOrderId: undefined
+          }
+        : table
+    ));
+    
+    toast.success(`تم إعادة تهيئة الطاولة ${tableId}`, {
+      description: "يمكنك إنشاء طلب جديد الآن"
+    });
+  };
+  
   // New function to mark a table order as paid
   const markTableAsPaid = (tableId: number) => {
     // Find the active order for this table
@@ -482,7 +501,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     markTableAsPaid,
     toggleTableReservation,
     updatePrinterSettings,
-    getOrdersByTable
+    getOrdersByTable,
+    resetTable
   };
 
   return (
