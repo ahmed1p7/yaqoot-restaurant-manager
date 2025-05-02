@@ -29,6 +29,10 @@ export const TableActions: React.FC<TableActionsProps> = ({
   
   const handleCreateOrder = () => {
     if (table.peopleCount) {
+      // If table is reserved, automatically remove reservation when creating an order
+      if (table.isReserved) {
+        toggleTableReservation(table.id, false);
+      }
       onCreateOrder(table.id);
     } else {
       setIsPeopleDialogOpen(true);
@@ -39,6 +43,10 @@ export const TableActions: React.FC<TableActionsProps> = ({
     updateTablePeopleCount(table.id, count);
     
     if (!isEditingPeople) {
+      // If table is reserved, automatically remove reservation when creating an order
+      if (table.isReserved) {
+        toggleTableReservation(table.id, false);
+      }
       onCreateOrder(table.id);
     }
     
@@ -83,11 +91,6 @@ export const TableActions: React.FC<TableActionsProps> = ({
         </div>
       )}
       
-      {/* Show reservation badge if table is reserved */}
-      {table.isReserved && (
-        <Badge className="w-full justify-center bg-purple-500">محجوزة</Badge>
-      )}
-      
       {/* Admin actions */}
       {isAdmin && (
         <div className="flex flex-col gap-2">
@@ -126,7 +129,7 @@ export const TableActions: React.FC<TableActionsProps> = ({
             variant={table.isOccupied ? "outline" : "default"}
             size="sm" 
             onClick={handleCreateOrder}
-            disabled={table.isReserved && !table.isOccupied}
+            disabled={false} // Removed the restriction for reserved tables so waiters can create orders
             className="w-full"
           >
             {table.isOccupied ? "تعديل الطلب" : "إنشاء طلب"}
