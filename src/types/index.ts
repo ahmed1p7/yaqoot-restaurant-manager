@@ -1,85 +1,89 @@
-
-export type User = {
+// User types
+export interface User {
   id: string;
   name: string;
   username: string;
-  role: 'admin' | 'waiter' | 'screen';
-  avatar?: string;
-  pin?: string; // Added PIN for login
-};
+  password: string;
+  role: 'admin' | 'waiter' | 'screen' | 'drinks';
+  isActive: boolean;
+}
 
-export type MenuCategory = 'appetizers' | 'main_dishes' | 'sides' | 'desserts' | 'drinks';
-
-export type MenuItem = {
+// Menu Item types
+export interface MenuItem {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   price: number;
-  category: MenuCategory;
   image?: string;
+  category: string;
   isAvailable: boolean;
-  departmentId?: string; // Which department prepares this item
-};
+  departmentId: string;
+}
 
-export type OrderItem = {
+// Order types
+export interface Order {
+  id: string;
+  tableNumber: number;
+  waiterId: string;
+  waiterName: string;
+  items: OrderItem[];
+  status: OrderStatus;
+  totalAmount: number;
+  createdAt: Date;
+  updatedAt?: Date;
+  notes?: string;
+  peopleCount: number;
+  delayed: boolean;
+  delayReason?: string;
+  isPaid: boolean;
+}
+
+export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered' | 'canceled';
+
+// Order Item types
+export interface OrderItem {
   menuItemId: string;
   name: string;
   price: number;
   quantity: number;
   notes?: string;
   completed: boolean;
-  canceled?: boolean;
-};
+}
 
-export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered' | 'canceled';
-
-export type Order = {
-  id: string;
-  tableNumber: number;
-  items: OrderItem[];
-  status: OrderStatus;
-  createdAt: Date;
-  updatedAt?: Date;
-  totalAmount: number;
-  waiterId: string;
-  waiterName: string;
-  notes?: string;
-  peopleCount?: number;
-  delayed?: boolean;
-  delayReason?: string;
-  isPaid?: boolean; // New field to track payment status
-};
-
-export type Table = {
+// Table types
+export interface Table {
   id: number;
   name: string;
   capacity: number;
   isOccupied: boolean;
   currentOrderId?: string;
   peopleCount?: number;
-  emergency?: boolean;
-  isReserved?: boolean; // New field to track reservation status
-};
+  isReserved: boolean;
+  emergency: boolean;
+}
 
-export type SystemSettings = {
+// Department types
+export interface Department {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+// System Settings types
+export interface SystemSettings {
   perSeatCharge: number;
   enablePerSeatCharge: boolean;
-  emergencyMode?: boolean;
-  backupPrinterEnabled?: boolean;
-  backupPhoneEnabled?: boolean;
-};
+  emergencyMode: boolean;
+  backupPrinterEnabled: boolean;
+  backupPhoneEnabled: boolean;
+}
 
-export type DepartmentType = {
+// Printer types
+export interface PrinterType {
   id: string;
   name: string;
-  description: string;
-};
-
-export type PrinterType = {
-  id: string;
-  name: string;
-  ip: string;
+  model: string;
+  connectionType: 'network' | 'usb' | 'bluetooth';
+  address: string;
   isActive: boolean;
-  departmentId?: string;
-  isBackup?: boolean;
-};
+}

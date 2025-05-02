@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -80,12 +81,13 @@ export const Tables = () => {
       toast.success(`تم إعادة تهيئة الطاولة ${tableId} للاستخدام`);
     }
     
-    // Store the selected table ID and navigate to the order creation page
-    setSelectedTable(tableId);
-    
-    // In a real app, we would navigate to the order creation page
-    // For now, we'll show a dialog that provides more information
-    // navigate(`/orders/new?table=${tableId}`);
+    // Navigate to the menu view page with table ID as a parameter
+    navigate(`/menu-view?table=${tableId}`);
+  };
+  
+  const handleViewTable = (tableId: number) => {
+    // Navigate to table details page
+    navigate(`/menu-view?table=${tableId}`);
   };
   
   const handleTableEmergency = (tableId: number) => {
@@ -192,8 +194,9 @@ export const Tables = () => {
                 ${isEmergency ? 'border-red-500 border-2 animate-pulse' : 
                   table.isReserved ? 'border-purple-300' :
                   table.isOccupied && !isPaid ? 'border-blue-300' : 'border-gray-200'}
-                hover:border-2 transition-all
+                hover:border-2 transition-all cursor-pointer
               `}
+              onClick={() => handleViewTable(table.id)}
             >
               <CardContent className="p-4 space-y-3">
                 <div className="flex justify-between items-center">
@@ -250,46 +253,6 @@ export const Tables = () => {
           );
         })}
       </div>
-      
-      {/* Dialog for order creation */}
-      {selectedTable && (
-        <Dialog open={selectedTable !== null} onOpenChange={() => setSelectedTable(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                إنشاء طلب للطاولة {selectedTable}
-              </DialogTitle>
-              <DialogDescription>
-                سيتم إنشاء طلب جديد للطاولة {selectedTable}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="text-center py-6">
-              <p className="text-gray-500 mb-4">
-                اختر أحد الإجراءات التالية للاستمرار:
-              </p>
-              <div className="flex flex-col space-y-2">
-                <Button 
-                  onClick={() => {
-                    toast.success(`تم إنشاء طلب جديد للطاولة ${selectedTable}`);
-                    setSelectedTable(null);
-                    // In a real app, this would navigate to the order creation page
-                    // navigate(`/orders/new?table=${selectedTable}`);
-                  }}
-                >
-                  إنشاء طلب جديد
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => setSelectedTable(null)}
-                >
-                  إلغاء
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
       
       {/* Close Day Dialog with Statistics */}
       <Dialog open={showCloseDayDialog} onOpenChange={setShowCloseDayDialog}>

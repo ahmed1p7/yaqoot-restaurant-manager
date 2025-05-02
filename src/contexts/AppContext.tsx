@@ -14,6 +14,7 @@ interface AppContextType {
   login: (username: string, password: string) => boolean;
   loginAsWaiter: () => boolean;
   loginAsScreen: () => boolean;
+  loginAsDrinksScreen: () => boolean;
   logout: () => void;
   addMenuItem: (item: Omit<MenuItem, 'id'>) => void;
   updateMenuItem: (item: MenuItem) => void;
@@ -109,6 +110,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     }
     
+    // Allow drinks screen login
+    if (username === 'drinks' && password === '0000') {
+      const drinksUser = mockUsers.find(u => u.username === 'drinks1');
+      if (drinksUser) {
+        setUser(drinksUser);
+        toast.success(`مرحباً ${drinksUser.name}`, {
+          description: "تم تسجيل الدخول بنجاح"
+        });
+        return true;
+      }
+    }
+    
     toast.error("فشل تسجيل الدخول", {
       description: "اسم المستخدم أو كلمة المرور غير صحيحة"
     });
@@ -134,6 +147,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (screenUser) {
       setUser(screenUser);
       toast.success(`تم تشغيل شاشة المطبخ`, {
+        description: "تم تسجيل الدخول بنجاح"
+      });
+      return true;
+    }
+    return false;
+  };
+
+  // Drinks screen login function
+  const loginAsDrinksScreen = (): boolean => {
+    const drinksUser = mockUsers.find(u => u.username === 'drinks1');
+    if (drinksUser) {
+      setUser(drinksUser);
+      toast.success(`تم تشغيل شاشة المشروبات`, {
         description: "تم تسجيل الدخول بنجاح"
       });
       return true;
@@ -179,8 +205,56 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const createOrder = (orderData: Omit<Order, 'id' | 'createdAt' | 'waiterName'>) => {
     if (!user) return;
     
-    const waiter = mockUsers.find(u => u.id === orderData.waiterId);
+    // If the user is "drinks" role, find a waiter to assign
+    let waiterId = orderData.waiterId;
+    let waiter;
+    
+    if (user.role === 'drinks') {
+      const availableWaiter = mockUsers.find(u => u.role === 'waiter' && u.isActive);
+      if (availableWaiter) {
+        waiterId = availableWaiter.id;
+        waiter = availableWaiter;
+      }
+    } else {
+      waiter = mockUsers.find(u => u.id === waiterId);
+    }
+    
     if (!waiter) return;
+    
+    // Find existing order if any
+    const existingTable = tables.find(t => t.id === orderData.tableNumber);
+    const existingOrderId = existingTable?.currentOrderId;
+    const existingOrder = existingOrderId ? orders.find(o => o.id === existingOrderId) : undefined;
+    
+    // If order exists, update it
+    if (existingOrder && !existingOrder.isPaid) {
+      // Merge existing items with new items
+      const updatedItems = [...orderData.items];
+      
+      setOrders(orders.map(order => 
+        order.id === existingOrderId ? 
+        {
+          ...order,
+          items: updatedItems,
+          notes: orderData.notes,
+          totalAmount: orderData.totalAmount,
+          peopleCount: orderData.peopleCount || order.peopleCount,
+          updatedAt: new Date()
+        } : 
+        order
+      ));
+      
+      toast.success("تم تحديث الطلب بنجاح", {
+        description: `تم تحديث طلب الطاولة ${orderData.tableNumber}`
+      });
+      
+      return;
+    }
+    
+    // If the table has a paid order, clear it
+    if (existingOrder?.isPaid) {
+      resetTable(orderData.tableNumber);
+    }
     
     // Add completed: false to each order item
     const orderItemsWithCompletionStatus = orderData.items.map(item => ({
@@ -193,6 +267,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       id: `order-${Date.now()}`,
       createdAt: new Date(),
       waiterName: waiter.name,
+      waiterId: waiterId,
       items: orderItemsWithCompletionStatus,
       peopleCount: orderData.peopleCount || tables.find(t => t.id === orderData.tableNumber)?.peopleCount || 1,
       delayed: false,
@@ -208,7 +283,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...table, 
             isOccupied: true, 
             currentOrderId: newOrder.id,
-            peopleCount: orderData.peopleCount || table.peopleCount || 1
+            peopleCount: orderData.peopleCount || table.peopleCount || 1,
+            isReserved: false // Remove reservation when creating order
           }
         : table
     ));
@@ -482,6 +558,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     login,
     loginAsWaiter,
     loginAsScreen,
+    loginAsDrinksScreen,
     logout,
     addMenuItem,
     updateMenuItem,
