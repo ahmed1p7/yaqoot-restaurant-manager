@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { TableActions } from "@/components/tables/TableActions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge"; 
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, User, Search, Table as TableIcon, DollarSign } from "lucide-react";
 import { toast } from "sonner";
