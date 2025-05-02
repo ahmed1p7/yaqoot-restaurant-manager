@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -150,6 +149,8 @@ export const MenuView = () => {
       totalAmount: orderTotal,
       peopleCount: peopleCount,
       notes: orderNotes,
+      delayed: false,
+      isPaid: false
     });
     
     // Navigate back to tables view

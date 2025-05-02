@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 
 interface PrinterSettingsProps {
   printers: PrinterType[];
@@ -150,6 +151,3 @@ export const PrinterSettings: React.FC<PrinterSettingsProps> = ({
     </Card>
   );
 };
-
-// Add missing Badge component import
-import { Badge } from "@/components/ui/badge";

@@ -17,7 +17,8 @@ export const mockOrders: Order[] = [
     waiterName: 'أحمد النادل',
     createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30 mins ago
     notes: 'زبون منتظم',
-    isPaid: false
+    isPaid: false,
+    delayed: false
   },
   {
     id: 'order-2',
@@ -33,7 +34,8 @@ export const mockOrders: Order[] = [
     waiterId: '3',
     waiterName: 'خالد النادل',
     createdAt: new Date(Date.now() - 1000 * 60 * 15), // 15 mins ago
-    isPaid: false
+    isPaid: false,
+    delayed: false
   },
   {
     id: 'order-3',
@@ -50,7 +52,8 @@ export const mockOrders: Order[] = [
     waiterName: 'أحمد النادل',
     createdAt: new Date(Date.now() - 1000 * 60 * 60), // 60 mins ago
     updatedAt: new Date(Date.now() - 1000 * 60 * 30), // 30 mins ago
-    isPaid: true
+    isPaid: true,
+    delayed: false
   },
   {
     id: 'order-4',
@@ -65,6 +68,7 @@ export const mockOrders: Order[] = [
     waiterId: '3',
     waiterName: 'خالد النادل',
     createdAt: new Date(), // just now
-    isPaid: false
+    isPaid: false,
+    delayed: false
   }
 ];

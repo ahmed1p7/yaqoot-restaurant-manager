@@ -31,7 +31,7 @@ const translateCategory = (category: MenuCategory): string => {
 };
 
 export const MenuManagement = () => {
-  const { menuItems, addMenuItem, updateMenuItem, deleteMenuItem } = useApp();
+  const { menuItems, addMenuItem, updateMenuItem, deleteMenuItem, departments } = useApp();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<MenuCategory | "all">("all");
   const [currentItem, setCurrentItem] = useState<MenuItem | null>(null);
@@ -42,6 +42,7 @@ export const MenuManagement = () => {
     category: "main_dishes",
     image: "/placeholder.svg",
     isAvailable: true,
+    departmentId: "1" // Default to first department
   });
   
   const handleOpenDialog = (item?: MenuItem) => {
@@ -54,6 +55,7 @@ export const MenuManagement = () => {
         category: item.category,
         image: item.image || "/placeholder.svg",
         isAvailable: item.isAvailable,
+        departmentId: item.departmentId
       });
     } else {
       setCurrentItem(null);
@@ -64,6 +66,7 @@ export const MenuManagement = () => {
         category: "main_dishes",
         image: "/placeholder.svg",
         isAvailable: true,
+        departmentId: "1" // Default to first department
       });
     }
     setIsDialogOpen(true);

@@ -1,7 +1,7 @@
 
-import { DepartmentType } from '../types';
+import { Department } from '../types';
 
-export const mockDepartments: DepartmentType[] = [
+export const mockDepartments: Department[] = [
   {
     id: '1',
     name: 'المطبخ الرئيسي',

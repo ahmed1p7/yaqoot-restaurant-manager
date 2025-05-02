@@ -1,3 +1,4 @@
+
 // User types
 export interface User {
   id: string;
@@ -15,10 +16,12 @@ export interface MenuItem {
   description?: string;
   price: number;
   image?: string;
-  category: string;
+  category: MenuCategory;
   isAvailable: boolean;
   departmentId: string;
 }
+
+export type MenuCategory = 'appetizers' | 'main_dishes' | 'desserts' | 'drinks' | 'sides';
 
 // Order types
 export interface Order {
@@ -86,4 +89,7 @@ export interface PrinterType {
   connectionType: 'network' | 'usb' | 'bluetooth';
   address: string;
   isActive: boolean;
+  departmentId: string;
+  ip: string;
+  isBackup?: boolean;
 }
