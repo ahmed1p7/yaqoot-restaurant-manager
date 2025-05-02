@@ -86,11 +86,17 @@ export const Tables = () => {
   };
   
   const handleViewTable = (tableId: number) => {
-    // Navigate to table details page
+    // Navigate to menu view page to see and edit orders
     navigate(`/menu-view?table=${tableId}`);
   };
   
   const handleTableEmergency = (tableId: number) => {
+    // Only admin can trigger emergency
+    if (user?.role !== 'admin') {
+      toast.error("فقط المشرف يمكنه تفعيل وضع الطوارئ");
+      return;
+    }
+    
     setEmergencyTable(tableId);
     toast.error(`تم تسجيل حالة طوارئ للطاولة ${tableId}!`, {
       description: "تم إرسال تنبيه للإدارة"

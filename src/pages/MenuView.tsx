@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -177,6 +178,8 @@ export const MenuView = () => {
     return null;
   }
   
+  const isAdmin = user?.role === 'admin';
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -250,7 +253,8 @@ export const MenuView = () => {
                     <CardContent className="p-3 flex flex-col h-full">
                       <div className="flex justify-between items-start">
                         <h3 className="font-medium">{menuItem.name}</h3>
-                        {user?.role !== 'drinks' && (
+                        {/* Only show price for admin users */}
+                        {isAdmin && (
                           <span className="text-sm font-semibold">
                             {menuItem.price} ريال
                           </span>
@@ -301,7 +305,8 @@ export const MenuView = () => {
                       <div className="flex justify-between">
                         <div>
                           <div className="font-medium">{item.name}</div>
-                          {user?.role !== 'drinks' && (
+                          {/* Only show price for admin users */}
+                          {isAdmin && (
                             <div className="text-sm text-gray-600">{item.price} ريال</div>
                           )}
                         </div>
@@ -311,7 +316,10 @@ export const MenuView = () => {
                             variant="outline" 
                             size="icon" 
                             className="h-6 w-6"
-                            onClick={() => updateItemQuantity(item.menuItemId, item.quantity - 1)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateItemQuantity(item.menuItemId, item.quantity - 1);
+                            }}
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
@@ -322,7 +330,10 @@ export const MenuView = () => {
                             variant="outline" 
                             size="icon" 
                             className="h-6 w-6"
-                            onClick={() => updateItemQuantity(item.menuItemId, item.quantity + 1)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateItemQuantity(item.menuItemId, item.quantity + 1);
+                            }}
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
@@ -331,7 +342,10 @@ export const MenuView = () => {
                             variant="ghost" 
                             size="icon" 
                             className="h-6 w-6 text-red-500"
-                            onClick={() => removeItem(item.menuItemId)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeItem(item.menuItemId);
+                            }}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -344,6 +358,7 @@ export const MenuView = () => {
                         value={item.notes}
                         onChange={(e) => updateItemNotes(item.menuItemId, e.target.value)}
                         className="mt-2 text-sm"
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </div>
                   ))}
@@ -362,11 +377,12 @@ export const MenuView = () => {
                 onChange={(e) => setOrderNotes(e.target.value)}
                 placeholder="أي ملاحظات خاصة بالطلب"
                 className="mt-1"
+                onClick={(e) => e.stopPropagation()}
               />
             </div>
             
-            {/* Show total only for non-drinks role */}
-            {user?.role !== 'drinks' && (
+            {/* Show total only for admin users */}
+            {isAdmin && (
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <div className="flex justify-between font-bold">
                   <span>الإجمالي:</span>

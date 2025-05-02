@@ -119,22 +119,8 @@ export const TableActions: React.FC<TableActionsProps> = ({
               )}
             </Button>
           )}
-        </div>
-      )}
-      
-      {/* Waiter actions */}
-      {!isAdmin && (
-        <>
-          <Button 
-            variant={table.isOccupied ? "outline" : "default"}
-            size="sm" 
-            onClick={handleCreateOrder}
-            disabled={false} // Removed the restriction for reserved tables so waiters can create orders
-            className="w-full"
-          >
-            {table.isOccupied ? "تعديل الطلب" : "إنشاء طلب"}
-          </Button>
           
+          {/* Emergency button (Admin only) */}
           <Button
             variant="outline"
             size="sm"
@@ -144,7 +130,20 @@ export const TableActions: React.FC<TableActionsProps> = ({
             <AlertTriangle className="h-4 w-4 mr-1" />
             طوارئ
           </Button>
-        </>
+        </div>
+      )}
+      
+      {/* Waiter actions (simplified) */}
+      {!isAdmin && (
+        <Button 
+          variant={table.isOccupied ? "outline" : "default"}
+          size="sm" 
+          onClick={handleCreateOrder}
+          disabled={false} // Removed the restriction for reserved tables so waiters can create orders
+          className="w-full"
+        >
+          {table.isOccupied ? "تعديل الطلب" : "إنشاء طلب"}
+        </Button>
       )}
       
       {/* People Count Dialog */}
