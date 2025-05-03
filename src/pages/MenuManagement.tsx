@@ -16,10 +16,8 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { MenuItem } from "@/types";
+import { MenuItem, MenuCategory } from "@/types";
 import { ChefHat, Pencil, Trash } from "lucide-react";
-
-type MenuCategory = "appetizers" | "main_dishes" | "desserts" | "drinks" | "sides";
 
 const translateCategory = (category: string): string => {
   switch (category) {
@@ -35,7 +33,7 @@ const translateCategory = (category: string): string => {
 export const MenuManagement = () => {
   const { menuItems, addMenuItem, updateMenuItem, deleteMenuItem, departments } = useApp();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<string | "all">("all");
+  const [activeTab, setActiveTab] = useState<MenuCategory | "all">("all");
   const [currentItem, setCurrentItem] = useState<MenuItem | null>(null);
   const [formData, setFormData] = useState<Omit<MenuItem, "id">>({
     name: "",
@@ -212,7 +210,10 @@ export const MenuManagement = () => {
                 <Label htmlFor="category">التصنيف</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  onValueChange={(value: string) => setFormData({ 
+                    ...formData, 
+                    category: value as MenuCategory 
+                  })}
                 >
                   <SelectTrigger id="category">
                     <SelectValue placeholder="Select category" />
