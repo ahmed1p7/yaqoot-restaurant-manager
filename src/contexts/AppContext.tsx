@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { User, MenuItem, Order, Table, OrderItem, SystemSettings, PrinterType, Department } from '../types';
 import { mockUsers, mockMenuItems, mockOrders, mockTables, mockDepartments, mockPrinters } from '../data/mockData';
@@ -10,7 +9,7 @@ interface AppContextType {
   orders: Order[];
   tables: Table[];
   printers: PrinterType[];
-  departments: Department[]; // Add this line
+  departments: Department[];
   hasNewOrders: boolean;
   systemSettings: SystemSettings;
   login: (username: string, password: string) => boolean;
@@ -52,7 +51,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   })));
   const [tables, setTables] = useState<Table[]>(mockTables);
   const [printers, setPrinters] = useState<PrinterType[]>(mockPrinters);
-  const [departments, setDepartments] = useState<Department[]>(mockDepartments); // Add this line
+  const [departments, setDepartments] = useState<Department[]>(mockDepartments);
   const [hasNewOrders, setHasNewOrders] = useState<boolean>(false);
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({
     perSeatCharge: 2,
@@ -453,6 +452,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Find the active order for this table
     const tableOrder = orders.find(o => 
       o.tableNumber === tableId && 
+      !o.isPaid &&
       (o.status === 'pending' || o.status === 'preparing' || o.status === 'ready' || o.status === 'delivered')
     );
     
@@ -460,13 +460,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Update the order to mark it as paid
       setOrders(orders.map(order => 
         order.id === tableOrder.id 
-          ? { ...order, isPaid: true } 
+          ? { ...order, isPaid: true, updatedAt: new Date() } 
           : order
       ));
       
       toast.success(`تم تسجيل الدفع للطاولة ${tableId}`);
+      return true;
     } else {
       toast.error(`لا يوجد طلب نشط للطاولة ${tableId}`);
+      return false;
     }
   };
   
@@ -556,7 +558,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     orders,
     tables,
     printers,
-    departments, // Add this line
+    departments,
     hasNewOrders,
     systemSettings,
     login,

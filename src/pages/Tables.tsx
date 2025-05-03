@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { TableActions } from "@/components/tables/TableActions";
+import { PaymentDialog } from "@/components/tables/PaymentDialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge"; 
@@ -14,13 +15,15 @@ import { toast } from "sonner";
 import { Order } from "@/types";
 
 export const Tables = () => {
-  const { tables, orders, user, menuItems, getMostOrderedItems, getOrdersByTable, resetTable } = useApp();
+  const { tables, orders, user, menuItems, getMostOrderedItems, getOrdersByTable, resetTable, markTableAsPaid } = useApp();
   const navigate = useNavigate();
   
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [emergencyTable, setEmergencyTable] = useState<number | null>(null);
   const [showCloseDayDialog, setShowCloseDayDialog] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [selectedTableForPayment, setSelectedTableForPayment] = useState<number | null>(null);
   
   // Get the most ordered items for quick orders
   const mostOrderedItems = getMostOrderedItems(5);
@@ -113,6 +116,37 @@ export const Tables = () => {
     // In a real app, this would mark all tables as available, close all open orders, etc.
     setShowCloseDayDialog(true);
   };
+
+  const handleConfirmCloseDay = () => {
+    // Reset all tables
+    tables.forEach(table => {
+      if (table.isOccupied) {
+        resetTable(table.id);
+      }
+    });
+    
+    toast.success("تم إغلاق اليوم بنجاح", {
+      description: "تم تصفير جميع الطاولات وإرسال التقرير"
+    });
+    setShowCloseDayDialog(false);
+  };
+  
+  const handlePaymentClick = (tableId: number) => {
+    setSelectedTableForPayment(tableId);
+    setShowPaymentDialog(true);
+  };
+  
+  const handleConfirmPayment = (method: 'cash' | 'card', discount: number) => {
+    // In a real app, we would track the payment method and discount
+    if (selectedTableForPayment) {
+      markTableAsPaid(selectedTableForPayment);
+    }
+    setShowPaymentDialog(false);
+    setSelectedTableForPayment(null);
+  };
+
+  // Get the order for the selected payment table
+  const selectedPaymentOrder = selectedTableForPayment ? getCurrentOrder(selectedTableForPayment) : undefined;
 
   return (
     <div className="space-y-6">
@@ -308,14 +342,23 @@ export const Tables = () => {
                   </div>
                   
                   <div className="pt-3 mt-3 border-t border-gray-100">
+                    <div className="mb-4">
+                      <h4 className="font-medium mb-2">الأصناف الأكثر طلبًا:</h4>
+                      <div className="space-y-1">
+                        {getMostOrderedItems(5).map((item, index) => (
+                          <div key={item.id} className="flex justify-between text-sm">
+                            <span>{index + 1}. {item.name}</span>
+                            <span className="text-gray-600">#{item.price} ريال</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-3 mt-3 border-t border-gray-100">
                     <Button 
                       className="w-full bg-blue-600 hover:bg-blue-700"
-                      onClick={() => {
-                        toast.success("تم إغلاق اليوم بنجاح", {
-                          description: "تم تصفير جميع الطاولات وإرسال التقرير"
-                        });
-                        setShowCloseDayDialog(false);
-                      }}
+                      onClick={handleConfirmCloseDay}
                     >
                       إغلاق اليوم وتصفير الطاولات
                     </Button>
@@ -326,6 +369,14 @@ export const Tables = () => {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Payment Dialog */}
+      <PaymentDialog
+        isOpen={showPaymentDialog}
+        onClose={() => setShowPaymentDialog(false)}
+        order={selectedPaymentOrder}
+        onConfirmPayment={handleConfirmPayment}
+      />
     </div>
   );
 };

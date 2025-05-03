@@ -28,7 +28,7 @@ export const TableActions: React.FC<TableActionsProps> = ({
   const [isEditingPeople, setIsEditingPeople] = useState(false);
   
   const handleCreateOrder = () => {
-    if (table.peopleCount) {
+    if (table.peopleCount && table.peopleCount > 0) {
       // If table is reserved, automatically remove reservation when creating an order
       if (table.isReserved) {
         toggleTableReservation(table.id, false);
@@ -133,7 +133,7 @@ export const TableActions: React.FC<TableActionsProps> = ({
         </div>
       )}
       
-      {/* Waiter actions (simplified) - Remove "تعديل الطلب" text */}
+      {/* Waiter actions */}
       {!isAdmin && (
         <Button 
           variant={table.isOccupied ? "outline" : "default"}
