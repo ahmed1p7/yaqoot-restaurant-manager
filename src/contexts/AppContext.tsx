@@ -246,9 +246,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         order
       ));
       
-      toast.success("تم تحديث الطلب بنجاح", {
-        description: `تم تحديث طلب الطاولة ${orderData.tableNumber}`
-      });
+      // No notification toast as requested
       
       return;
     }
@@ -294,9 +292,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Set notification for screen users
     setHasNewOrders(true);
     
-    toast.success("تم إنشاء الطلب بنجاح", {
-      description: `طلب جديد للطاولة ${orderData.tableNumber}`
-    });
+    // No notification toast as requested
     
     // If emergency mode is on, handle backup procedures
     if (systemSettings.emergencyMode) {
@@ -330,12 +326,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ));
     }
     
-    toast.success("تم تحديث حالة الطلب", {
-      description: `تم تغيير حالة الطلب إلى ${status === 'pending' ? 'معلق' : 
-        status === 'preparing' ? 'قيد التحضير' : 
-        status === 'ready' ? 'جاهز' : 
-        status === 'delivered' ? 'تم التسليم' : 'ملغى'}`
-    });
+    // No status change notifications as requested, except for "ready" status
+    if (status === 'ready') {
+      toast.success("الطلب جاهز للتقديم");
+    }
   };
 
   // New function to update item completion status
@@ -474,17 +468,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   
   // New function to toggle table reservation
   const toggleTableReservation = (tableId: number, isReserved: boolean) => {
+    // Don't allow reserving an occupied table
+    if (isReserved) {
+      const targetTable = tables.find(t => t.id === tableId);
+      if (targetTable && targetTable.isOccupied) {
+        return;
+      }
+    }
+    
     setTables(tables.map(table => 
       table.id === tableId 
         ? { ...table, isReserved } 
         : table
     ));
     
-    if (isReserved) {
-      toast.success(`تم حجز الطاولة ${tableId}`);
-    } else {
-      toast.success(`تم إلغاء حجز الطاولة ${tableId}`);
-    }
+    // No notification toast as requested
   };
   
   // New function to update printer settings

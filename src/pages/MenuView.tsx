@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -9,12 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Minus, Plus, ArrowLeft, Trash2, User, AlertTriangle, Check } from "lucide-react";
+import { Minus, Plus, ArrowLeft, Trash2, User, Check } from "lucide-react";
 import { toast } from "sonner";
 import { MenuItem, Order, OrderItem } from "@/types";
 
 export const MenuView = () => {
-  const { menuItems, user, orders, tables, createOrder, updateTablePeopleCount } = useApp();
+  const { menuItems, user, orders, tables, createOrder, updateTablePeopleCount, toggleTableReservation } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -43,7 +44,7 @@ export const MenuView = () => {
   const [orderNotes, setOrderNotes] = useState(existingOrder?.notes || "");
   const [peopleCount, setPeopleCount] = useState(currentTable?.peopleCount || 0);
   
-  // Only show the people dialog when table has no people count set
+  // Show people dialog only when first accessing a table without a people count
   const [showPeopleDialog, setShowPeopleDialog] = useState(
     currentTable ? (currentTable.peopleCount || 0) === 0 : true
   );
@@ -103,7 +104,7 @@ export const MenuView = () => {
       ]);
     }
     
-    toast.success(`تمت إضافة ${menuItem.name} للطلب`);
+    // Removed notification toast as requested
   };
   
   // Function to update item quantity
@@ -130,7 +131,6 @@ export const MenuView = () => {
   // Function to remove item
   const removeItem = (menuItemId: string) => {
     setSelectedItems(selectedItems.filter(item => item.menuItemId !== menuItemId));
-    toast.success("تم حذف العنصر من الطلب");
   };
   
   // Function to handle order submission
@@ -175,6 +175,11 @@ export const MenuView = () => {
     // Update table people count
     if (tableId) {
       updateTablePeopleCount(tableId, count);
+      
+      // If table is reserved, automatically mark it as occupied
+      if (currentTable?.isReserved) {
+        toggleTableReservation(tableId, false);
+      }
     }
   };
   

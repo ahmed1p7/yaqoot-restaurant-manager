@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Table, Order } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { useApp } from "@/contexts/AppContext";
 import { AlertTriangle, User, Check } from "lucide-react";
 import { PeopleCountDialog } from "./PeopleCountDialog";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 interface TableActionsProps {
   table: Table;
@@ -29,7 +29,7 @@ export const TableActions: React.FC<TableActionsProps> = ({
   
   const handleCreateOrder = () => {
     if (table.peopleCount && table.peopleCount > 0) {
-      // If table is reserved, automatically remove reservation when creating an order
+      // If table is reserved, automatically mark it as occupied
       if (table.isReserved) {
         toggleTableReservation(table.id, false);
       }
@@ -43,7 +43,7 @@ export const TableActions: React.FC<TableActionsProps> = ({
     updateTablePeopleCount(table.id, count);
     
     if (!isEditingPeople) {
-      // If table is reserved, automatically remove reservation when creating an order
+      // If table is reserved, automatically remove reservation and mark as occupied
       if (table.isReserved) {
         toggleTableReservation(table.id, false);
       }
@@ -58,6 +58,12 @@ export const TableActions: React.FC<TableActionsProps> = ({
   };
   
   const handleToggleReservation = () => {
+    // If table is occupied, don't allow reserving it
+    if (table.isOccupied && !table.isReserved) {
+      toast.error("لا يمكن حجز طاولة مشغولة");
+      return;
+    }
+    
     toggleTableReservation(table.id, !table.isReserved);
   };
   
@@ -99,6 +105,7 @@ export const TableActions: React.FC<TableActionsProps> = ({
             size="sm"
             onClick={handleToggleReservation}
             className={table.isReserved ? "border-purple-500 text-purple-500" : ""}
+            disabled={table.isOccupied && !table.isReserved} // Prevent reserving occupied tables
           >
             {table.isReserved ? "إلغاء الحجز" : "حجز الطاولة"}
           </Button>
