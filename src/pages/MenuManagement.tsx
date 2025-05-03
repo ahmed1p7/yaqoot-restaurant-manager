@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
@@ -15,10 +16,12 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { MenuCategory, MenuItem } from "@/types";
+import { MenuItem } from "@/types";
 import { ChefHat, Pencil, Trash } from "lucide-react";
 
-const translateCategory = (category: MenuCategory): string => {
+type MenuCategory = "appetizers" | "main_dishes" | "desserts" | "drinks" | "sides";
+
+const translateCategory = (category: string): string => {
   switch (category) {
     case "appetizers": return "مقبلات";
     case "main_dishes": return "أطباق رئيسية";
@@ -32,7 +35,7 @@ const translateCategory = (category: MenuCategory): string => {
 export const MenuManagement = () => {
   const { menuItems, addMenuItem, updateMenuItem, deleteMenuItem, departments } = useApp();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<MenuCategory | "all">("all");
+  const [activeTab, setActiveTab] = useState<string | "all">("all");
   const [currentItem, setCurrentItem] = useState<MenuItem | null>(null);
   const [formData, setFormData] = useState<Omit<MenuItem, "id">>({
     name: "",
@@ -65,7 +68,7 @@ export const MenuManagement = () => {
         category: "main_dishes",
         image: "/placeholder.svg",
         isAvailable: true,
-        departmentId: "1" // Default to first department
+        departmentId: departments && departments.length > 0 ? departments[0].id : "1"
       });
     }
     setIsDialogOpen(true);
@@ -110,7 +113,7 @@ export const MenuManagement = () => {
         </TabsList>
         
         <TabsContent value={activeTab} className="mt-0">
-          <div className="menu-grid">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredItems.map((item) => (
               <Card key={item.id} className={`overflow-hidden ${!item.isAvailable ? 'opacity-60' : ''}`}>
                 <div className="h-40 bg-gray-200 flex items-center justify-center">
@@ -209,7 +212,7 @@ export const MenuManagement = () => {
                 <Label htmlFor="category">التصنيف</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value as MenuCategory })}
+                  onValueChange={(value) => setFormData({ ...formData, category: value })}
                 >
                   <SelectTrigger id="category">
                     <SelectValue placeholder="Select category" />
@@ -235,7 +238,7 @@ export const MenuManagement = () => {
                   <SelectValue placeholder="اختر القسم" />
                 </SelectTrigger>
                 <SelectContent>
-                  {departments.map((dept) => (
+                  {departments?.map((dept) => (
                     <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
                   ))}
                 </SelectContent>

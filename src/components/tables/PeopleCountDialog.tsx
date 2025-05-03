@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { User, Plus, Minus } from "lucide-react";
+import { toast } from "sonner";
 
 interface PeopleCountDialogProps {
   isOpen: boolean;
@@ -20,17 +21,21 @@ export const PeopleCountDialog: React.FC<PeopleCountDialogProps> = ({
   onConfirm,
   isEditing = false
 }) => {
-  const [count, setCount] = useState<number>(currentCount || 1);
+  const [count, setCount] = useState<number>(currentCount || 0);
 
   const handleIncrement = () => {
     setCount(prev => Math.min(prev + 1, 20));
   };
 
   const handleDecrement = () => {
-    setCount(prev => Math.max(prev - 1, 1));
+    setCount(prev => Math.max(prev - 1, 0));
   };
 
   const handleConfirm = () => {
+    if (count === 0) {
+      toast.error("يجب تحديد عدد الأشخاص");
+      return;
+    }
     onConfirm(count);
     onClose();
   };
@@ -50,7 +55,7 @@ export const PeopleCountDialog: React.FC<PeopleCountDialogProps> = ({
             variant="outline"
             size="icon"
             onClick={handleDecrement}
-            disabled={count <= 1}
+            disabled={count <= 0}
           >
             <Minus className="w-4 h-4" />
           </Button>
@@ -58,9 +63,9 @@ export const PeopleCountDialog: React.FC<PeopleCountDialogProps> = ({
           <Input
             type="number"
             value={count}
-            onChange={(e) => setCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+            onChange={(e) => setCount(Math.max(0, Math.min(20, parseInt(e.target.value) || 0)))}
             className="w-20 text-center text-lg"
-            min={1}
+            min={0}
             max={20}
           />
           
@@ -76,7 +81,7 @@ export const PeopleCountDialog: React.FC<PeopleCountDialogProps> = ({
         
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>إلغاء</Button>
-          <Button onClick={handleConfirm}>تأكيد</Button>
+          <Button onClick={handleConfirm} disabled={count === 0}>تأكيد</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

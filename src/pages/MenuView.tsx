@@ -42,8 +42,8 @@ export const MenuView = () => {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [orderNotes, setOrderNotes] = useState(existingOrder?.notes || "");
-  const [peopleCount, setPeopleCount] = useState(currentTable?.peopleCount || 1);
-  const [showPeopleDialog, setShowPeopleDialog] = useState(!currentTable?.peopleCount);
+  const [peopleCount, setPeopleCount] = useState(currentTable?.peopleCount || 0);
+  const [showPeopleDialog, setShowPeopleDialog] = useState(true); // Always show people dialog first
   const [orderTotal, setOrderTotal] = useState(0);
   
   // Calculate total whenever selected items change
@@ -133,6 +133,11 @@ export const MenuView = () => {
   const handleSubmitOrder = () => {
     if (selectedItems.length === 0) {
       toast.error("لا يمكن إنشاء طلب فارغ");
+      return;
+    }
+    
+    if (peopleCount <= 0) {
+      setShowPeopleDialog(true);
       return;
     }
     
@@ -241,37 +246,23 @@ export const MenuView = () => {
               ))}
             </TabsList>
             
-            {/* Menu items grid */}
+            {/* Menu items grid - Changed to keypad style layout */}
             <TabsContent value={activeCategory} className="mt-0">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {filteredMenuItems.map((menuItem) => (
                   <Card 
                     key={menuItem.id} 
                     className="cursor-pointer hover:border-blue-300 transition-colors"
                     onClick={() => handleAddItem(menuItem)}
                   >
-                    <CardContent className="p-3 flex flex-col h-full">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-medium">{menuItem.name}</h3>
-                        {/* Only show price for admin users */}
-                        {isAdmin && (
-                          <span className="text-sm font-semibold">
-                            {menuItem.price} ريال
-                          </span>
-                        )}
-                      </div>
-                      {menuItem.description && (
-                        <p className="text-sm text-gray-500 mt-1 flex-grow">
-                          {menuItem.description}
-                        </p>
+                    <CardContent className="p-3 flex flex-col items-center justify-center h-24 text-center">
+                      <h3 className="font-medium">{menuItem.name}</h3>
+                      {/* Only show price for admin users */}
+                      {isAdmin && (
+                        <span className="text-sm font-semibold mt-1">
+                          {menuItem.price} ريال
+                        </span>
                       )}
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="mt-2 w-full"
-                      >
-                        إضافة للطلب
-                      </Button>
                     </CardContent>
                   </Card>
                 ))}
@@ -403,8 +394,15 @@ export const MenuView = () => {
         </div>
       </div>
       
-      {/* People count dialog */}
-      <Dialog open={showPeopleDialog} onOpenChange={setShowPeopleDialog}>
+      {/* People count dialog - Always show at start with 0 as default */}
+      <Dialog open={showPeopleDialog} onOpenChange={(open) => {
+        // Don't allow closing if count is 0 and there's no existing count
+        if (!open && peopleCount === 0 && (!currentTable || !currentTable.peopleCount)) {
+          toast.error("يجب تحديد عدد الأشخاص");
+          return;
+        }
+        setShowPeopleDialog(open);
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>عدد الأشخاص</DialogTitle>

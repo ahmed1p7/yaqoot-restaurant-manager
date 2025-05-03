@@ -133,16 +133,15 @@ export const TableActions: React.FC<TableActionsProps> = ({
         </div>
       )}
       
-      {/* Waiter actions (simplified) */}
+      {/* Waiter actions (simplified) - Remove "تعديل الطلب" text */}
       {!isAdmin && (
         <Button 
           variant={table.isOccupied ? "outline" : "default"}
           size="sm" 
           onClick={handleCreateOrder}
-          disabled={false} // Removed the restriction for reserved tables so waiters can create orders
           className="w-full"
         >
-          {table.isOccupied ? "تعديل الطلب" : "إنشاء طلب"}
+          {table.id}
         </Button>
       )}
       
@@ -150,7 +149,7 @@ export const TableActions: React.FC<TableActionsProps> = ({
       <PeopleCountDialog
         isOpen={isPeopleDialogOpen}
         onClose={() => setIsPeopleDialogOpen(false)}
-        currentCount={table.peopleCount || 1}
+        currentCount={table.peopleCount || 0}
         onConfirm={handlePeopleCountConfirm}
         isEditing={isEditingPeople}
       />
