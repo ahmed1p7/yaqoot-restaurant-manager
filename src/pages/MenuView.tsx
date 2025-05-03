@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -43,7 +42,12 @@ export const MenuView = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [orderNotes, setOrderNotes] = useState(existingOrder?.notes || "");
   const [peopleCount, setPeopleCount] = useState(currentTable?.peopleCount || 0);
-  const [showPeopleDialog, setShowPeopleDialog] = useState(true); // Always show people dialog first
+  
+  // Only show the people dialog when table has no people count set
+  const [showPeopleDialog, setShowPeopleDialog] = useState(
+    currentTable ? (currentTable.peopleCount || 0) === 0 : true
+  );
+  
   const [orderTotal, setOrderTotal] = useState(0);
   
   // Calculate total whenever selected items change
@@ -394,10 +398,10 @@ export const MenuView = () => {
         </div>
       </div>
       
-      {/* People count dialog - Always show at start with 0 as default */}
+      {/* People count dialog - Only show when table has no people count */}
       <Dialog open={showPeopleDialog} onOpenChange={(open) => {
-        // Don't allow closing if count is 0 and there's no existing count
-        if (!open && peopleCount === 0 && (!currentTable || !currentTable.peopleCount)) {
+        // Don't allow closing if count is 0
+        if (!open && peopleCount === 0) {
           toast.error("يجب تحديد عدد الأشخاص");
           return;
         }
