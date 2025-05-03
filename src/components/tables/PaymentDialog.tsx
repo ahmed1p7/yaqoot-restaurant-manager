@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, User, Cash, Percent } from "lucide-react";
+import { CreditCard, User, DollarSign, Percent } from "lucide-react";
 import { toast } from "sonner";
 
 interface PaymentDialogProps {
@@ -42,9 +42,9 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex justify-between items-center">
-            <span>تسجيل دفع للطاولة {order.tableNumber}</span>
+            <span>تسجيل دفع للطاولة {order?.tableNumber}</span>
             <Badge className="bg-blue-100 text-blue-800 flex items-center gap-1">
-              <User className="h-3 w-3" /> {order.peopleCount} أشخاص
+              <User className="h-3 w-3" /> {order?.peopleCount} أشخاص
             </Badge>
           </DialogTitle>
         </DialogHeader>
@@ -55,7 +55,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
             <h4 className="text-sm font-medium mb-2">الأطباق المطلوبة:</h4>
             <ScrollArea className="h-32 rounded-md border p-2">
               <div className="space-y-2">
-                {order.items.map((item, index) => (
+                {order?.items.map((item, index) => (
                   <div key={index} className="flex justify-between text-sm">
                     <div>
                       <span className="font-medium">{item.name}</span>
@@ -81,7 +81,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                 className="flex-1"
                 onClick={() => setPaymentMethod('cash')}
               >
-                <Cash className="h-4 w-4 mr-2" />
+                <DollarSign className="h-4 w-4 mr-2" />
                 نقدي
               </Button>
               <Button
@@ -132,7 +132,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
               <span>{discountedAmount.toFixed(2)} ريال</span>
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              المتوسط للشخص: {(discountedAmount / order.peopleCount).toFixed(2)} ريال
+              المتوسط للشخص: {(discountedAmount / order?.peopleCount!).toFixed(2)} ريال
             </div>
           </div>
         </div>
