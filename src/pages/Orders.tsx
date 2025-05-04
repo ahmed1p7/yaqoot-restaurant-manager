@@ -26,6 +26,7 @@ const getStatusColor = (status: OrderStatus): string => {
     case "ready": return "bg-green-500";
     case "delivered": return "bg-restaurant-primary";
     case "canceled": return "bg-red-500";
+    case "completed": return "bg-green-700"; // Added color for completed status
     default: return "bg-gray-500";
   }
 };
@@ -51,6 +52,7 @@ export const Orders = () => {
       ready: 2,
       delivered: 3,
       canceled: 4,
+      completed: 5, // Added completed status with lowest priority
     };
     
     // Sort by status first, then by creation time (newest first for same status)
