@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { User, MenuItem, Order, Table, OrderItem, SystemSettings, PrinterType, Department } from '../types';
 import { mockUsers, mockMenuItems, mockOrders, mockTables, mockDepartments, mockPrinters } from '../data/mockData';
@@ -205,9 +204,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const createOrder = (orderData: Omit<Order, 'id' | 'createdAt' | 'waiterName'>) => {
-    if (!user) return;
-    
+  // New function to create or update an order
+  const createOrder = (orderData: Partial<Order>) => {
+    // Check if this is an update for an existing order
+    const tableId = orderData.tableNumber;
+    if (!tableId) return;
+
+    // Find the table
+    const table = tables.find(t => t.id === tableId);
+    if (!table) return;
+
+    // If no items in order, reset people count to 0
+    if (!orderData.items || orderData.items.length === 0) {
+      updateTablePeopleCount(tableId, 0);
+      return;
+    }
+
     // If the user is "drinks" role, find a waiter to assign
     let waiterId = orderData.waiterId;
     let waiter;
@@ -426,8 +438,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   
   // New function to reset a table after it has been paid
   const resetTable = (tableId: number) => {
-    // Reset the table status
-    setTables(tables.map(table => 
+    // Find the table to reset
+    const tableToReset = tables.find(t => t.id === tableId);
+    if (!tableToReset) return;
+
+    // Reset the table in tables array
+    setTables(prevTables => prevTables.map(table => 
       table.id === tableId 
         ? { 
             ...table, 
@@ -437,10 +453,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           }
         : table
     ));
-    
-    toast.success(`تم إعادة تهيئة الطاولة ${tableId}`, {
-      description: "يمكنك إنشاء طلب جديد الآن"
-    });
+
+    // Update any orders for this table
+    updateOrderStatus(tableToReset.currentOrderId || '', 'completed');
   };
   
   // New function to mark a table order as paid

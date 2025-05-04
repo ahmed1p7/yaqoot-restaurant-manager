@@ -24,7 +24,7 @@ export const PeopleCountDialog: React.FC<PeopleCountDialogProps> = ({
   const [count, setCount] = useState<number>(currentCount || 0);
 
   const handleIncrement = () => {
-    setCount(prev => Math.min(prev + 1, 20));
+    setCount(prev => Math.min(prev + 1, 100));
   };
 
   const handleDecrement = () => {
@@ -63,17 +63,17 @@ export const PeopleCountDialog: React.FC<PeopleCountDialogProps> = ({
           <Input
             type="number"
             value={count}
-            onChange={(e) => setCount(Math.max(0, Math.min(20, parseInt(e.target.value) || 0)))}
+            onChange={(e) => setCount(Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
             className="w-20 text-center text-lg"
             min={0}
-            max={20}
+            max={100}
           />
           
           <Button
             variant="outline"
             size="icon"
             onClick={handleIncrement}
-            disabled={count >= 20}
+            disabled={count >= 100}
           >
             <Plus className="w-4 h-4" />
           </Button>
