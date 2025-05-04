@@ -1,4 +1,3 @@
-
 // User types
 export interface User {
   id: string;
@@ -41,7 +40,7 @@ export interface Order {
   isPaid: boolean;
 }
 
-export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered' | 'canceled';
+export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered' | 'canceled' | 'completed';
 
 // Order Item types
 export interface OrderItem {

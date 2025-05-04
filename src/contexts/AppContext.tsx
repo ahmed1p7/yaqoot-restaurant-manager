@@ -276,13 +276,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }));
     
     const newOrder: Order = {
-      ...orderData,
       id: `order-${Date.now()}`,
-      createdAt: new Date(),
-      waiterName: waiter.name,
+      tableNumber: tableId, // Ensure tableNumber is explicitly set
       waiterId: waiterId,
+      waiterName: waiter.name,
+      createdAt: new Date(),
       items: orderItemsWithCompletionStatus,
-      peopleCount: orderData.peopleCount || tables.find(t => t.id === orderData.tableNumber)?.peopleCount || 1,
+      status: 'pending', // Set a default status
+      totalAmount: orderData.totalAmount || 0,
+      peopleCount: orderData.peopleCount || tables.find(t => t.id === tableId)?.peopleCount || 1,
       delayed: false,
       isPaid: false
     };
@@ -454,8 +456,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         : table
     ));
 
-    // Update any orders for this table
-    updateOrderStatus(tableToReset.currentOrderId || '', 'completed');
+    // Update any orders for this table - use 'delivered' instead of 'completed'
+    if (tableToReset.currentOrderId) {
+      updateOrderStatus(tableToReset.currentOrderId, 'delivered');
+    }
   };
   
   // New function to mark a table order as paid
