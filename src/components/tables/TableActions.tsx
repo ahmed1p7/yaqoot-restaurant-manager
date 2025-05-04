@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Table, Order } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ export const TableActions: React.FC<TableActionsProps> = ({
       }
       onCreateOrder(table.id);
     } else {
+      // Always show people dialog when table has no people count set
       setIsPeopleDialogOpen(true);
     }
   };
@@ -62,6 +64,11 @@ export const TableActions: React.FC<TableActionsProps> = ({
     if (table.isOccupied && !table.isReserved) {
       toast.error("لا يمكن حجز طاولة مشغولة");
       return;
+    }
+    
+    // When reserving a table, reset its people count to 0
+    if (!table.isReserved) {
+      updateTablePeopleCount(table.id, 0);
     }
     
     toggleTableReservation(table.id, !table.isReserved);

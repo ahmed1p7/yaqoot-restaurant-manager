@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { User, MenuItem, Order, Table, OrderItem, SystemSettings, PrinterType, Department } from '../types';
 import { mockUsers, mockMenuItems, mockOrders, mockTables, mockDepartments, mockPrinters } from '../data/mockData';
@@ -431,7 +432,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         ? { 
             ...table, 
             isOccupied: false, 
-            currentOrderId: undefined
+            currentOrderId: undefined,
+            peopleCount: 0  // Reset people count to zero when table is reset
           }
         : table
     ));
