@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useApp } from "@/contexts/AppContext";
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -12,14 +13,13 @@ import { OrderItem } from '@/types';
 import { QuickOrderBar } from "@/components/menu/QuickOrderBar";
 
 export const MenuView = () => {
-  const { menuItems, createOrder, tables, orders } = useApp();
+  const { menuItems, createOrder, tables, orders, getMostOrderedItems } = useApp();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tableId = searchParams.get("table");
   const selectedTable = tableId ? parseInt(tableId) : null;
   const [category, setCategory] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
-  const { getMostOrderedItems } = useApp();
 
   useEffect(() => {
     if (!selectedTable) {
@@ -33,7 +33,7 @@ export const MenuView = () => {
   }
 
   const handleAddToOrder = (item: any) => {
-    const existingTable = tables.tables.find(t => t.id === selectedTable);
+    const existingTable = tables.find(t => t.id === selectedTable);
     const existingOrderId = existingTable?.currentOrderId;
     const existingOrder = existingOrderId ? orders.find(o => o.id === existingOrderId) : undefined;
 
@@ -50,14 +50,19 @@ export const MenuView = () => {
       name: item.name,
       price: item.price,
       quantity: quantity,
-      notes: ''
+      notes: '',
+      completed: false // Adding the required completed property
     };
 
     const orderData = {
       tableNumber: selectedTable,
       items: [orderItem],
       totalAmount: item.price * quantity,
-      peopleCount: tables.tables.find(t => t.id === selectedTable)?.peopleCount
+      peopleCount: tables.find(t => t.id === selectedTable)?.peopleCount,
+      status: 'pending', // Adding the required status property
+      waiterId: '', // Adding required waiterId (will be set in AppContext)
+      delayed: false, // Adding required delayed property
+      isPaid: false // Adding required isPaid property
     };
 
     createOrder(orderData);
