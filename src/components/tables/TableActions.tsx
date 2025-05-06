@@ -29,8 +29,13 @@ export const TableActions: React.FC<TableActionsProps> = ({
   const [isEditingPeople, setIsEditingPeople] = useState(false);
   
   const handleCreateOrder = () => {
-    // Always show people dialog when trying to create a new order
-    setIsPeopleDialogOpen(true);
+    // If table doesn't have people count set, show the dialog
+    if (!table.peopleCount || table.peopleCount === 0) {
+      setIsPeopleDialogOpen(true);
+    } else {
+      // If there's already a people count, just create the order
+      onCreateOrder(table.id);
+    }
   };
   
   const handlePeopleCountConfirm = (count: number) => {
