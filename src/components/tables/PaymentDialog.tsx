@@ -24,7 +24,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   order,
   onConfirmPayment
 }) => {
-  const { systemSettings } = useApp();
+  const { systemSettings, menuItems } = useApp();
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
   const [discount, setDiscount] = useState<number>(0);
 
@@ -34,7 +34,10 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   const categorizedItems: Record<string, { items: OrderItem[], subtotal: number }> = {};
   
   order.items.forEach(item => {
-    const category = item.category || "أخرى";
+    // Look up the category from menuItems since it doesn't exist in OrderItem
+    const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
+    const category = menuItem?.category ? menuItem.category : "أخرى";
+    
     if (!categorizedItems[category]) {
       categorizedItems[category] = { items: [], subtotal: 0 };
     }

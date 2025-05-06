@@ -57,7 +57,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     addMenuItem: menu.addMenuItem,
     updateMenuItem: menu.updateMenuItem,
     deleteMenuItem: menu.deleteMenuItem,
-    createOrder: (orderData) => orders.createOrder({...orderData, user: auth.user, systemSettings: settings.systemSettings}),
+    // Fix: Pass waiterId and systemSettings separately instead of user object
+    createOrder: (orderData) => orders.createOrder({
+      ...orderData,
+      waiterId: auth.user?.id,
+      waiterRole: auth.user?.role
+    }),
     updateOrderStatus: orders.updateOrderStatus,
     updateItemCompletionStatus: orders.updateItemCompletionStatus,
     getFilteredOrders: orders.getFilteredOrders,

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Order, OrderItem } from '../../types';
 import { mockOrders, mockUsers } from '../../data/mockData';
@@ -25,7 +24,7 @@ export const useOrders = (
     setHasNewOrders(false);
   };
 
-  const createOrder = (orderData: Partial<Order>) => {
+  const createOrder = (orderData: Partial<Order> & { waiterId?: string, waiterRole?: string }) => {
     // Check if this is an update for an existing order
     const tableId = orderData.tableNumber;
     if (!tableId) return;
@@ -44,7 +43,7 @@ export const useOrders = (
     let waiterId = orderData.waiterId;
     let waiter;
     
-    if (orderData.user?.role === 'drinks') {
+    if (orderData.waiterRole === 'drinks') {
       const availableWaiter = mockUsers.find(u => u.role === 'waiter' && u.isActive);
       if (availableWaiter) {
         waiterId = availableWaiter.id;
@@ -124,21 +123,6 @@ export const useOrders = (
     
     // Set notification for screen users
     setHasNewOrders(true);
-    
-    // If emergency mode is on, handle backup procedures
-    if (orderData.systemSettings?.emergencyMode) {
-      if (orderData.systemSettings.backupPrinterEnabled) {
-        toast.info("تم إرسال الطلب إلى الطابعة الاحتياطية", {
-          description: "نظام الطوارئ مفعل"
-        });
-      }
-      
-      if (orderData.systemSettings.backupPhoneEnabled) {
-        toast.info("تم إرسال إشعار إلى تطبيق الطهاة", {
-          description: "نظام الطوارئ مفعل"
-        });
-      }
-    }
   };
 
   const updateOrderStatus = (orderId: string, status: Order['status']) => {
