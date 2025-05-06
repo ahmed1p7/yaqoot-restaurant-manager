@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from "@/contexts/AppContext";
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +20,20 @@ export const MenuView = () => {
   const selectedTable = tableId ? parseInt(tableId) : null;
   const [category, setCategory] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentOrderItems, setCurrentOrderItems] = useState<OrderItem[]>([]);
+
+  // Find current order for this table
+  useEffect(() => {
+    if (selectedTable) {
+      const table = tables.find(t => t.id === selectedTable);
+      if (table?.currentOrderId) {
+        const currentOrder = orders.find(o => o.id === table.currentOrderId);
+        if (currentOrder && !currentOrder.isPaid) {
+          setCurrentOrderItems(currentOrder.items);
+        }
+      }
+    }
+  }, [selectedTable, tables, orders]);
 
   useEffect(() => {
     if (!selectedTable) {
@@ -59,13 +73,30 @@ export const MenuView = () => {
       items: [orderItem],
       totalAmount: item.price * quantity,
       peopleCount: tables.find(t => t.id === selectedTable)?.peopleCount,
-      status: 'pending' as OrderStatus, // Using the correct OrderStatus type
-      waiterId: '', // This will be set in AppContext
+      status: 'pending' as OrderStatus,
+      waiterId: '',
       delayed: false,
       isPaid: false
     };
 
     createOrder(orderData);
+    
+    // Update local state to show the item immediately
+    const itemExists = currentOrderItems.some(i => i.menuItemId === item.id);
+    if (itemExists) {
+      setCurrentOrderItems(prevItems => 
+        prevItems.map(i => i.menuItemId === item.id ? 
+          { ...i, quantity: i.quantity + 1 } : i
+        )
+      );
+    } else {
+      setCurrentOrderItems(prevItems => [...prevItems, orderItem]);
+    }
+    
+    // Show success toast
+    toast.success(`تمت إضافة ${item.name} للطلب`, {
+      description: "يمكنك تعديل الكمية لاحقاً"
+    });
   };
 
   const filteredMenuItems = menuItems.filter(item => {
@@ -98,6 +129,20 @@ export const MenuView = () => {
         />
       </div>
 
+      {/* Current Order Items Display */}
+      {currentOrderItems.length > 0 && (
+        <div className="bg-gray-50 p-3 rounded-lg border mb-4">
+          <h3 className="font-medium mb-2">الطلب الحالي:</h3>
+          <div className="flex flex-wrap gap-2">
+            {currentOrderItems.map((item) => (
+              <Badge key={item.menuItemId} variant="outline" className="px-3 py-1">
+                {item.name} ({item.quantity}x)
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
       <Tabs defaultValue="all" className="space-y-4">
         <TabsList>
           <TabsTrigger value="all" onClick={() => setCategory(undefined)}>الكل</TabsTrigger>
@@ -115,9 +160,6 @@ export const MenuView = () => {
             items={getMostOrderedItems(5)}
             onAddItem={(item) => {
               handleAddToOrder(item);
-              toast.success(`تمت إضافة ${item.name} للطلب`, {
-                description: "يمكنك تعديل الكمية لاحقاً"
-              });
             }}
           />
         )}
