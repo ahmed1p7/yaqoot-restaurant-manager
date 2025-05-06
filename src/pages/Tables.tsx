@@ -25,9 +25,6 @@ export const Tables = () => {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedTableForPayment, setSelectedTableForPayment] = useState<number | null>(null);
   
-  // Get the most ordered items for quick orders
-  const mostOrderedItems = getMostOrderedItems(5);
-  
   // Calculate daily statistics for admin
   const calculateDailyStatistics = () => {
     // Get all completed orders for the day (in a real app, this would filter by date)
@@ -177,29 +174,6 @@ export const Tables = () => {
           </div>
         </div>
       </div>
-      
-      {/* Quick order bar - Show only for waiters */}
-      {user?.role === 'waiter' && mostOrderedItems.length > 0 && (
-        <div className="bg-gray-50 p-2 rounded-md flex items-center gap-2 overflow-x-auto">
-          <span className="text-sm font-medium min-w-max">طلبات سريعة:</span>
-          {mostOrderedItems.map(item => (
-            <Button 
-              key={item.id} 
-              variant="outline" 
-              size="sm"
-              className="min-w-max"
-              onClick={() => {
-                // In a real app, this would add the item to current order
-                toast.success(`تمت إضافة ${item.name} للطلب`, {
-                  description: "يمكنك تعديل الكمية لاحقاً"
-                });
-              }}
-            >
-              {item.name}
-            </Button>
-          ))}
-        </div>
-      )}
       
       {/* Emergency Alert */}
       {emergencyTable && (

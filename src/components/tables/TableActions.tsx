@@ -30,16 +30,8 @@ export const TableActions: React.FC<TableActionsProps> = ({
   const [isEditingPeople, setIsEditingPeople] = useState(false);
   
   const handleCreateOrder = () => {
-    if (table.peopleCount && table.peopleCount > 0) {
-      // If table is reserved, automatically mark it as occupied
-      if (table.isReserved) {
-        toggleTableReservation(table.id, false);
-      }
-      onCreateOrder(table.id);
-    } else {
-      // Always show people dialog when table has no people count set
-      setIsPeopleDialogOpen(true);
-    }
+    // Always show people dialog when trying to create a new order
+    setIsPeopleDialogOpen(true);
   };
   
   const handlePeopleCountConfirm = (count: number) => {
@@ -167,7 +159,7 @@ export const TableActions: React.FC<TableActionsProps> = ({
           onClick={handleCreateOrder}
           className="w-full"
         >
-          {table.id}
+          {table.isOccupied ? "تعديل الطلب" : "طلب جديد"}
         </Button>
       )}
       
