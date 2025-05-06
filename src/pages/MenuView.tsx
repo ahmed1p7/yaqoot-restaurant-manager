@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { OrderItem } from '@/types';
+import { OrderItem, OrderStatus } from '@/types';
 import { QuickOrderBar } from "@/components/menu/QuickOrderBar";
 
 export const MenuView = () => {
@@ -51,7 +51,7 @@ export const MenuView = () => {
       price: item.price,
       quantity: quantity,
       notes: '',
-      completed: false // Adding the required completed property
+      completed: false
     };
 
     const orderData = {
@@ -59,10 +59,10 @@ export const MenuView = () => {
       items: [orderItem],
       totalAmount: item.price * quantity,
       peopleCount: tables.find(t => t.id === selectedTable)?.peopleCount,
-      status: 'pending', // Adding the required status property
-      waiterId: '', // Adding required waiterId (will be set in AppContext)
-      delayed: false, // Adding required delayed property
-      isPaid: false // Adding required isPaid property
+      status: 'pending' as OrderStatus, // Using the correct OrderStatus type
+      waiterId: '', // This will be set in AppContext
+      delayed: false,
+      isPaid: false
     };
 
     createOrder(orderData);
