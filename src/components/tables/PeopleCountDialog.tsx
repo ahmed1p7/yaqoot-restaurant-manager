@@ -2,9 +2,9 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { User, Plus, Minus } from "lucide-react";
+import { User } from "lucide-react";
 import { toast } from "sonner";
+import { PeopleCountSlider } from "./PeopleCountSlider";
 
 interface PeopleCountDialogProps {
   isOpen: boolean;
@@ -22,14 +22,6 @@ export const PeopleCountDialog: React.FC<PeopleCountDialogProps> = ({
   isEditing = false
 }) => {
   const [count, setCount] = useState<number>(currentCount || 0);
-
-  const handleIncrement = () => {
-    setCount(prev => Math.min(prev + 1, 100));
-  };
-
-  const handleDecrement = () => {
-    setCount(prev => Math.max(prev - 1, 0));
-  };
 
   const handleConfirm = () => {
     if (count === 0) {
@@ -50,33 +42,12 @@ export const PeopleCountDialog: React.FC<PeopleCountDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="flex items-center justify-center gap-4 py-6">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleDecrement}
-            disabled={count <= 0}
-          >
-            <Minus className="w-4 h-4" />
-          </Button>
-          
-          <Input
-            type="number"
-            value={count}
-            onChange={(e) => setCount(Math.max(0, Math.min(100, parseInt(e.target.value) || 0)))}
-            className="w-20 text-center text-lg"
-            min={0}
+        <div className="flex flex-col items-center justify-center gap-4 py-6">
+          <PeopleCountSlider
+            currentCount={currentCount}
+            onChange={setCount}
             max={100}
           />
-          
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleIncrement}
-            disabled={count >= 100}
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
         </div>
         
         <DialogFooter>

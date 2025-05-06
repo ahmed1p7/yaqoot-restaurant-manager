@@ -6,6 +6,7 @@ import { useApp } from "@/contexts/AppContext";
 import { AlertTriangle, User, Check } from "lucide-react";
 import { PeopleCountDialog } from "./PeopleCountDialog";
 import { Badge } from "@/components/ui/badge";
+import { PeopleCountSlider } from "./PeopleCountSlider";
 import { toast } from "sonner";
 
 interface TableActionsProps {
@@ -80,10 +81,14 @@ export const TableActions: React.FC<TableActionsProps> = ({
     }
   };
   
+  const handleQuickPeopleCountChange = (count: number) => {
+    updateTablePeopleCount(table.id, count);
+  };
+  
   return (
     <div className="space-y-3">
       {/* People count display */}
-      {table.peopleCount && table.peopleCount > 0 && (
+      {table.peopleCount && table.peopleCount > 0 ? (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 text-sm text-gray-500">
             <User className="h-4 w-4" />
@@ -101,6 +106,13 @@ export const TableActions: React.FC<TableActionsProps> = ({
           >
             تعديل
           </Button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <PeopleCountSlider 
+            currentCount={table.peopleCount || 0}
+            onChange={handleQuickPeopleCountChange}
+          />
         </div>
       )}
       
