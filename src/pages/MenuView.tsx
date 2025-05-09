@@ -11,6 +11,7 @@ import { OrderItem, OrderStatus } from '@/types';
 import { QuickOrderBar } from "@/components/menu/QuickOrderBar";
 import { CurrentOrderPanel } from "@/components/menu/CurrentOrderPanel";
 import { PeopleCountDialog } from "@/components/tables/PeopleCountDialog";
+import { Plus } from 'lucide-react';
 
 export const MenuView = () => {
   const { 
