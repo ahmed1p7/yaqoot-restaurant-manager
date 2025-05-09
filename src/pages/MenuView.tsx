@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from "@/contexts/AppContext";
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -11,6 +10,7 @@ import { toast } from "sonner";
 import { OrderItem, OrderStatus } from '@/types';
 import { QuickOrderBar } from "@/components/menu/QuickOrderBar";
 import { CurrentOrderPanel } from "@/components/menu/CurrentOrderPanel";
+import { PeopleCountDialog } from "@/components/tables/PeopleCountDialog";
 
 export const MenuView = () => {
   const { 
@@ -19,7 +19,8 @@ export const MenuView = () => {
     tables, 
     orders, 
     getMostOrderedItems, 
-    cancelOrderItem 
+    cancelOrderItem, 
+    updateTablePeopleCount 
   } = useApp();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -28,6 +29,7 @@ export const MenuView = () => {
   const [category, setCategory] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentOrderItems, setCurrentOrderItems] = useState<OrderItem[]>([]);
+  const [isPeopleDialogOpen, setIsPeopleDialogOpen] = useState(false);
 
   // Find current order for this table
   useEffect(() => {
@@ -179,6 +181,16 @@ export const MenuView = () => {
     return existingOrderId ? orders.find(o => o.id === existingOrderId) : undefined;
   };
 
+  const getCurrentTablePeopleCount = () => {
+    const table = tables.find(t => t.id === selectedTable);
+    return table?.peopleCount || 0;
+  };
+  
+  const handlePeopleCountConfirm = (count: number) => {
+    updateTablePeopleCount(selectedTable, count);
+    setIsPeopleDialogOpen(false);
+  };
+
   const filteredMenuItems = menuItems.filter(item => {
     if (category && item.category !== category) {
       return false;
@@ -225,6 +237,8 @@ export const MenuView = () => {
         onUpdateNote={handleUpdateNote}
         onRemoveItem={handleRemoveItem}
         tableNumber={selectedTable}
+        peopleCount={getCurrentTablePeopleCount()}
+        onOpenPeopleDialog={() => setIsPeopleDialogOpen(true)}
       />
 
       {/* Quick Order Bar */}
@@ -233,6 +247,7 @@ export const MenuView = () => {
         onAddItem={handleAddToOrder}
       />
 
+      {/* Menu Tabs and Items */}
       <Tabs defaultValue={getCategoryLabel(category)} className="space-y-4">
         <TabsList>
           <TabsTrigger value="all" onClick={() => setCategory(undefined)}>الكل</TabsTrigger>
@@ -248,13 +263,19 @@ export const MenuView = () => {
         <ScrollArea className="h-[450px] w-full rounded-md border p-4">
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {filteredMenuItems.map(item => (
-              <Card key={item.id} className="cursor-pointer hover:bg-gray-50 transition-all">
+              <Card key={item.id} className="cursor-pointer hover:bg-gray-50 transition-all border border-primary/10">
                 <CardContent className="p-4">
                   <h3 className="font-medium text-lg">{item.name}</h3>
-                  <p className="text-sm text-gray-500">{item.description}</p>
-                  <div className="mt-2 flex justify-between items-center">
-                    <span className="font-semibold">{item.price} ريال</span>
-                    <Button size="sm" onClick={() => handleAddToOrder(item)}>إضافة</Button>
+                  <p className="text-sm text-gray-500 mb-3">{item.description}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-primary">{item.price} ريال</span>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleAddToOrder(item)}
+                      className="gap-1"
+                    >
+                      <Plus className="h-4 w-4" /> إضافة
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -262,6 +283,15 @@ export const MenuView = () => {
           </div>
         </ScrollArea>
       </Tabs>
+      
+      {/* People Count Dialog */}
+      <PeopleCountDialog
+        isOpen={isPeopleDialogOpen}
+        onClose={() => setIsPeopleDialogOpen(false)}
+        currentCount={getCurrentTablePeopleCount()}
+        onConfirm={handlePeopleCountConfirm}
+        isEditing={true}
+      />
     </div>
   );
 };
