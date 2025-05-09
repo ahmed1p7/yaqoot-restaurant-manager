@@ -25,7 +25,23 @@ export const useSettings = () => {
     toast.success(enabled ? "تم تفعيل رسوم المقعد" : "تم إيقاف رسوم المقعد");
   };
 
-  // New function to update printer settings
+  // Emergency mode functions
+  const toggleEmergencyMode = (enabled: boolean) => {
+    setSystemSettings({...systemSettings, emergencyMode: enabled});
+    toast.success(enabled ? "تم تفعيل وضع الطوارئ" : "تم إيقاف وضع الطوارئ");
+  };
+
+  const toggleBackupPrinterEnabled = (enabled: boolean) => {
+    setSystemSettings({...systemSettings, backupPrinterEnabled: enabled});
+    toast.success(enabled ? "تم تفعيل الطابعة الاحتياطية" : "تم إيقاف الطابعة الاحتياطية");
+  };
+
+  const toggleBackupPhoneEnabled = (enabled: boolean) => {
+    setSystemSettings({...systemSettings, backupPhoneEnabled: enabled});
+    toast.success(enabled ? "تم تفعيل إشعارات الطوارئ" : "تم إيقاف إشعارات الطوارئ");
+  };
+
+  // Printer settings functions
   const updatePrinterSettings = (printer: PrinterType) => {
     setPrinters(printers.map(p => 
       p.id === printer.id 
@@ -41,6 +57,9 @@ export const useSettings = () => {
     systemSettings,
     updatePerSeatCharge,
     togglePerSeatChargeEnabled,
+    toggleEmergencyMode,
+    toggleBackupPrinterEnabled,
+    toggleBackupPhoneEnabled,
     updatePrinterSettings
   };
 };

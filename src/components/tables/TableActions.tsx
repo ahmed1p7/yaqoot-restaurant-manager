@@ -3,9 +3,8 @@ import React, { useState } from "react";
 import { Table, Order } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/contexts/AppContext";
-import { AlertTriangle, User, Check } from "lucide-react";
+import { User, Check } from "lucide-react";
 import { PeopleCountDialog } from "./PeopleCountDialog";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 interface TableActionsProps {
@@ -13,15 +12,13 @@ interface TableActionsProps {
   currentOrder?: Order;
   onCreateOrder: (tableId: number) => void;
   isAdmin?: boolean;
-  triggerEmergency?: (tableId: number) => void;
 }
 
 export const TableActions: React.FC<TableActionsProps> = ({
   table,
   currentOrder,
   onCreateOrder,
-  isAdmin = false,
-  triggerEmergency
+  isAdmin = false
 }) => {
   const { updateTablePeopleCount, markTableAsPaid, toggleTableReservation } = useApp();
   
@@ -69,12 +66,6 @@ export const TableActions: React.FC<TableActionsProps> = ({
     }
     
     toggleTableReservation(table.id, !table.isReserved);
-  };
-  
-  const handleEmergency = () => {
-    if (triggerEmergency) {
-      triggerEmergency(table.id);
-    }
   };
   
   return (
@@ -130,17 +121,6 @@ export const TableActions: React.FC<TableActionsProps> = ({
               )}
             </Button>
           )}
-          
-          {/* Emergency button (Admin only) */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full text-red-500 border-red-200"
-            onClick={handleEmergency}
-          >
-            <AlertTriangle className="h-4 w-4 mr-1" />
-            طوارئ
-          </Button>
         </div>
       )}
       

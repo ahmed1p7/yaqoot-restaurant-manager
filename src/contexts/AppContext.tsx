@@ -8,7 +8,6 @@ import { useMenu } from './hooks/useMenu';
 import { useTables } from './hooks/useTables';
 import { useSettings } from './hooks/useSettings';
 import { useOrders } from './hooks/useOrders';
-import { mockUsers } from '../data/mockData';
 import { Order } from '../types';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -71,6 +70,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     clearNewOrdersNotification: orders.clearNewOrdersNotification,
     updatePerSeatCharge: settings.updatePerSeatCharge,
     togglePerSeatChargeEnabled: settings.togglePerSeatChargeEnabled,
+    toggleEmergencyMode: settings.toggleEmergencyMode,
+    toggleBackupPrinterEnabled: settings.toggleBackupPrinterEnabled,
+    toggleBackupPhoneEnabled: settings.toggleBackupPhoneEnabled,
     delayOrder: orders.delayOrder,
     cancelOrderItem: orders.cancelOrderItem,
     getMostOrderedItems: menu.getMostOrderedItems,

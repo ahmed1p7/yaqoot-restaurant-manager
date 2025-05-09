@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Order, OrderItem } from '../../types';
 import { mockOrders, mockUsers } from '../../data/mockData';
 import { toast } from "sonner";
@@ -22,6 +22,23 @@ const orderHelpers = {
   // Check if all items in an order are completed
   checkAllItemsCompleted: (items: OrderItem[]): boolean => {
     return items.every(item => item.completed);
+  },
+  
+  // Initialize order from order data
+  initializeOrder: (orderData: Partial<Order>, tableId: number, waiterId: string, waiterName: string): Order => {
+    return {
+      id: `order-${Date.now()}`,
+      tableNumber: tableId,
+      waiterId: waiterId,
+      waiterName: waiterName,
+      createdAt: new Date(),
+      items: orderData.items.map(item => ({...item, completed: false})) as OrderItem[],
+      status: 'pending',
+      totalAmount: orderData.totalAmount || 0,
+      peopleCount: orderData.peopleCount || 1,
+      delayed: false,
+      isPaid: false
+    };
   }
 };
 
@@ -42,12 +59,12 @@ export const useOrders = (
   }, [orders, updateOrderStats]);
 
   // Function to clear new orders notification
-  const clearNewOrdersNotification = () => {
+  const clearNewOrdersNotification = useCallback(() => {
     setHasNewOrders(false);
-  };
+  }, []);
 
   // Create or update an order
-  const createOrder = (orderData: Partial<Order> & { waiterId?: string, waiterRole?: string }) => {
+  const createOrder = useCallback((orderData: Partial<Order> & { waiterId?: string, waiterRole?: string }) => {
     // Check if this is an update for an existing order
     const tableId = orderData.tableNumber;
     if (!tableId) return;
@@ -73,7 +90,7 @@ export const useOrders = (
     
     // Update existing order if found and not paid
     if (existingOrder && !existingOrder.isPaid) {
-      setOrders(orders.map(order => 
+      setOrders(prevOrders => prevOrders.map(order => 
         order.id === existingOrderId ? 
         {
           ...order,
@@ -93,39 +110,26 @@ export const useOrders = (
       tables.resetTable(orderData.tableNumber);
     }
     
-    // Add completed: false to each order item
-    const orderItemsWithCompletionStatus = orderData.items.map(item => ({
-      ...item,
-      completed: false
-    }));
-    
     // Create a new order
-    const newOrder: Order = {
-      id: `order-${Date.now()}`,
-      tableNumber: tableId,
-      waiterId: waiter.id,
-      waiterName: waiter.name,
-      createdAt: new Date(),
-      items: orderItemsWithCompletionStatus as OrderItem[],
-      status: 'pending',
-      totalAmount: orderData.totalAmount || 0,
-      peopleCount: orderData.peopleCount || tables.tables.find(t => t.id === tableId)?.peopleCount || 1,
-      delayed: false,
-      isPaid: false
-    };
+    const newOrder = orderHelpers.initializeOrder(
+      orderData,
+      tableId,
+      waiter.id,
+      waiter.name
+    );
     
-    setOrders([...orders, newOrder]);
+    setOrders(prevOrders => [...prevOrders, newOrder]);
     
     // Update table status and people count
     updateTableWithNewOrder(tableId, newOrder.id, orderData.peopleCount);
     
     // Set notification for screen users
     setHasNewOrders(true);
-  };
+  }, [orders, tables]);
 
   // Helper to update table with new order
-  const updateTableWithNewOrder = (tableId: number, orderId: string, peopleCount?: number) => {
-    tables.setTables(tables.tables.map(table => 
+  const updateTableWithNewOrder = useCallback((tableId: number, orderId: string, peopleCount?: number) => {
+    tables.setTables(prevTables => prevTables.map(table => 
       table.id === tableId 
         ? { 
             ...table, 
@@ -136,11 +140,11 @@ export const useOrders = (
           }
         : table
     ));
-  };
+  }, [tables]);
 
   // Update order status
-  const updateOrderStatus = (orderId: string, status: Order['status']) => {
-    setOrders(orders.map(order => 
+  const updateOrderStatus = useCallback((orderId: string, status: Order['status']) => {
+    setOrders(prevOrders => prevOrders.map(order => 
       order.id === orderId 
         ? { ...order, status, updatedAt: new Date() } 
         : order
@@ -148,7 +152,7 @@ export const useOrders = (
     
     // If status is delivered, free up the table
     if (status === 'delivered') {
-      tables.setTables(tables.tables.map(table => 
+      tables.setTables(prevTables => prevTables.map(table => 
         table.currentOrderId === orderId
           ? { ...table, isOccupied: false, currentOrderId: undefined }
           : table
@@ -159,11 +163,11 @@ export const useOrders = (
     if (status === 'ready') {
       toast.success("الطلب جاهز للتقديم");
     }
-  };
+  }, [tables]);
 
   // Update item completion status
-  const updateItemCompletionStatus = (orderId: string, menuItemId: string, completed: boolean) => {
-    setOrders(orders.map(order => {
+  const updateItemCompletionStatus = useCallback((orderId: string, menuItemId: string, completed: boolean) => {
+    setOrders(prevOrders => prevOrders.map(order => {
       if (order.id === orderId) {
         const updatedItems = order.items.map(item => 
           item.menuItemId === menuItemId ? { ...item, completed } : item
@@ -186,11 +190,11 @@ export const useOrders = (
     }));
     
     toast.success(completed ? "تم الانتهاء من تحضير العنصر" : "تمت إعادة العنصر للتحضير");
-  };
+  }, []);
 
   // Delay an order
-  const delayOrder = (orderId: string, reason: string) => {
-    setOrders(orders.map(order => 
+  const delayOrder = useCallback((orderId: string, reason: string) => {
+    setOrders(prevOrders => prevOrders.map(order => 
       order.id === orderId 
         ? { ...order, delayed: true, delayReason: reason, updatedAt: new Date() } 
         : order
@@ -199,11 +203,11 @@ export const useOrders = (
     toast.info("تم تحديث حالة الطلب", {
       description: "تم تأجيل الطلب وإرسال إشعار للنادل"
     });
-  };
+  }, []);
   
   // Cancel a specific order item
-  const cancelOrderItem = (orderId: string, menuItemId: string) => {
-    setOrders(orders.map(order => {
+  const cancelOrderItem = useCallback((orderId: string, menuItemId: string) => {
+    setOrders(prevOrders => prevOrders.map(order => {
       if (order.id === orderId) {
         // Filter out the canceled item
         const updatedItems = order.items.filter(item => item.menuItemId !== menuItemId);
@@ -220,19 +224,19 @@ export const useOrders = (
     }));
     
     toast.success("تم إلغاء العنصر من الطلب");
-  };
+  }, []);
 
   // Helper to free up a table
-  const freeUpTable = (orderId: string) => {
-    tables.setTables(tables.tables.map(table => 
+  const freeUpTable = useCallback((orderId: string) => {
+    tables.setTables(prevTables => prevTables.map(table => 
       table.currentOrderId === orderId
         ? { ...table, isOccupied: false, currentOrderId: undefined }
         : table
     ));
-  };
+  }, [tables]);
 
   // Mark a table order as paid
-  const markTableAsPaid = (tableId: number) => {
+  const markTableAsPaid = useCallback((tableId: number) => {
     // Find active order for this table
     const tableOrder = orders.find(o => 
       o.tableNumber === tableId && 
@@ -241,7 +245,7 @@ export const useOrders = (
     );
     
     if (tableOrder) {
-      setOrders(orders.map(order => 
+      setOrders(prevOrders => prevOrders.map(order => 
         order.id === tableOrder.id 
           ? { ...order, isPaid: true, updatedAt: new Date() } 
           : order
@@ -253,25 +257,25 @@ export const useOrders = (
       toast.error(`لا يوجد طلب نشط للطاولة ${tableId}`);
       return false;
     }
-  };
+  }, [orders]);
 
   // Reset table order
-  const resetTableOrder = (tableId: number) => {
+  const resetTableOrder = useCallback((tableId: number) => {
     const tableToReset = tables.resetTable(tableId);
 
     if (tableToReset?.currentOrderId) {
       updateOrderStatus(tableToReset.currentOrderId, 'delivered');
     }
-  };
+  }, [tables, updateOrderStatus]);
 
   // Get filtered orders by status
-  const getFilteredOrders = (status?: Order['status']) => {
+  const getFilteredOrders = useCallback((status?: Order['status']) => {
     if (!status) return orders;
     return orders.filter(order => order.status === status);
-  };
+  }, [orders]);
 
   // Get orders grouped by table
-  const getOrdersByTable = (): Record<number, Order[]> => {
+  const getOrdersByTable = useCallback((): Record<number, Order[]> => {
     const tableOrders: Record<number, Order[]> = {};
     
     orders.forEach(order => {
@@ -282,7 +286,7 @@ export const useOrders = (
     });
     
     return tableOrders;
-  };
+  }, [orders]);
 
   return {
     orders,

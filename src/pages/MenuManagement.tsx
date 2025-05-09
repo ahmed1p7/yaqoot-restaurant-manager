@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { MenuItem, MenuCategory } from "@/types";
 import { ChefHat, Pencil, Trash } from "lucide-react";
+import { ImageUploader } from "@/components/menu/ImageUploader";
 
 const translateCategory = (category: string): string => {
   switch (category) {
@@ -244,6 +244,14 @@ export const MenuManagement = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="dishImage">صورة الطبق</Label>
+              <ImageUploader
+                currentImage={formData.image}
+                onImageChange={(imageUrl) => setFormData({ ...formData, image: imageUrl })}
+              />
             </div>
             
             <div className="flex items-center justify-between">
