@@ -5,13 +5,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { OrderItemCard } from './OrderItemCard';
 import { Badge } from "@/components/ui/badge";
-import { Users } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Users, SendHorizonal, Send } from 'lucide-react';
 
 interface CurrentOrderPanelProps {
   items: OrderItem[];
   onUpdateQuantity: (menuItemId: string, quantity: number) => void;
   onUpdateNote: (menuItemId: string, note: string) => void;
   onRemoveItem: (menuItemId: string) => void;
+  onSendOrder?: () => void;
   tableNumber?: number;
   peopleCount?: number;
   onOpenPeopleDialog?: () => void;
@@ -22,6 +24,7 @@ export const CurrentOrderPanel: React.FC<CurrentOrderPanelProps> = ({
   onUpdateQuantity,
   onUpdateNote,
   onRemoveItem,
+  onSendOrder,
   tableNumber,
   peopleCount,
   onOpenPeopleDialog
@@ -80,8 +83,17 @@ export const CurrentOrderPanel: React.FC<CurrentOrderPanelProps> = ({
       </CardContent>
       
       {items.length > 0 && (
-        <CardFooter className="bg-primary/5 py-2 text-sm text-muted-foreground">
-          <div className="w-full text-center">
+        <CardFooter className="bg-primary/5 py-3 flex flex-col gap-2">
+          <Button 
+            className="w-full" 
+            size="lg" 
+            onClick={onSendOrder}
+            disabled={items.length === 0}
+          >
+            <Send className="h-5 w-5 ml-2" />
+            إرسال الطلب إلى المطبخ
+          </Button>
+          <div className="w-full text-center text-sm text-muted-foreground">
             * يمكنك تعديل الكميات وإضافة ملاحظات للأطباق
           </div>
         </CardFooter>

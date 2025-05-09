@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { OrderItem, OrderStatus } from '@/types';
+import { OrderItem, OrderStatus, MenuItem } from '@/types';
 import { QuickOrderBar } from "@/components/menu/QuickOrderBar";
 import { CurrentOrderPanel } from "@/components/menu/CurrentOrderPanel";
 import { PeopleCountDialog } from "@/components/tables/PeopleCountDialog";
-import { Plus } from 'lucide-react';
+import { Plus, CupSoda, Utensils, CakeSlice, Send } from 'lucide-react';
 
 export const MenuView = () => {
   const { 
@@ -192,8 +192,37 @@ export const MenuView = () => {
     setIsPeopleDialogOpen(false);
   };
 
+  // عملية إرسال الطلب إلى المطبخ
+  const handleSendOrder = () => {
+    if (currentOrderItems.length === 0) {
+      toast.error("لا يمكن إرسال طلب فارغ");
+      return;
+    }
+
+    const existingTable = tables.find(t => t.id === selectedTable);
+    const existingOrderId = existingTable?.currentOrderId;
+
+    const orderData = {
+      tableNumber: selectedTable,
+      items: currentOrderItems,
+      totalAmount: calculateTotalAmount(currentOrderItems),
+      peopleCount: tables.find(t => t.id === selectedTable)?.peopleCount || 1,
+      status: 'pending' as OrderStatus,
+      waiterId: '',
+      delayed: false,
+      isPaid: false
+    };
+
+    createOrder(orderData);
+    
+    toast.success("تم إرسال الطلب إلى المطبخ بنجاح", {
+      description: "سيتم إشعار المطبخ بالطلب الجديد"
+    });
+  };
+
+  // Filter menu items by category and search query
   const filteredMenuItems = menuItems.filter(item => {
-    if (category && item.category !== category) {
+    if (category && item.category !== mapCategoryToArabic(category)) {
       return false;
     }
     if (searchQuery && !item.name.toLowerCase().includes(searchQuery.toLowerCase())) {
@@ -202,14 +231,26 @@ export const MenuView = () => {
     return true;
   });
 
-  const getCategoryLabel = (category: string | undefined) => {
+  // تحويل التصنيفات إلى مسميات عربية
+  const mapCategoryToArabic = (category: string): string => {
     switch(category) {
-      case "مشروبات": return "drinks";
-      case "أطباق رئيسية": return "main";
-      case "حلويات": return "desserts";
-      default: return "all";
+      case "drinks": return "مشروبات";
+      case "main": return "أطباق رئيسية";
+      case "desserts": return "حلويات";
+      case "appetizers": return "مقبلات";
+      case "sides": return "أطباق جانبية";
+      default: return "";
     }
-  };
+  }
+
+  // تجميع الأطباق حسب التصنيف
+  const groupedMenuItems: Record<string, MenuItem[]> = {};
+  menuItems.forEach(item => {
+    if (!groupedMenuItems[item.category]) {
+      groupedMenuItems[item.category] = [];
+    }
+    groupedMenuItems[item.category].push(item);
+  });
 
   return (
     <div className="space-y-4">
@@ -231,12 +272,13 @@ export const MenuView = () => {
         />
       </div>
 
-      {/* Current Order Panel */}
+      {/* Current Order Panel with Send Button */}
       <CurrentOrderPanel 
         items={currentOrderItems}
         onUpdateQuantity={handleUpdateQuantity}
         onUpdateNote={handleUpdateNote}
         onRemoveItem={handleRemoveItem}
+        onSendOrder={handleSendOrder}
         tableNumber={selectedTable}
         peopleCount={getCurrentTablePeopleCount()}
         onOpenPeopleDialog={() => setIsPeopleDialogOpen(true)}
@@ -248,40 +290,68 @@ export const MenuView = () => {
         onAddItem={handleAddToOrder}
       />
 
-      {/* Menu Tabs and Items */}
-      <Tabs defaultValue={getCategoryLabel(category)} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="all" onClick={() => setCategory(undefined)}>الكل</TabsTrigger>
-          <TabsTrigger value="drinks" onClick={() => setCategory("مشروبات")}>مشروبات</TabsTrigger>
-          <TabsTrigger value="main" onClick={() => setCategory("أطباق رئيسية")}>أطباق رئيسية</TabsTrigger>
-          <TabsTrigger value="desserts" onClick={() => setCategory("حلويات")}>حلويات</TabsTrigger>
+      {/* Menu Tabs and Items - تحسين طريقة عرض التصنيفات */}
+      <Tabs defaultValue="all" className="space-y-4">
+        <TabsList className="flex flex-wrap">
+          <TabsTrigger value="all" onClick={() => setCategory(undefined)} className="flex items-center gap-1">
+            الكل
+          </TabsTrigger>
+          <TabsTrigger value="drinks" onClick={() => setCategory("drinks")} className="flex items-center gap-1">
+            <CupSoda className="h-4 w-4" /> مشروبات
+          </TabsTrigger>
+          <TabsTrigger value="main" onClick={() => setCategory("main")} className="flex items-center gap-1">
+            <Utensils className="h-4 w-4" /> أطباق رئيسية
+          </TabsTrigger>
+          <TabsTrigger value="desserts" onClick={() => setCategory("desserts")} className="flex items-center gap-1">
+            <CakeSlice className="h-4 w-4" /> حلويات
+          </TabsTrigger>
+          <TabsTrigger value="appetizers" onClick={() => setCategory("appetizers")} className="flex items-center gap-1">
+            مقبلات
+          </TabsTrigger>
+          <TabsTrigger value="sides" onClick={() => setCategory("sides")} className="flex items-center gap-1">
+            أطباق جانبية
+          </TabsTrigger>
         </TabsList>
+        
         <TabsContent value="all" />
         <TabsContent value="drinks" />
         <TabsContent value="main" />
         <TabsContent value="desserts" />
+        <TabsContent value="appetizers" />
+        <TabsContent value="sides" />
 
         <ScrollArea className="h-[450px] w-full rounded-md border p-4">
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {filteredMenuItems.map(item => (
-              <Card key={item.id} className="cursor-pointer hover:bg-gray-50 transition-all border border-primary/10">
-                <CardContent className="p-4">
-                  <h3 className="font-medium text-lg">{item.name}</h3>
-                  <p className="text-sm text-gray-500 mb-3">{item.description}</p>
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-primary">{item.price} ريال</span>
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleAddToOrder(item)}
-                      className="gap-1"
-                    >
-                      <Plus className="h-4 w-4" /> إضافة
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {filteredMenuItems.length > 0 ? (
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {filteredMenuItems.map(item => (
+                <Card key={item.id} className="cursor-pointer hover:bg-gray-50 transition-all border border-primary/10">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="outline" className="text-xs">
+                        {item.category}
+                      </Badge>
+                    </div>
+                    <h3 className="font-medium text-lg">{item.name}</h3>
+                    <p className="text-sm text-gray-500 mb-3">{item.description}</p>
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-primary">{item.price} ريال</span>
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleAddToOrder(item)}
+                        className="gap-1"
+                      >
+                        <Plus className="h-4 w-4" /> إضافة
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <p className="text-lg text-gray-500">لا توجد أطباق متطابقة مع البحث</p>
+            </div>
+          )}
         </ScrollArea>
       </Tabs>
       
