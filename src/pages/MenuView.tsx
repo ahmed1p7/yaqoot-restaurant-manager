@@ -34,6 +34,18 @@ export const MenuView = () => {
   const [currentOrderItems, setCurrentOrderItems] = useState<OrderItem[]>([]);
   const [isPeopleDialogOpen, setIsPeopleDialogOpen] = useState(false);
 
+  // تحويل التصنيفات إلى مسميات عربية - MOVED BEFORE USAGE
+  const mapCategoryToArabic = (category: string): string => {
+    switch(category) {
+      case "drinks": return "مشروبات";
+      case "main": return "أطباق رئيسية";
+      case "desserts": return "حلويات";
+      case "appetizers": return "مقبلات";
+      case "sides": return "أطباق جانبية";
+      default: return "";
+    }
+  }
+  
   // Find current order for this table
   useEffect(() => {
     if (selectedTable) {
@@ -232,18 +244,6 @@ export const MenuView = () => {
     }
     return true;
   });
-
-  // تحويل التصنيفات إلى مسميات عربية
-  const mapCategoryToArabic = (category: string): string => {
-    switch(category) {
-      case "drinks": return "مشروبات";
-      case "main": return "أطباق رئيسية";
-      case "desserts": return "حلويات";
-      case "appetizers": return "مقبلات";
-      case "sides": return "أطباق جانبية";
-      default: return "";
-    }
-  }
 
   // تجميع الأطباق حسب التصنيف
   const groupedMenuItems: Record<string, MenuItem[]> = {};
