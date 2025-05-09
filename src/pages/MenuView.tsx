@@ -16,6 +16,18 @@ import { PeopleCountDialog } from "@/components/tables/PeopleCountDialog";
 import { Plus, CupSoda, Utensils, CakeSlice, Send } from 'lucide-react';
 
 export const MenuView = () => {
+  // تحويل التصنيفات إلى مسميات عربية - MOVED BEFORE USAGE
+  const mapCategoryToArabic = (category: string): string => {
+    switch(category) {
+      case "drinks": return "مشروبات";
+      case "main": return "أطباق رئيسية";
+      case "desserts": return "حلويات";
+      case "appetizers": return "مقبلات";
+      case "sides": return "أطباق جانبية";
+      default: return "";
+    }
+  }
+
   const { 
     menuItems, 
     createOrder, 
@@ -33,18 +45,6 @@ export const MenuView = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentOrderItems, setCurrentOrderItems] = useState<OrderItem[]>([]);
   const [isPeopleDialogOpen, setIsPeopleDialogOpen] = useState(false);
-
-  // تحويل التصنيفات إلى مسميات عربية - MOVED BEFORE USAGE
-  const mapCategoryToArabic = (category: string): string => {
-    switch(category) {
-      case "drinks": return "مشروبات";
-      case "main": return "أطباق رئيسية";
-      case "desserts": return "حلويات";
-      case "appetizers": return "مقبلات";
-      case "sides": return "أطباق جانبية";
-      default: return "";
-    }
-  }
   
   // Find current order for this table
   useEffect(() => {
@@ -232,6 +232,9 @@ export const MenuView = () => {
     toast.success("تم إرسال الطلب إلى المطبخ بنجاح", {
       description: "سيتم إشعار المطبخ بالطلب الجديد"
     });
+    
+    // Navigate to tables page after sending the order
+    navigate('/tables');
   };
 
   // Filter menu items by category and search query

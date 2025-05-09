@@ -1,7 +1,29 @@
+
 import { useState, useEffect } from 'react';
 import { Order, OrderItem } from '../../types';
 import { mockOrders, mockUsers } from '../../data/mockData';
 import { toast } from "sonner";
+
+// Helper functions for order operations
+const orderHelpers = {
+  // Calculate total amount for an order
+  calculateTotal: (items: OrderItem[]): number => {
+    return items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  },
+  
+  // Find waiter for an order
+  findWaiter: (waiterId?: string, waiterRole?: string) => {
+    if (waiterRole === 'drinks') {
+      return mockUsers.find(u => u.role === 'waiter' && u.isActive);
+    }
+    return mockUsers.find(u => u.id === waiterId);
+  },
+  
+  // Check if all items in an order are completed
+  checkAllItemsCompleted: (items: OrderItem[]): boolean => {
+    return items.every(item => item.completed);
+  }
+};
 
 export const useOrders = (
   tables: ReturnType<typeof import('./useTables').useTables>,
@@ -24,6 +46,7 @@ export const useOrders = (
     setHasNewOrders(false);
   };
 
+  // Create or update an order
   const createOrder = (orderData: Partial<Order> & { waiterId?: string, waiterRole?: string }) => {
     // Check if this is an update for an existing order
     const tableId = orderData.tableNumber;
@@ -39,20 +62,8 @@ export const useOrders = (
       return;
     }
 
-    // If the user is "drinks" role, find a waiter to assign
-    let waiterId = orderData.waiterId;
-    let waiter;
-    
-    if (orderData.waiterRole === 'drinks') {
-      const availableWaiter = mockUsers.find(u => u.role === 'waiter' && u.isActive);
-      if (availableWaiter) {
-        waiterId = availableWaiter.id;
-        waiter = availableWaiter;
-      }
-    } else {
-      waiter = mockUsers.find(u => u.id === waiterId);
-    }
-    
+    // Find waiter for this order
+    const waiter = orderHelpers.findWaiter(orderData.waiterId, orderData.waiterRole);
     if (!waiter) return;
     
     // Find existing order if any
@@ -60,16 +71,13 @@ export const useOrders = (
     const existingOrderId = existingTable?.currentOrderId;
     const existingOrder = existingOrderId ? orders.find(o => o.id === existingOrderId) : undefined;
     
-    // If order exists, update it
+    // Update existing order if found and not paid
     if (existingOrder && !existingOrder.isPaid) {
-      // Merge existing items with new items
-      const updatedItems = [...orderData.items] as OrderItem[];
-      
       setOrders(orders.map(order => 
         order.id === existingOrderId ? 
         {
           ...order,
-          items: updatedItems,
+          items: [...orderData.items] as OrderItem[],
           notes: orderData.notes,
           totalAmount: orderData.totalAmount,
           peopleCount: orderData.peopleCount || order.peopleCount,
@@ -77,7 +85,6 @@ export const useOrders = (
         } : 
         order
       ));
-      
       return;
     }
     
@@ -92,14 +99,15 @@ export const useOrders = (
       completed: false
     }));
     
+    // Create a new order
     const newOrder: Order = {
       id: `order-${Date.now()}`,
-      tableNumber: tableId, // Ensure tableNumber is explicitly set
-      waiterId: waiterId,
+      tableNumber: tableId,
+      waiterId: waiter.id,
       waiterName: waiter.name,
       createdAt: new Date(),
       items: orderItemsWithCompletionStatus as OrderItem[],
-      status: 'pending', // Set a default status
+      status: 'pending',
       totalAmount: orderData.totalAmount || 0,
       peopleCount: orderData.peopleCount || tables.tables.find(t => t.id === tableId)?.peopleCount || 1,
       delayed: false,
@@ -109,22 +117,28 @@ export const useOrders = (
     setOrders([...orders, newOrder]);
     
     // Update table status and people count
-    tables.setTables(tables.tables.map(table => 
-      table.id === orderData.tableNumber 
-        ? { 
-            ...table, 
-            isOccupied: true, 
-            currentOrderId: newOrder.id,
-            peopleCount: orderData.peopleCount || table.peopleCount || 1,
-            isReserved: false // Remove reservation when creating order
-          }
-        : table
-    ));
+    updateTableWithNewOrder(tableId, newOrder.id, orderData.peopleCount);
     
     // Set notification for screen users
     setHasNewOrders(true);
   };
 
+  // Helper to update table with new order
+  const updateTableWithNewOrder = (tableId: number, orderId: string, peopleCount?: number) => {
+    tables.setTables(tables.tables.map(table => 
+      table.id === tableId 
+        ? { 
+            ...table, 
+            isOccupied: true, 
+            currentOrderId: orderId,
+            peopleCount: peopleCount || table.peopleCount || 1,
+            isReserved: false // Remove reservation when creating order
+          }
+        : table
+    ));
+  };
+
+  // Update order status
   const updateOrderStatus = (orderId: string, status: Order['status']) => {
     setOrders(orders.map(order => 
       order.id === orderId 
@@ -141,13 +155,13 @@ export const useOrders = (
       ));
     }
     
-    // No status change notifications as requested, except for "ready" status
+    // Notify only for "ready" status
     if (status === 'ready') {
       toast.success("الطلب جاهز للتقديم");
     }
   };
 
-  // New function to update item completion status
+  // Update item completion status
   const updateItemCompletionStatus = (orderId: string, menuItemId: string, completed: boolean) => {
     setOrders(orders.map(order => {
       if (order.id === orderId) {
@@ -156,9 +170,9 @@ export const useOrders = (
         );
         
         // Check if all items are completed
-        const allCompleted = updatedItems.every(item => item.completed);
+        const allCompleted = orderHelpers.checkAllItemsCompleted(updatedItems);
         
-        // If all items are completed, automatically set order status to ready
+        // Auto-update status if all items are completed
         const newStatus = allCompleted ? 'ready' : order.status;
         
         return { 
@@ -174,7 +188,7 @@ export const useOrders = (
     toast.success(completed ? "تم الانتهاء من تحضير العنصر" : "تمت إعادة العنصر للتحضير");
   };
 
-  // New function to delay an order
+  // Delay an order
   const delayOrder = (orderId: string, reason: string) => {
     setOrders(orders.map(order => 
       order.id === orderId 
@@ -187,22 +201,16 @@ export const useOrders = (
     });
   };
   
-  // New function to cancel a specific order item
+  // Cancel a specific order item
   const cancelOrderItem = (orderId: string, menuItemId: string) => {
     setOrders(orders.map(order => {
       if (order.id === orderId) {
         // Filter out the canceled item
         const updatedItems = order.items.filter(item => item.menuItemId !== menuItemId);
         
-        // If no items are left, mark order as canceled
+        // If no items left, mark order as canceled and free up the table
         if (updatedItems.length === 0) {
-          // Free up the table if this is the current order
-          tables.setTables(tables.tables.map(table => 
-            table.currentOrderId === orderId
-              ? { ...table, isOccupied: false, currentOrderId: undefined }
-              : table
-          ));
-          
+          freeUpTable(orderId);
           return { ...order, status: 'canceled', items: [], updatedAt: new Date() };
         }
         
@@ -214,9 +222,18 @@ export const useOrders = (
     toast.success("تم إلغاء العنصر من الطلب");
   };
 
-  // New function to mark a table order as paid
+  // Helper to free up a table
+  const freeUpTable = (orderId: string) => {
+    tables.setTables(tables.tables.map(table => 
+      table.currentOrderId === orderId
+        ? { ...table, isOccupied: false, currentOrderId: undefined }
+        : table
+    ));
+  };
+
+  // Mark a table order as paid
   const markTableAsPaid = (tableId: number) => {
-    // Find the active order for this table
+    // Find active order for this table
     const tableOrder = orders.find(o => 
       o.tableNumber === tableId && 
       !o.isPaid &&
@@ -224,7 +241,6 @@ export const useOrders = (
     );
     
     if (tableOrder) {
-      // Update the order to mark it as paid
       setOrders(orders.map(order => 
         order.id === tableOrder.id 
           ? { ...order, isPaid: true, updatedAt: new Date() } 
@@ -239,26 +255,25 @@ export const useOrders = (
     }
   };
 
-  // Using the resetTable function from tables
+  // Reset table order
   const resetTableOrder = (tableId: number) => {
     const tableToReset = tables.resetTable(tableId);
 
-    // Update any orders for this table - use 'delivered' instead of 'completed'
     if (tableToReset?.currentOrderId) {
       updateOrderStatus(tableToReset.currentOrderId, 'delivered');
     }
   };
 
+  // Get filtered orders by status
   const getFilteredOrders = (status?: Order['status']) => {
     if (!status) return orders;
     return orders.filter(order => order.status === status);
   };
 
-  // New function to get orders grouped by table
+  // Get orders grouped by table
   const getOrdersByTable = (): Record<number, Order[]> => {
     const tableOrders: Record<number, Order[]> = {};
     
-    // Group orders by table number
     orders.forEach(order => {
       if (!tableOrders[order.tableNumber]) {
         tableOrders[order.tableNumber] = [];
