@@ -3,6 +3,7 @@ import React, { createContext, useContext, ReactNode, useCallback } from 'react'
 import { Department } from '../types';
 import { mockDepartments } from '../data/mockData';
 import { AppContextType } from './types';
+// Fix: Use correct relative import paths for hooks
 import { useAuth } from './hooks/useAuth';
 import { useMenu } from './hooks/useMenu';
 import { useTables } from './hooks/useTables';
