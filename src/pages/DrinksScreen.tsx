@@ -15,18 +15,7 @@ export const DrinksScreen = () => {
   const navigate = useNavigate();
   const { isMobile, isTablet } = useDeviceType();
   
-  // Get only tables with active orders that have drinks
-  const tablesWithDrinkOrders = tables.filter(table => {
-    if (!table.isOccupied) return false;
-    
-    // Check if the table's current order has drinks
-    const order = getCurrentOrder(table.id);
-    return order && getDrinksCount(table.id) > 0;
-  });
-  
-  // Filter menu items to get only drinks
-  const drinksItems = menuItems.filter(item => item.category === 'drinks');
-  
+  // Define utility functions first, before they are used
   // Get current order for a table
   const getCurrentOrder = (tableId: number) => {
     const table = tables.find(t => t.id === tableId);
@@ -71,6 +60,18 @@ export const DrinksScreen = () => {
         };
       });
   };
+  
+  // Get only tables with active orders that have drinks
+  const tablesWithDrinkOrders = tables.filter(table => {
+    if (!table.isOccupied) return false;
+    
+    // Check if the table's current order has drinks
+    const order = getCurrentOrder(table.id);
+    return order && getDrinksCount(table.id) > 0;
+  });
+  
+  // Filter menu items to get only drinks
+  const drinksItems = menuItems.filter(item => item.category === 'drinks');
   
   const handleViewTable = (tableId: number) => {
     // Navigate to the menu view with drinks filter
