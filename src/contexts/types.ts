@@ -27,6 +27,9 @@ export interface AppContextType {
   clearNewOrdersNotification: () => void;
   updatePerSeatCharge: (amount: number) => void;
   togglePerSeatChargeEnabled: (enabled: boolean) => void;
+  toggleEmergencyMode: (enabled: boolean) => void;
+  toggleBackupPrinterEnabled: (enabled: boolean) => void;
+  toggleBackupPhoneEnabled: (enabled: boolean) => void;
   delayOrder: (orderId: string, reason: string) => void;
   cancelOrderItem: (orderId: string, menuItemId: string) => void;
   getMostOrderedItems: (count?: number) => MenuItem[];

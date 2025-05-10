@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -244,7 +243,6 @@ export const Tables = () => {
                   currentOrder={currentOrder}
                   onCreateOrder={handleCreateOrder}
                   isAdmin={user?.role === 'admin'}
-                  triggerEmergency={handleTableEmergency}
                 />
                 
                 {/* Show price info only for admin */}
