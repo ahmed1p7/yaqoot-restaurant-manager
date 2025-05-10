@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { OrderItemCard } from './OrderItemCard';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, SendHorizonal, Send } from 'lucide-react';
+import { Users, Send } from 'lucide-react';
 
 interface CurrentOrderPanelProps {
   items: OrderItem[];

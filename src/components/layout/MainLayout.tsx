@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
@@ -12,10 +12,22 @@ interface MainLayoutProps {
 }
 
 export const MainLayout = ({ children }: MainLayoutProps) => {
-  const { user, loginAsScreen } = useApp();
+  const { user } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+      setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   useEffect(() => {
     if (user) {
@@ -28,27 +40,37 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       if (user.role === 'screen' && (location.pathname === '/' || location.pathname === '/dashboard')) {
         navigate('/kitchen');
       }
+      
+      // Redirect drinks users to drinks page if they're on the homepage
+      if (user.role === 'drinks' && (location.pathname === '/' || location.pathname === '/dashboard')) {
+        navigate('/drinks');
+      }
     }
   }, [user, location.pathname, navigate]);
-  
-  // Auto login for screen role if path is /kitchen
-  useEffect(() => {
-    if (!user && location.pathname === '/kitchen') {
-      loginAsScreen();
-    }
-  }, [user, location.pathname, loginAsScreen]);
   
   if (!user) {
     return <LoginPage />;
   }
+  
+  // Screen size indicator for development purposes
+  const screenSizeIndicator = () => {
+    if (process.env.NODE_ENV !== 'production') {
+      return (
+        <div className="fixed bottom-0 right-0 bg-black/70 text-white px-2 py-1 text-xs z-50 rounded-tl-md">
+          {isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'} ({window.innerWidth}x{window.innerHeight})
+        </div>
+      );
+    }
+    return null;
+  };
   
   return (
     <div className="flex flex-col min-h-screen bg-restaurant-secondary">
       <Header />
       <div className="flex flex-1 overflow-hidden">
         {!isMobile && <Sidebar />}
-        <main className={`flex-1 ${isMobile ? 'p-2' : 'p-6'} overflow-auto`}>
-          <div className="max-w-6xl mx-auto">
+        <main className={`flex-1 ${isMobile ? 'p-2' : isTablet ? 'p-4' : 'p-6'} overflow-auto`}>
+          <div className={`mx-auto ${isDesktop ? 'max-w-6xl' : 'max-w-full'}`}>
             {children}
           </div>
         </main>
@@ -58,6 +80,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           <Sidebar />
         </div>
       )}
+      {screenSizeIndicator()}
     </div>
   );
 };

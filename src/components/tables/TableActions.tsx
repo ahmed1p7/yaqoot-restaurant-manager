@@ -65,7 +65,6 @@ export const TableActions: React.FC<TableActionsProps> = ({
       updateTablePeopleCount(table.id, 0);
     }
     
-    // We're NOT creating an order here, just toggling reservation state
     toggleTableReservation(table.id, !table.isReserved);
     
     const actionMessage = table.isReserved ? 
@@ -107,7 +106,6 @@ export const TableActions: React.FC<TableActionsProps> = ({
             size="sm"
             onClick={handleToggleReservation}
             className={table.isReserved ? "border-purple-500 text-purple-500" : ""}
-            disabled={table.isOccupied && !table.isReserved} // Prevent reserving occupied tables
           >
             {table.isReserved ? "إلغاء الحجز" : "حجز الطاولة"}
           </Button>

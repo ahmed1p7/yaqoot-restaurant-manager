@@ -4,7 +4,7 @@ import { useApp } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChefHat, User, Monitor, KeyRound } from "lucide-react";
+import { ChefHat, User, Monitor, Coffee, KeyRound } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,7 +13,9 @@ export const LoginPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [waiterPin, setWaiterPin] = useState("");
-  const { login, loginAsWaiter, loginAsScreen } = useApp();
+  const [kitchenPin, setKitchenPin] = useState("");
+  const [drinksPin, setDrinksPin] = useState("");
+  const { login } = useApp();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("admin");
@@ -32,15 +34,17 @@ export const LoginPage = () => {
     }
   };
 
-  const handleWaiterLogin = () => {
-    if (loginAsWaiter()) {
-      navigate('/tables');
+  const handleKitchenLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (login("kitchen", kitchenPin)) {
+      navigate('/kitchen');
     }
   };
   
-  const handleScreenLogin = () => {
-    if (loginAsScreen()) {
-      navigate('/kitchen');
+  const handleDrinksLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (login("drinks", drinksPin)) {
+      navigate('/drinks');
     }
   };
   
@@ -56,7 +60,7 @@ export const LoginPage = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="admin" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-2 mb-4">
+            <TabsList className="grid grid-cols-3 mb-4">
               <TabsTrigger value="admin" className="flex items-center gap-2">
                 <KeyRound className="w-4 h-4" />
                 مشرف
@@ -64,6 +68,10 @@ export const LoginPage = () => {
               <TabsTrigger value="waiter" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
                 نادل
+              </TabsTrigger>
+              <TabsTrigger value="screens" className="flex items-center gap-2">
+                <Monitor className="w-4 h-4" />
+                شاشات
               </TabsTrigger>
             </TabsList>
             
@@ -103,25 +111,6 @@ export const LoginPage = () => {
                 </Button>
               </form>
               
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t"></span>
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">أو</span>
-                </div>
-              </div>
-              
-              <Button 
-                type="button" 
-                onClick={handleScreenLogin}
-                variant="outline"
-                className={`w-full border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white ${isMobile ? 'text-sm py-1' : ''}`}
-              >
-                <Monitor className="mr-2 h-4 w-4" />
-                دخول كشاشة مطبخ
-              </Button>
-              
               <div className={`text-sm text-center mt-4 text-gray-500 ${isMobile ? 'text-xs' : ''}`}>
                 <p>للتجربة، استخدم:</p>
                 <p className="font-medium">مدير: admin (كلمة المرور: admin123)</p>
@@ -157,19 +146,78 @@ export const LoginPage = () => {
                   <p>للتجربة، استخدم:</p>
                   <p className="font-medium">نادل: 101</p>
                   <p className="font-medium">كلمة المرور تلقائية (0000)</p>
-                  <p className="font-medium mt-2">أو اضغط الزر أدناه:</p>
+                </div>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="screens" className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div className="border rounded-lg p-4 bg-blue-50">
+                  <h3 className="text-center text-blue-700 mb-3 flex items-center justify-center gap-2">
+                    <Monitor className="h-5 w-5" />
+                    شاشة المطبخ
+                  </h3>
+                  
+                  <form onSubmit={handleKitchenLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <label htmlFor="kitchenPin" className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-center block`}>
+                        رمز الدخول
+                      </label>
+                      <Input
+                        id="kitchenPin"
+                        type="password"
+                        placeholder="أدخل رمز شاشة المطبخ"
+                        value={kitchenPin}
+                        onChange={(e) => setKitchenPin(e.target.value)}
+                        className={`w-full ${isMobile ? 'text-sm h-9' : ''} text-center font-bold`}
+                        maxLength={3}
+                      />
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className={`w-full bg-blue-600 hover:bg-blue-700 ${isMobile ? 'text-sm py-1' : ''}`}
+                    >
+                      دخول كشاشة مطبخ
+                    </Button>
+                    
+                    <p className="text-xs text-center text-gray-500">الرمز للتجربة: 111</p>
+                  </form>
                 </div>
                 
-                <Button 
-                  type="button" 
-                  onClick={handleWaiterLogin}
-                  variant="outline"
-                  className={`w-full border-restaurant-primary text-restaurant-primary hover:bg-restaurant-primary hover:text-white ${isMobile ? 'text-sm py-1' : ''}`}
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  دخول سريع كنادل
-                </Button>
-              </form>
+                <div className="border rounded-lg p-4 bg-green-50">
+                  <h3 className="text-center text-green-700 mb-3 flex items-center justify-center gap-2">
+                    <Coffee className="h-5 w-5" />
+                    شاشة المشروبات
+                  </h3>
+                  
+                  <form onSubmit={handleDrinksLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <label htmlFor="drinksPin" className={`${isMobile ? 'text-xs' : 'text-sm'} font-medium text-center block`}>
+                        رمز الدخول
+                      </label>
+                      <Input
+                        id="drinksPin"
+                        type="password"
+                        placeholder="أدخل رمز شاشة المشروبات"
+                        value={drinksPin}
+                        onChange={(e) => setDrinksPin(e.target.value)}
+                        className={`w-full ${isMobile ? 'text-sm h-9' : ''} text-center font-bold`}
+                        maxLength={3}
+                      />
+                    </div>
+                    
+                    <Button 
+                      type="submit" 
+                      className={`w-full bg-green-600 hover:bg-green-700 ${isMobile ? 'text-sm py-1' : ''}`}
+                    >
+                      دخول كشاشة مشروبات
+                    </Button>
+                    
+                    <p className="text-xs text-center text-gray-500">الرمز للتجربة: 222</p>
+                  </form>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>

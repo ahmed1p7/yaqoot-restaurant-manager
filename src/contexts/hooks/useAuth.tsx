@@ -65,7 +65,7 @@ export const useAuth = () => {
     return false;
   };
 
-  // Login for waiter
+  // For backward compatibility - may be removed later
   const loginAsWaiter = (): boolean => {
     const waiterUser = mockUsers.find(u => u.username === 'waiter1');
     if (waiterUser) {
@@ -78,10 +78,8 @@ export const useAuth = () => {
     return false;
   };
 
-  // Screen login function with PIN
+  // For backward compatibility - may be removed later
   const loginAsScreen = (): boolean => {
-    // In a real app, this would prompt for a PIN
-    // For demo purposes, we just log in directly
     const screenUser = mockUsers.find(u => u.username === 'screen1');
     if (screenUser) {
       setUser(screenUser);
@@ -93,10 +91,8 @@ export const useAuth = () => {
     return false;
   };
 
-  // Drinks screen login function with PIN
+  // For backward compatibility - may be removed later
   const loginAsDrinksScreen = (): boolean => {
-    // In a real app, this would prompt for a PIN
-    // For demo purposes, we just log in directly
     const drinksUser = mockUsers.find(u => u.username === 'drinks1');
     if (drinksUser) {
       setUser(drinksUser);
