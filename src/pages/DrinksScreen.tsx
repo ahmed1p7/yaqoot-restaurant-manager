@@ -8,9 +8,10 @@ import { Table as TableIcon, Clock, User, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useDeviceType } from "@/hooks/use-mobile";
+import { OrderItem } from "@/types";
 
 export const DrinksScreen = () => {
-  const { tables, orders, menuItems, updateOrderStatus } = useApp();
+  const { tables, orders, menuItems, updateItemCompletionStatus } = useApp();
   const navigate = useNavigate();
   const { isMobile, isTablet } = useDeviceType();
   
@@ -64,7 +65,9 @@ export const DrinksScreen = () => {
         return {
           ...item,
           name: menuItem?.name || 'غير معروف',
-          price: menuItem?.price || 0
+          price: menuItem?.price || 0,
+          // We'll derive the completion status here instead of adding a status property
+          isDelivered: item.completed
         };
       });
   };
@@ -78,16 +81,14 @@ export const DrinksScreen = () => {
     const order = getCurrentOrder(tableId);
     if (!order) return;
     
-    // Mark drinks as delivered
-    const updatedItems = order.items.map(item => {
+    // Mark drinks as delivered by setting completed = true for each drink item
+    order.items.forEach(item => {
       const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
       if (menuItem && menuItem.category === 'drinks') {
-        return { ...item, status: 'delivered' as const };
+        updateItemCompletionStatus(order.id, item.menuItemId, true);
       }
-      return item;
     });
     
-    updateOrderStatus(order.id, updatedItems);
     toast.success(`تم تسليم المشروبات للطاولة ${tableId}`);
   };
   
@@ -143,10 +144,8 @@ export const DrinksScreen = () => {
                           <span className="font-medium">{item.quantity}x</span>
                           <span>{item.name}</span>
                         </div>
-                        <Badge variant={item.status === 'delivered' ? "outline" : "default"} className={item.status === 'delivered' ? "text-green-600" : ""}>
-                          {item.status === 'pending' ? 'معلق' : 
-                           item.status === 'preparing' ? 'قيد التحضير' :
-                           item.status === 'ready' ? 'جاهز' : 'تم التسليم'}
+                        <Badge variant={item.isDelivered ? "outline" : "default"} className={item.isDelivered ? "text-green-600" : ""}>
+                          {item.isDelivered ? 'تم التسليم' : 'قيد التحضير'}
                         </Badge>
                       </div>
                     ))}
