@@ -4,7 +4,7 @@ import { useApp } from "@/contexts/AppContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table as TableIcon, Clock, User, Check } from "lucide-react";
+import { TableIcon, Clock, User, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useDeviceType } from "@/hooks/use-mobile";
@@ -47,7 +47,7 @@ export const DrinksScreen = () => {
     return order.items
       .filter(item => {
         const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
-        return menuItem && menuItem.category === 'drinks';
+        return menuItem && menuItem.category === 'drinks' && !item.completed; // Only return non-completed drinks
       })
       .map(item => {
         const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
@@ -55,7 +55,6 @@ export const DrinksScreen = () => {
           ...item,
           name: menuItem?.name || 'غير معروف',
           price: menuItem?.price || 0,
-          // We'll derive the completion status here instead of adding a status property
           isDelivered: item.completed
         };
       });
@@ -66,8 +65,8 @@ export const DrinksScreen = () => {
     if (!table.isOccupied) return false;
     
     // Check if the table's current order has drinks
-    const order = getCurrentOrder(table.id);
-    return order && getDrinksCount(table.id) > 0;
+    const drinkItems = getDrinkItems(table.id);
+    return drinkItems.length > 0; // Only tables with non-delivered drinks
   });
   
   // Filter menu items to get only drinks
@@ -78,19 +77,14 @@ export const DrinksScreen = () => {
     navigate(`/menu-view?table=${tableId}&category=drinks`);
   };
   
-  const handleDeliverDrinks = (tableId: number) => {
+  const handleDeliverDrinks = (tableId: number, menuItemId: string) => {
     const order = getCurrentOrder(tableId);
     if (!order) return;
     
-    // Mark drinks as delivered by setting completed = true for each drink item
-    order.items.forEach(item => {
-      const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
-      if (menuItem && menuItem.category === 'drinks') {
-        updateItemCompletionStatus(order.id, item.menuItemId, true);
-      }
-    });
+    // Mark specific drink as delivered
+    updateItemCompletionStatus(order.id, menuItemId, true);
     
-    toast.success(`تم تسليم المشروبات للطاولة ${tableId}`);
+    toast.success(`تم تسليم المشروب للطاولة ${tableId}`);
   };
   
   return (
@@ -101,7 +95,6 @@ export const DrinksScreen = () => {
         {tablesWithDrinkOrders.length > 0 ? (
           tablesWithDrinkOrders.map(table => {
             const currentOrder = getCurrentOrder(table.id);
-            const drinksCount = getDrinksCount(table.id);
             const drinkItems = getDrinkItems(table.id);
             
             return (
@@ -115,7 +108,7 @@ export const DrinksScreen = () => {
                       <TableIcon className="h-4 w-4" />
                       طاولة {table.name}
                       <Badge className="bg-blue-500 text-xs ml-2">
-                        {drinksCount} مشروبات
+                        {drinkItems.length} مشروبات
                       </Badge>
                     </h3>
                     
@@ -140,38 +133,33 @@ export const DrinksScreen = () => {
                   
                   <div className="bg-gray-50 rounded-md p-2 max-h-40 overflow-y-auto">
                     {drinkItems.map((item, idx) => (
-                      <div key={idx} className="flex justify-between py-1 border-b border-gray-100 last:border-0">
+                      <div key={idx} className="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{item.quantity}x</span>
                           <span>{item.name}</span>
                         </div>
-                        <Badge variant={item.isDelivered ? "outline" : "default"} className={item.isDelivered ? "text-green-600" : ""}>
-                          {item.isDelivered ? 'تم التسليم' : 'قيد التحضير'}
-                        </Badge>
+                        <Button 
+                          size="sm" 
+                          className="bg-green-600 hover:bg-green-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeliverDrinks(table.id, item.menuItemId);
+                          }}
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          تم التسليم
+                        </Button>
                       </div>
                     ))}
                   </div>
                   
-                  <div className="flex gap-2">
-                    <Button 
-                      className="bg-green-600 hover:bg-green-700 flex-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeliverDrinks(table.id);
-                      }}
-                    >
-                      <Check className="h-4 w-4 mr-1" />
-                      تسليم المشروبات
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => handleViewTable(table.id)}
-                    >
-                      إضافة مشروبات
-                    </Button>
-                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => handleViewTable(table.id)}
+                  >
+                    إضافة مشروبات
+                  </Button>
                 </CardContent>
               </Card>
             );
