@@ -7,13 +7,21 @@ import { Badge } from "@/components/ui/badge";
 import { Table as TableIcon, Clock, User, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useDeviceType } from "@/hooks/use-mobile";
 
 export const DrinksScreen = () => {
   const { tables, orders, menuItems, updateOrderStatus } = useApp();
   const navigate = useNavigate();
+  const { isMobile, isTablet } = useDeviceType();
   
-  // Get only tables with active orders
-  const tablesWithOrders = tables.filter(table => table.isOccupied);
+  // Get only tables with active orders that have drinks
+  const tablesWithDrinkOrders = tables.filter(table => {
+    if (!table.isOccupied) return false;
+    
+    // Check if the table's current order has drinks
+    const order = getCurrentOrder(table.id);
+    return order && getDrinksCount(table.id) > 0;
+  });
   
   // Filter menu items to get only drinks
   const drinksItems = menuItems.filter(item => item.category === 'drinks');
@@ -41,16 +49,45 @@ export const DrinksScreen = () => {
     }, 0);
   };
   
+  // Get drink items for a specific table
+  const getDrinkItems = (tableId: number) => {
+    const order = getCurrentOrder(tableId);
+    if (!order) return [];
+    
+    return order.items
+      .filter(item => {
+        const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
+        return menuItem && menuItem.category === 'drinks';
+      })
+      .map(item => {
+        const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
+        return {
+          ...item,
+          name: menuItem?.name || 'غير معروف',
+          price: menuItem?.price || 0
+        };
+      });
+  };
+  
   const handleViewTable = (tableId: number) => {
     // Navigate to the menu view with drinks filter
-    navigate(`/menu-view?table=${tableId}`);
+    navigate(`/menu-view?table=${tableId}&category=drinks`);
   };
   
   const handleDeliverDrinks = (tableId: number) => {
     const order = getCurrentOrder(tableId);
     if (!order) return;
     
-    // Mark drinks as delivered (in a real app, we would only mark drinks as delivered)
+    // Mark drinks as delivered
+    const updatedItems = order.items.map(item => {
+      const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
+      if (menuItem && menuItem.category === 'drinks') {
+        return { ...item, status: 'delivered' as const };
+      }
+      return item;
+    });
+    
+    updateOrderStatus(order.id, updatedItems);
     toast.success(`تم تسليم المشروبات للطاولة ${tableId}`);
   };
   
@@ -58,31 +95,26 @@ export const DrinksScreen = () => {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">شاشة المشروبات</h1>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {tablesWithOrders.length > 0 ? (
-          tablesWithOrders.map(table => {
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {tablesWithDrinkOrders.length > 0 ? (
+          tablesWithDrinkOrders.map(table => {
             const currentOrder = getCurrentOrder(table.id);
             const drinksCount = getDrinksCount(table.id);
+            const drinkItems = getDrinkItems(table.id);
             
             return (
               <Card 
                 key={table.id}
-                className={`
-                  hover:border-blue-300 transition-all cursor-pointer
-                  ${drinksCount > 0 ? 'border-blue-300' : 'border-gray-200'}
-                `}
-                onClick={() => handleViewTable(table.id)}
+                className="hover:border-blue-300 transition-all cursor-pointer shadow-md"
               >
                 <CardContent className="p-4 space-y-3">
                   <div className="flex justify-between items-center">
                     <h3 className="font-medium flex items-center gap-1">
                       <TableIcon className="h-4 w-4" />
-                      {table.name}
-                      {drinksCount > 0 && (
-                        <Badge className="bg-blue-500 text-xs px-2 py-0.5 rounded ml-2">
-                          {drinksCount} مشروبات
-                        </Badge>
-                      )}
+                      طاولة {table.name}
+                      <Badge className="bg-blue-500 text-xs ml-2">
+                        {drinksCount} مشروبات
+                      </Badge>
                     </h3>
                     
                     <span className="text-sm text-gray-500">
@@ -104,9 +136,25 @@ export const DrinksScreen = () => {
                     </div>
                   )}
                   
-                  {drinksCount > 0 ? (
+                  <div className="bg-gray-50 rounded-md p-2 max-h-40 overflow-y-auto">
+                    {drinkItems.map((item, idx) => (
+                      <div key={idx} className="flex justify-between py-1 border-b border-gray-100 last:border-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{item.quantity}x</span>
+                          <span>{item.name}</span>
+                        </div>
+                        <Badge variant={item.status === 'delivered' ? "outline" : "default"} className={item.status === 'delivered' ? "text-green-600" : ""}>
+                          {item.status === 'pending' ? 'معلق' : 
+                           item.status === 'preparing' ? 'قيد التحضير' :
+                           item.status === 'ready' ? 'جاهز' : 'تم التسليم'}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="flex gap-2">
                     <Button 
-                      className="bg-green-600 hover:bg-green-700 w-full"
+                      className="bg-green-600 hover:bg-green-700 flex-1"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeliverDrinks(table.id);
@@ -115,22 +163,22 @@ export const DrinksScreen = () => {
                       <Check className="h-4 w-4 mr-1" />
                       تسليم المشروبات
                     </Button>
-                  ) : (
+                    
                     <Button 
                       variant="outline" 
-                      className="w-full"
+                      className="flex-1"
                       onClick={() => handleViewTable(table.id)}
                     >
                       إضافة مشروبات
                     </Button>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             );
           })
         ) : (
           <div className="col-span-full text-center py-12">
-            <p className="text-gray-500">لا توجد طاولات نشطة حالياً</p>
+            <p className="text-gray-500">لا توجد طلبات مشروبات حالياً</p>
           </div>
         )}
       </div>

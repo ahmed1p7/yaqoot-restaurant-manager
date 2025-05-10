@@ -59,3 +59,32 @@ export function useDeviceType() {
   
   return { isMobile, isTablet, isDesktop }
 }
+
+export function useScreenSize() {
+  const [screenSize, setScreenSize] = React.useState({
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
+  
+  React.useEffect(() => {
+    const handleResize = () => {
+      setScreenSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  return screenSize;
+}
+
+export function getDeviceTypeString() {
+  const width = window.innerWidth;
+  
+  if (width < MOBILE_BREAKPOINT) return "موبايل";
+  if (width < TABLET_BREAKPOINT) return "تابلت";
+  return "ديسكتوب";
+}
