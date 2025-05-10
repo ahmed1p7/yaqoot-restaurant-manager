@@ -10,7 +10,8 @@ import {
   Settings, 
   FileText, 
   Table,
-  Monitor
+  Monitor,
+  GlassWater
 } from "lucide-react";
 
 export const Sidebar = () => {
@@ -41,12 +42,20 @@ export const Sidebar = () => {
     { name: 'الطلبات', path: '/orders', icon: <FileText className="w-5 h-5" /> },
   ];
   
+  // Add new drinks user role links
+  const drinksLinks = [
+    { name: 'شاشة المشروبات', path: '/drinks', icon: <GlassWater className="w-5 h-5" /> },
+    { name: 'الطلبات', path: '/orders', icon: <FileText className="w-5 h-5" /> },
+  ];
+  
   let links = adminLinks;
   
   if (user?.role === 'waiter') {
     links = waiterLinks;
   } else if (user?.role === 'screen') {
     links = screenLinks;
+  } else if (user?.role === 'drinks') {
+    links = drinksLinks;
   }
 
   if (isMobile) {
