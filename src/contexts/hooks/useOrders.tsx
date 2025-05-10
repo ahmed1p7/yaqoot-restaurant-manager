@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Order, OrderItem } from '../../types';
 import { mockOrders, mockUsers } from '../../data/mockData';
@@ -235,7 +234,7 @@ export const useOrders = (
     ));
   }, [tables]);
 
-  // Mark a table order as paid
+  // Mark a table order as paid - Enhanced for admin functionality
   const markTableAsPaid = useCallback((tableId: number) => {
     // Find active order for this table
     const tableOrder = orders.find(o => 
@@ -245,6 +244,7 @@ export const useOrders = (
     );
     
     if (tableOrder) {
+      // Mark the order as paid in the orders state
       setOrders(prevOrders => prevOrders.map(order => 
         order.id === tableOrder.id 
           ? { ...order, isPaid: true, updatedAt: new Date() } 
@@ -252,20 +252,27 @@ export const useOrders = (
       ));
       
       toast.success(`تم تسجيل الدفع للطاولة ${tableId}`);
+      
+      // After marking as paid, we completely reset the table
+      // This is the admin-specific functionality to clear everything
+      tables.resetTable(tableId);
+      
       return true;
     } else {
       toast.error(`لا يوجد طلب نشط للطاولة ${tableId}`);
       return false;
     }
-  }, [orders]);
+  }, [orders, tables]);
 
-  // Reset table order
+  // Reset table order - Enhanced for admin functionality
   const resetTableOrder = useCallback((tableId: number) => {
     const tableToReset = tables.resetTable(tableId);
 
     if (tableToReset?.currentOrderId) {
       updateOrderStatus(tableToReset.currentOrderId, 'delivered');
     }
+    
+    toast.success(`تم إعادة تهيئة الطاولة ${tableId}`);
   }, [tables, updateOrderStatus]);
 
   // Get filtered orders by status

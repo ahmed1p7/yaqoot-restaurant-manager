@@ -35,12 +35,24 @@ export const useAuth = () => {
       }
     }
     
-    // Allow drinks screen login
-    if (username === 'drinks' && password === '0000') {
+    // Allow drinks screen login with specific PIN
+    if (username === 'drinks' && password === '222') {
       const drinksUser = mockUsers.find(u => u.username === 'drinks1');
       if (drinksUser) {
         setUser(drinksUser);
         toast.success(`مرحباً ${drinksUser.name}`, {
+          description: "تم تسجيل الدخول بنجاح"
+        });
+        return true;
+      }
+    }
+    
+    // Allow kitchen screen login with specific PIN
+    if (username === 'kitchen' && password === '111') {
+      const screenUser = mockUsers.find(u => u.username === 'screen1');
+      if (screenUser) {
+        setUser(screenUser);
+        toast.success(`تم تشغيل شاشة المطبخ`, {
           description: "تم تسجيل الدخول بنجاح"
         });
         return true;
@@ -66,26 +78,30 @@ export const useAuth = () => {
     return false;
   };
 
-  // Screen login function
+  // Screen login function with PIN
   const loginAsScreen = (): boolean => {
+    // In a real app, this would prompt for a PIN
+    // For demo purposes, we just log in directly
     const screenUser = mockUsers.find(u => u.username === 'screen1');
     if (screenUser) {
       setUser(screenUser);
       toast.success(`تم تشغيل شاشة المطبخ`, {
-        description: "تم تسجيل الدخول بنجاح"
+        description: "تم تسجيل الدخول بنجاح لشاشة المطبخ"
       });
       return true;
     }
     return false;
   };
 
-  // Drinks screen login function
+  // Drinks screen login function with PIN
   const loginAsDrinksScreen = (): boolean => {
+    // In a real app, this would prompt for a PIN
+    // For demo purposes, we just log in directly
     const drinksUser = mockUsers.find(u => u.username === 'drinks1');
     if (drinksUser) {
       setUser(drinksUser);
       toast.success(`تم تشغيل شاشة المشروبات`, {
-        description: "تم تسجيل الدخول بنجاح"
+        description: "تم تسجيل الدخول بنجاح لشاشة المشروبات"
       });
       return true;
     }

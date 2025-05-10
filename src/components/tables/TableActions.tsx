@@ -65,7 +65,14 @@ export const TableActions: React.FC<TableActionsProps> = ({
       updateTablePeopleCount(table.id, 0);
     }
     
+    // We're NOT creating an order here, just toggling reservation state
     toggleTableReservation(table.id, !table.isReserved);
+    
+    const actionMessage = table.isReserved ? 
+      `تم إلغاء حجز الطاولة ${table.id}` : 
+      `تم حجز الطاولة ${table.id}`;
+      
+    toast.success(actionMessage);
   };
   
   return (

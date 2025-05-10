@@ -8,8 +8,7 @@ import { PaymentDialog } from "@/components/tables/PaymentDialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge"; 
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, User, Search, Table as TableIcon, DollarSign } from "lucide-react";
+import { User, Search, Table as TableIcon, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import { Order } from "@/types";
 
@@ -19,7 +18,6 @@ export const Tables = () => {
   
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [emergencyTable, setEmergencyTable] = useState<number | null>(null);
   const [showCloseDayDialog, setShowCloseDayDialog] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedTableForPayment, setSelectedTableForPayment] = useState<number | null>(null);
@@ -89,25 +87,6 @@ export const Tables = () => {
     navigate(`/menu-view?table=${tableId}`);
   };
   
-  const handleTableEmergency = (tableId: number) => {
-    // Only admin can trigger emergency
-    if (user?.role !== 'admin') {
-      toast.error("فقط المشرف يمكنه تفعيل وضع الطوارئ");
-      return;
-    }
-    
-    setEmergencyTable(tableId);
-    toast.error(`تم تسجيل حالة طوارئ للطاولة ${tableId}!`, {
-      description: "تم إرسال تنبيه للإدارة"
-    });
-    
-    // In a real system, this would trigger notifications to admin
-  };
-  
-  const handleResetEmergency = () => {
-    setEmergencyTable(null);
-  };
-  
   const handleCloseDay = () => {
     // In a real app, this would mark all tables as available, close all open orders, etc.
     setShowCloseDayDialog(true);
@@ -136,6 +115,10 @@ export const Tables = () => {
     // In a real app, we would track the payment method and discount
     if (selectedTableForPayment) {
       markTableAsPaid(selectedTableForPayment);
+      
+      // After payment is processed, clear the table for reuse
+      resetTable(selectedTableForPayment);
+      toast.success(`تم إعادة تهيئة الطاولة ${selectedTableForPayment} للاستخدام`);
     }
     setShowPaymentDialog(false);
     setSelectedTableForPayment(null);
@@ -174,42 +157,21 @@ export const Tables = () => {
         </div>
       </div>
       
-      {/* Emergency Alert */}
-      {emergencyTable && (
-        <Alert variant="destructive" className="animate-pulse">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle className="mr-2">حالة طوارئ!</AlertTitle>
-          <AlertDescription className="mr-2">
-            تم تسجيل حالة طوارئ للطاولة {emergencyTable}
-          </AlertDescription>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mr-auto"
-            onClick={handleResetEmergency}
-          >
-            إغلاق
-          </Button>
-        </Alert>
-      )}
-      
       {/* Tables grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {filteredTables.map((table) => {
           const currentOrder = getCurrentOrder(table.id);
-          const isEmergency = emergencyTable === table.id;
           const isPaid = currentOrder?.isPaid;
           
           return (
             <Card 
               key={table.id} 
               className={`
-                ${isEmergency ? 'border-red-500 border-2 animate-pulse' : 
-                  table.isReserved ? 'border-purple-300' :
+                ${table.isReserved ? 'border-purple-300' :
                   table.isOccupied && !isPaid ? 'border-blue-300' : 'border-gray-200'}
                 hover:border-2 transition-all cursor-pointer
               `}
-              onClick={() => handleViewTable(table.id)}
+              onClick={() => user?.role === 'admin' ? setSelectedTable(table.id) : handleViewTable(table.id)}
             >
               <CardContent className="p-4 space-y-3">
                 <div className="flex justify-between items-center">
@@ -257,6 +219,20 @@ export const Tables = () => {
                         <span>المتوسط للشخص:</span>
                         <span>{(currentOrder.totalAmount / currentOrder.peopleCount).toFixed(2)} ريال</span>
                       </div>
+                    )}
+                    
+                    {/* Admin-only payment button */}
+                    {!currentOrder.isPaid && (
+                      <Button 
+                        className="w-full mt-2 bg-green-600 hover:bg-green-700"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePaymentClick(table.id);
+                        }}
+                      >
+                        تسجيل حساب وتحصيل
+                      </Button>
                     )}
                   </div>
                 )}
@@ -320,7 +296,7 @@ export const Tables = () => {
                         {getMostOrderedItems(5).map((item, index) => (
                           <div key={item.id} className="flex justify-between text-sm">
                             <span>{index + 1}. {item.name}</span>
-                            <span className="text-gray-600">#{item.price} ريال</span>
+                            <span className="text-gray-600">{item.price} ريال</span>
                           </div>
                         ))}
                       </div>
@@ -342,13 +318,68 @@ export const Tables = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Payment Dialog */}
+      {/* Payment Dialog - Enhanced for admin */}
       <PaymentDialog
         isOpen={showPaymentDialog}
         onClose={() => setShowPaymentDialog(false)}
         order={selectedPaymentOrder}
         onConfirmPayment={handleConfirmPayment}
       />
+      
+      {/* Table Details Dialog */}
+      <Dialog open={selectedTable !== null} onOpenChange={(open) => !open && setSelectedTable(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {tables.find(t => t.id === selectedTable)?.name || `الطاولة ${selectedTable}`}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            {selectedTable && (
+              <>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">الحالة:</span>
+                  <Badge className={tables.find(t => t.id === selectedTable)?.isOccupied ? 'bg-blue-500' : 'bg-green-500'}>
+                    {tables.find(t => t.id === selectedTable)?.isOccupied ? 'مشغولة' : 'متاحة'}
+                  </Badge>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">عدد الأشخاص:</span>
+                  <span className="font-medium">
+                    {tables.find(t => t.id === selectedTable)?.peopleCount || 0}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 mt-6">
+                  <Button 
+                    onClick={() => {
+                      handleCreateOrder(selectedTable);
+                      setSelectedTable(null);
+                    }}
+                  >
+                    {tables.find(t => t.id === selectedTable)?.isOccupied ? 'تعديل الطلب' : 'طلب جديد'}
+                  </Button>
+                  
+                  {getCurrentOrder(selectedTable) && !getCurrentOrder(selectedTable)?.isPaid && (
+                    <Button
+                      variant="outline"
+                      className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                      onClick={() => {
+                        handlePaymentClick(selectedTable);
+                        setSelectedTable(null);
+                      }}
+                    >
+                      تسجيل حساب وتحصيل
+                    </Button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from "@/contexts/AppContext";
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -16,15 +15,27 @@ import { PeopleCountDialog } from "@/components/tables/PeopleCountDialog";
 import { Plus, CupSoda, Utensils, CakeSlice, Send } from 'lucide-react';
 
 export const MenuView = () => {
-  // تحويل التصنيفات إلى مسميات عربية - MOVED BEFORE USAGE
+  // تحويل التصنيفات إلى مسميات عربية
   const mapCategoryToArabic = (category: string): string => {
     switch(category) {
       case "drinks": return "مشروبات";
-      case "main": return "أطباق رئيسية";
+      case "main_dishes": return "أطباق رئيسية";
       case "desserts": return "حلويات";
       case "appetizers": return "مقبلات";
       case "sides": return "أطباق جانبية";
-      default: return "";
+      default: return category;
+    }
+  }
+  
+  // Map Arabic categories back to English
+  const mapArabicToCategory = (arabicName: string): string => {
+    switch(arabicName) {
+      case "مشروبات": return "drinks";
+      case "أطباق رئيسية": return "main_dishes";
+      case "حلويات": return "desserts";
+      case "مقبلات": return "appetizers";
+      case "أطباق جانبية": return "sides";
+      default: return arabicName;
     }
   }
 
@@ -237,14 +248,21 @@ export const MenuView = () => {
     navigate('/tables');
   };
 
-  // Filter menu items by category and search query
+  // Fix: Filter menu items by category using proper mapping
   const filteredMenuItems = menuItems.filter(item => {
-    if (category && item.category !== mapCategoryToArabic(category)) {
-      return false;
+    // If category is selected, filter by it
+    if (category) {
+      const mappedCategory = mapArabicToCategory(mapCategoryToArabic(category));
+      if (item.category !== mappedCategory) {
+        return false;
+      }
     }
+    
+    // Also apply search filter if there's a search query
     if (searchQuery && !item.name.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
+    
     return true;
   });
 
@@ -304,7 +322,7 @@ export const MenuView = () => {
           <TabsTrigger value="drinks" onClick={() => setCategory("drinks")} className="flex items-center gap-1">
             <CupSoda className="h-4 w-4" /> مشروبات
           </TabsTrigger>
-          <TabsTrigger value="main" onClick={() => setCategory("main")} className="flex items-center gap-1">
+          <TabsTrigger value="main_dishes" onClick={() => setCategory("main_dishes")} className="flex items-center gap-1">
             <Utensils className="h-4 w-4" /> أطباق رئيسية
           </TabsTrigger>
           <TabsTrigger value="desserts" onClick={() => setCategory("desserts")} className="flex items-center gap-1">
@@ -320,7 +338,7 @@ export const MenuView = () => {
         
         <TabsContent value="all" />
         <TabsContent value="drinks" />
-        <TabsContent value="main" />
+        <TabsContent value="main_dishes" />
         <TabsContent value="desserts" />
         <TabsContent value="appetizers" />
         <TabsContent value="sides" />
@@ -333,7 +351,7 @@ export const MenuView = () => {
                   <CardContent className="p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <Badge variant="outline" className="text-xs">
-                        {item.category}
+                        {mapCategoryToArabic(item.category)}
                       </Badge>
                     </div>
                     <h3 className="font-medium text-lg">{item.name}</h3>
