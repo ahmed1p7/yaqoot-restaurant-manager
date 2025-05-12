@@ -13,6 +13,7 @@ export const Header = () => {
       case 'admin': return 'مدير';
       case 'waiter': return 'نادل';
       case 'screen': return 'شاشة مطبخ';
+      case 'drinks': return 'شاشة مشروبات';
       default: return role;
     }
   };
@@ -54,11 +55,11 @@ export const Header = () => {
 
   // الاحتفاظ بالشريط العلوي الأصلي للأدوار الأخرى
   return (
-    <header className={`${user?.role === 'screen' ? 'bg-blue-600' : 'bg-restaurant-primary'} text-white p-4 flex justify-between items-center shadow-md`}>
+    <header className="bg-restaurant-primary text-white p-4 flex justify-between items-center shadow-md">
       <div className="flex items-center">
         {getHeaderIcon()}
         <h1 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold`}>
-          {user?.role === 'screen' ? 'شاشة المطبخ' : 'نظام إدارة المطعم'}
+          {user?.role === 'drinks' ? 'شاشة المشروبات' : 'نظام إدارة المطعم'}
         </h1>
       </div>
       
@@ -67,7 +68,7 @@ export const Header = () => {
           {!isMobile && (
             <>
               <span className="font-medium">مرحباً، {user.name}</span>
-              <span className={`text-xs ${user.role === 'screen' ? 'bg-blue-400' : 'bg-restaurant-accent'} text-white px-2 py-1 rounded-full`}>
+              <span className="text-xs bg-restaurant-accent text-white px-2 py-1 rounded-full">
                 {getRoleLabel(user.role)}
               </span>
             </>
