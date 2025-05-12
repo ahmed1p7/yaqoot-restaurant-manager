@@ -5,14 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableIcon, Clock, User, Check } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useDeviceType } from "@/hooks/use-mobile";
-import { OrderItem } from "@/types";
 
 export const DrinksScreen = () => {
   const { tables, orders, menuItems, updateItemCompletionStatus } = useApp();
-  const navigate = useNavigate();
   const { isMobile, isTablet } = useDeviceType();
   
   // Define utility functions first, before they are used
@@ -72,11 +69,6 @@ export const DrinksScreen = () => {
   // Filter menu items to get only drinks
   const drinksItems = menuItems.filter(item => item.category === 'drinks');
   
-  const handleViewTable = (tableId: number) => {
-    // Navigate to the menu view with drinks filter
-    navigate(`/menu-view?table=${tableId}&category=drinks`);
-  };
-  
   const handleDeliverDrinks = (tableId: number, menuItemId: string) => {
     const order = getCurrentOrder(tableId);
     if (!order) return;
@@ -100,7 +92,7 @@ export const DrinksScreen = () => {
             return (
               <Card 
                 key={table.id}
-                className="hover:border-blue-300 transition-all cursor-pointer shadow-md"
+                className="hover:border-blue-300 transition-all shadow-md"
               >
                 <CardContent className="p-4 space-y-3">
                   <div className="flex justify-between items-center">
@@ -152,14 +144,6 @@ export const DrinksScreen = () => {
                       </div>
                     ))}
                   </div>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handleViewTable(table.id)}
-                  >
-                    إضافة مشروبات
-                  </Button>
                 </CardContent>
               </Card>
             );
