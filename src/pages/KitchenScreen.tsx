@@ -210,34 +210,20 @@ export const KitchenScreen = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <ChefHat className="w-6 h-6" />
-          شاشة المطبخ
-        </h1>
-        <div className="flex gap-4 items-center">
+      {/* تحسين تصميم الشريط العلوي وإزالة العدادات */}
+      <div className="kitchen-header rounded-lg shadow-lg mb-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <ChefHat className="h-8 w-8 text-white" />
+            <h1 className="text-2xl font-bold text-white">شاشة المطبخ</h1>
+          </div>
+          
           {hasNewOrders && (
-            <div className="animate-bounce bg-yellow-500 text-white p-2 rounded-full flex items-center gap-2">
+            <div className="animate-bounce bg-yellow-100 text-orange-700 p-2 rounded-full flex items-center gap-2 shadow-md">
               <Bell className="w-5 h-5" />
-              <span>طلبات جديدة!</span>
+              <span className="font-semibold">طلبات جديدة!</span>
             </div>
           )}
-          <div className="flex gap-2">
-            {delayedOrders.length > 0 && (
-              <Badge className="bg-red-500 text-lg flex items-center gap-1">
-                <AlertTriangle className="w-4 h-4" />
-                {delayedOrders.length} متأخر
-              </Badge>
-            )}
-            <Badge className="bg-yellow-500 text-lg">{pendingOrders.length}</Badge>
-            <span className="font-medium">معلقة:</span>
-            
-            <Badge className="bg-blue-500 text-lg">{preparingOrders.length}</Badge>
-            <span className="font-medium">قيد التحضير:</span>
-            
-            <Badge className="bg-green-500 text-lg">{readyOrders.length}</Badge>
-            <span className="font-medium">جاهزة:</span>
-          </div>
         </div>
       </div>
       
@@ -274,19 +260,19 @@ export const KitchenScreen = () => {
       )}
       
       <Tabs defaultValue="tables" value={activeTab} onValueChange={(v) => setActiveTab(v as "tables" | "items" | "by-table")}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="tables" className="flex items-center gap-1">
+        <TabsList className="mb-4 bg-orange-100 p-1">
+          <TabsTrigger value="tables" className="flex items-center gap-1 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
             <AlarmClock className="w-4 h-4" />
             الطاولات
           </TabsTrigger>
-          <TabsTrigger value="items" className="flex items-center gap-1">
+          <TabsTrigger value="items" className="flex items-center gap-1 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
             <ChefHat className="w-4 h-4" />
             قائمة الأطباق
             {hasNewOrders && (
               <Bell className="w-4 h-4 text-yellow-500 animate-bounce" />
             )}
           </TabsTrigger>
-          <TabsTrigger value="by-table" className="flex items-center gap-1">
+          <TabsTrigger value="by-table" className="flex items-center gap-1 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
             <ChefHat className="w-4 h-4" />
             الطلبات حسب الطاولة
           </TabsTrigger>
