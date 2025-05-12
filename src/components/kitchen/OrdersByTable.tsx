@@ -1,9 +1,9 @@
 
 import React from "react";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Clock, User, MessageCircle } from "lucide-react";
+import { Check, X, Clock, User, MessageCircle, ChefHat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Order } from "@/types";
 
@@ -26,8 +26,10 @@ export const OrdersByTable = ({
   
   if (tableNumbers.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-xl font-medium text-gray-500">لا توجد طلبات نشطة</p>
+      <div className="kitchen-empty">
+        <ChefHat className="w-16 h-16 mx-auto text-orange-300 mb-4" />
+        <p className="text-xl font-medium text-orange-800 mb-2">لا توجد طلبات نشطة</p>
+        <p className="text-gray-500">ستظهر الطلبات هنا عندما يتم طلبها</p>
       </div>
     );
   }
@@ -38,28 +40,30 @@ export const OrdersByTable = ({
         const tableOrders = ordersByTable[tableNumber];
         
         return (
-          <Card key={tableNumber} className="border-2 border-blue-400">
-            <CardContent className="p-4">
-              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md">
+          <Card key={tableNumber} className="kitchen-card">
+            <div className="kitchen-card-header">
+              <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
+                <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-md">
                   طاولة {tableNumber}
                 </span>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-600">
                   ({tableOrders.length} طلب)
                 </span>
               </h3>
-              
+            </div>
+            
+            <CardContent className="p-4">
               <div className="space-y-4">
                 {tableOrders.map((order) => (
                   <div 
                     key={order.id}
-                    className="border border-gray-200 rounded-lg p-3"
+                    className="border border-orange-100 rounded-lg p-3 bg-gradient-to-r from-white to-orange-50"
                   >
                     <div className="flex justify-between items-center mb-3">
                       <div className="flex items-center gap-2">
                         <Badge className={
                           order.status === 'pending' ? 'bg-yellow-500' : 
-                          order.status === 'preparing' ? 'bg-blue-500' : 
+                          order.status === 'preparing' ? 'bg-orange-500' : 
                           'bg-green-500'
                         }>
                           {order.status === 'pending' ? 'معلق' : 
@@ -67,13 +71,13 @@ export const OrdersByTable = ({
                            'جاهز'}
                         </Badge>
                         
-                        <div className="text-sm text-gray-500 flex items-center gap-1">
+                        <div className="text-sm text-gray-600 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {formatTimeDiff(order.createdAt)}
                         </div>
                         
                         {order.peopleCount && (
-                          <div className="text-sm text-gray-500 flex items-center gap-1">
+                          <div className="text-sm text-gray-600 flex items-center gap-1">
                             <User className="w-3 h-3" />
                             {order.peopleCount}
                           </div>
@@ -83,7 +87,7 @@ export const OrdersByTable = ({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-red-500 border-red-200"
+                        className="text-orange-600 border-orange-200 hover:bg-orange-50"
                         onClick={() => openDelayDialog(order.id)}
                       >
                         <MessageCircle className="w-4 h-4 mr-1" />
@@ -91,7 +95,7 @@ export const OrdersByTable = ({
                       </Button>
                     </div>
                     
-                    <div className="space-y-2 divide-y divide-gray-100">
+                    <div className="space-y-2 divide-y divide-orange-100">
                       {order.items.map((item, idx) => (
                         <div 
                           key={`${item.menuItemId}-${idx}`} 
@@ -102,12 +106,12 @@ export const OrdersByTable = ({
                         >
                           <div className="flex items-center gap-2">
                             <span className={cn(
-                              "font-bold",
-                              item.completed ? "text-green-500" : "text-blue-500"
+                              "flex items-center justify-center h-6 w-6 rounded-full font-medium",
+                              item.completed ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"
                             )}>
-                              {item.quantity}×
+                              {item.quantity}
                             </span>
-                            <span className={item.completed ? "line-through text-gray-500" : ""}>
+                            <span className={item.completed ? "line-through text-gray-500" : "font-medium"}>
                               {item.name}
                             </span>
                             {item.notes && (
@@ -123,7 +127,7 @@ export const OrdersByTable = ({
                               variant={item.completed ? "outline" : "default"}
                               className={item.completed 
                                 ? "border-red-500 text-red-500 hover:bg-red-50"
-                                : "bg-green-500 hover:bg-green-600"
+                                : "kitchen-button"
                               }
                               onClick={() => handleItemCompletion(order.id, item.menuItemId, item.completed)}
                             >

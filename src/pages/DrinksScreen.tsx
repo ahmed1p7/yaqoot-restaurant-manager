@@ -1,16 +1,17 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TableIcon, Clock, User, Check } from "lucide-react";
+import { TableIcon, Clock, User, Check, CupSoda, Coffee } from "lucide-react";
 import { toast } from "sonner";
 import { useDeviceType } from "@/hooks/use-mobile";
 
 export const DrinksScreen = () => {
   const { tables, orders, menuItems, updateItemCompletionStatus } = useApp();
   const { isMobile, isTablet } = useDeviceType();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // Define utility functions first, before they are used
   // Get current order for a table
@@ -29,7 +30,7 @@ export const DrinksScreen = () => {
     // Sum quantities of all drink items
     return order.items.reduce((count, item) => {
       const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
-      if (menuItem && menuItem.category === 'drinks') {
+      if (menuItem && menuItem.category === 'drinks' && !item.completed) {
         return count + item.quantity;
       }
       return count;
@@ -75,70 +76,100 @@ export const DrinksScreen = () => {
     
     // Mark specific drink as delivered
     updateItemCompletionStatus(order.id, menuItemId, true);
+    setRefreshTrigger(prev => prev + 1);
     
-    toast.success(`تم تسليم المشروب للطاولة ${tableId}`);
+    toast.success(`تم تسليم المشروب للطاولة ${tableId}`, {
+      position: "top-center",
+      style: { background: "#10b981", color: "white" }
+    });
   };
+  
+  // Force re-render when drinks are delivered
+  useEffect(() => {
+    // This is just to trigger a re-render when refreshTrigger changes
+  }, [refreshTrigger]);
   
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">شاشة المشروبات</h1>
+      <div className="flex items-center justify-between bg-gradient-to-r from-blue-600 to-cyan-500 text-white p-4 rounded-lg shadow-lg mb-6">
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+          <CupSoda className="h-7 w-7" />
+          شاشة المشروبات
+        </h1>
+        <Badge className="bg-white text-blue-700 text-lg px-3 py-1 font-medium">
+          {tablesWithDrinkOrders.reduce((total, table) => total + getDrinksCount(table.id), 0)} مشروبات بانتظار التسليم
+        </Badge>
+      </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {tablesWithDrinkOrders.length > 0 ? (
-          tablesWithDrinkOrders.map(table => {
+      {tablesWithDrinkOrders.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {tablesWithDrinkOrders.map(table => {
             const currentOrder = getCurrentOrder(table.id);
             const drinkItems = getDrinkItems(table.id);
             
             return (
               <Card 
                 key={table.id}
-                className="hover:border-blue-300 transition-all shadow-md"
+                className="overflow-hidden border-2 border-blue-200 hover:border-blue-400 transition-all shadow-lg rounded-xl"
               >
-                <CardContent className="p-4 space-y-3">
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-3 border-b border-blue-100">
                   <div className="flex justify-between items-center">
-                    <h3 className="font-medium flex items-center gap-1">
-                      <TableIcon className="h-4 w-4" />
+                    <h3 className="font-bold flex items-center gap-2 text-blue-800">
+                      <TableIcon className="h-5 w-5 text-blue-600" />
                       طاولة {table.name}
-                      <Badge className="bg-blue-500 text-xs ml-2">
+                      <Badge className="bg-blue-600 text-white ml-2">
                         {drinkItems.length} مشروبات
                       </Badge>
                     </h3>
                     
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full flex items-center">
+                      <User className="h-3 w-3 mr-1" />
                       {table.peopleCount} شخص
                     </span>
                   </div>
                   
                   {currentOrder && (
-                    <div className="text-sm text-gray-500 flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
+                    <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                      <Clock className="h-4 w-4 text-blue-500" />
                       <span>
                         {new Date(currentOrder.createdAt).toLocaleTimeString('ar-SA', {
                           hour: '2-digit',
                           minute: '2-digit'
                         })}
                       </span>
-                      <User className="h-3 w-3 mr-1" />
+                      <span className="mx-1">•</span>
+                      <User className="h-4 w-4 text-blue-500" />
                       <span>{currentOrder.waiterName}</span>
                     </div>
                   )}
-                  
-                  <div className="bg-gray-50 rounded-md p-2 max-h-40 overflow-y-auto">
+                </div>
+                
+                <CardContent className="p-0">
+                  <div className="max-h-64 overflow-y-auto divide-y divide-gray-100">
                     {drinkItems.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
+                      <div 
+                        key={idx} 
+                        className="flex justify-between items-center p-3 hover:bg-blue-50 transition-colors"
+                      >
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{item.quantity}x</span>
-                          <span>{item.name}</span>
+                          <span className="flex items-center justify-center h-7 w-7 bg-blue-100 text-blue-800 rounded-full font-medium">
+                            {item.quantity}×
+                          </span>
+                          <div>
+                            <span className="font-medium">{item.name}</span>
+                            {item.notes && (
+                              <p className="text-xs text-gray-500 mt-1 bg-gray-50 px-2 py-1 rounded">
+                                {item.notes}
+                              </p>
+                            )}
+                          </div>
                         </div>
                         <Button 
                           size="sm" 
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeliverDrinks(table.id, item.menuItemId);
-                          }}
+                          className="bg-green-600 hover:bg-green-700 text-white shadow-sm flex items-center gap-1"
+                          onClick={() => handleDeliverDrinks(table.id, item.menuItemId)}
                         >
-                          <Check className="h-4 w-4 mr-1" />
+                          <Check className="h-4 w-4" />
                           تم التسليم
                         </Button>
                       </div>
@@ -147,13 +178,15 @@ export const DrinksScreen = () => {
                 </CardContent>
               </Card>
             );
-          })
-        ) : (
-          <div className="col-span-full text-center py-12">
-            <p className="text-gray-500">لا توجد طلبات مشروبات حالياً</p>
-          </div>
-        )}
-      </div>
+          })}
+        </div>
+      ) : (
+        <div className="text-center py-16 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100 shadow-sm">
+          <Coffee className="w-16 h-16 mx-auto text-blue-300 mb-4" />
+          <p className="text-xl font-medium text-blue-800 mb-2">لا توجد طلبات مشروبات حالياً</p>
+          <p className="text-gray-500">ستظهر طلبات المشروبات هنا عندما يتم طلبها</p>
+        </div>
+      )}
     </div>
   );
 };

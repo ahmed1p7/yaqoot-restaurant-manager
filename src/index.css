@@ -43,6 +43,14 @@
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 351 38% 30%;
     --sidebar-ring: 351 58% 65%;
+    
+    /* Kitchen and Drinks Screen Colors */
+    --kitchen-primary: 12 76% 61%;
+    --kitchen-light: 12 76% 95%;
+    --kitchen-dark: 12 76% 40%;
+    --drinks-primary: 200 98% 39%;
+    --drinks-light: 200 98% 95%;
+    --drinks-dark: 200 98% 29%;
   }
 }
 
@@ -67,5 +75,54 @@
 
   .order-item {
     @apply flex justify-between items-center border-b border-muted py-3;
+  }
+  
+  /* Kitchen and Drinks Screen Components */
+  .kitchen-header {
+    @apply bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 rounded-lg shadow-lg;
+  }
+  
+  .drinks-header {
+    @apply bg-gradient-to-r from-blue-600 to-cyan-500 text-white p-4 rounded-lg shadow-lg;
+  }
+  
+  .kitchen-card {
+    @apply border-2 border-orange-200 hover:border-orange-400 transition-all shadow-lg rounded-xl overflow-hidden;
+  }
+  
+  .drinks-card {
+    @apply border-2 border-blue-200 hover:border-blue-400 transition-all shadow-lg rounded-xl overflow-hidden;
+  }
+  
+  .kitchen-card-header {
+    @apply bg-gradient-to-r from-orange-50 to-red-50 p-3 border-b border-orange-100;
+  }
+  
+  .drinks-card-header {
+    @apply bg-gradient-to-r from-blue-50 to-cyan-50 p-3 border-b border-blue-100;
+  }
+  
+  .kitchen-badge {
+    @apply bg-orange-500 text-white;
+  }
+  
+  .drinks-badge {
+    @apply bg-blue-600 text-white;
+  }
+  
+  .kitchen-button {
+    @apply bg-orange-500 hover:bg-orange-600 text-white shadow-sm;
+  }
+  
+  .drinks-button {
+    @apply bg-blue-600 hover:bg-blue-700 text-white shadow-sm;
+  }
+  
+  .kitchen-empty {
+    @apply text-center py-16 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-100 shadow-sm;
+  }
+  
+  .drinks-empty {
+    @apply text-center py-16 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100 shadow-sm;
   }
 }
