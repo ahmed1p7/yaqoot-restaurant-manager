@@ -1,7 +1,7 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { Order, OrderItem } from '../../types';
 import { mockOrders, mockUsers } from '../../data/mockData';
-import { toast } from "sonner";
 
 // Helper functions for order operations
 const orderHelpers = {
@@ -157,11 +157,6 @@ export const useOrders = (
           : table
       ));
     }
-    
-    // Notify only for "ready" status
-    if (status === 'ready') {
-      toast.success("الطلب جاهز للتقديم");
-    }
   }, [tables]);
 
   // Update item completion status
@@ -187,8 +182,6 @@ export const useOrders = (
       }
       return order;
     }));
-    
-    toast.success(completed ? "تم الانتهاء من تحضير العنصر" : "تمت إعادة العنصر للتحضير");
   }, []);
 
   // Delay an order
@@ -198,10 +191,6 @@ export const useOrders = (
         ? { ...order, delayed: true, delayReason: reason, updatedAt: new Date() } 
         : order
     ));
-    
-    toast.info("تم تحديث حالة الطلب", {
-      description: "تم تأجيل الطلب وإرسال إشعار للنادل"
-    });
   }, []);
   
   // Cancel a specific order item
@@ -221,8 +210,6 @@ export const useOrders = (
       }
       return order;
     }));
-    
-    toast.success("تم إلغاء العنصر من الطلب");
   }, []);
 
   // Helper to free up a table
@@ -251,15 +238,12 @@ export const useOrders = (
           : order
       ));
       
-      toast.success(`تم تسجيل الدفع للطاولة ${tableId}`);
-      
       // After marking as paid, we completely reset the table
       // This is the admin-specific functionality to clear everything
       tables.resetTable(tableId);
       
       return true;
     } else {
-      toast.error(`لا يوجد طلب نشط للطاولة ${tableId}`);
       return false;
     }
   }, [orders, tables]);
@@ -271,8 +255,6 @@ export const useOrders = (
     if (tableToReset?.currentOrderId) {
       updateOrderStatus(tableToReset.currentOrderId, 'delivered');
     }
-    
-    toast.success(`تم إعادة تهيئة الطاولة ${tableId}`);
   }, [tables, updateOrderStatus]);
 
   // Get filtered orders by status

@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableIcon, Clock, User, Check, CupSoda, Coffee } from "lucide-react";
-import { toast } from "sonner";
 import { useDeviceType } from "@/hooks/use-mobile";
 
 export const DrinksScreen = () => {
@@ -77,11 +76,6 @@ export const DrinksScreen = () => {
     // Mark specific drink as delivered
     updateItemCompletionStatus(order.id, menuItemId, true);
     setRefreshTrigger(prev => prev + 1);
-    
-    toast.success(`تم تسليم المشروب للطاولة ${tableId}`, {
-      position: "top-center",
-      style: { background: "#10b981", color: "white" }
-    });
   };
   
   // Force re-render when drinks are delivered
