@@ -34,7 +34,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
     
     menu.setOrderStats(stats);
-  }, [menu]);
+  }, [menu.setOrderStats]);
 
   const orders = useOrders(tables, updateOrderStats);
   
