@@ -6,51 +6,51 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 18%;
+    --foreground: 202 95% 13%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 18%;
+    --card-foreground: 202 95% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 18%;
+    --popover-foreground: 202 95% 13%;
 
-    --primary: 351 58% 35%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 202 95% 13%;
+    --primary-foreground: 184 75% 77%;
 
-    --secondary: 32 60% 96%;
-    --secondary-foreground: 0 0% 18%;
+    --secondary: 184 75% 77%;
+    --secondary-foreground: 202 95% 13%;
 
-    --muted: 30 15% 95%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 193 48% 45%;
+    --muted-foreground: 0 0% 98%;
 
-    --accent: 43 70% 52%;
-    --accent-foreground: 0 0% 18%;
+    --accent: 184 75% 77%;
+    --accent-foreground: 202 95% 13%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 30 10% 85%;
-    --input: 30 10% 85%;
-    --ring: 351 58% 35%;
+    --border: 193 48% 45%;
+    --input: 193 48% 45%;
+    --ring: 202 95% 13%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 351 58% 35%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 43 70% 52%;
-    --sidebar-primary-foreground: 0 0% 18%;
-    --sidebar-accent: 351 38% 42%;
+    --sidebar-background: 202 95% 13%;
+    --sidebar-foreground: 184 75% 77%;
+    --sidebar-primary: 184 75% 77%;
+    --sidebar-primary-foreground: 202 95% 13%;
+    --sidebar-accent: 193 48% 45%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 351 38% 30%;
-    --sidebar-ring: 351 58% 65%;
+    --sidebar-border: 201 59% 35%;
+    --sidebar-ring: 184 75% 77%;
     
     /* Kitchen and Drinks Screen Colors */
-    --kitchen-primary: 12 76% 61%;
-    --kitchen-light: 12 76% 95%;
-    --kitchen-dark: 12 76% 40%;
-    --drinks-primary: 200 98% 39%;
-    --drinks-light: 200 98% 95%;
-    --drinks-dark: 200 98% 29%;
+    --kitchen-primary: 202 95% 13%;
+    --kitchen-light: 184 75% 95%;
+    --kitchen-dark: 201 59% 35%;
+    --drinks-primary: 202 95% 13%;
+    --drinks-light: 184 75% 95%;
+    --drinks-dark: 201 59% 35%;
   }
 }
 

@@ -3,6 +3,7 @@ import { useApp } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
 import { ChefHat, Monitor } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import seaLogo from "@/assets/sea-logo.jpg";
 
 export const Header = () => {
   const { user, logout } = useApp();
@@ -28,23 +29,26 @@ export const Header = () => {
   // تعديل تصميم الشريط العلوي لشاشة المطبخ
   if (user?.role === 'screen') {
     return (
-      <header className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 flex justify-between items-center shadow-lg">
-        <div className="flex items-center">
-          <ChefHat className={`${isMobile ? 'h-6 w-6 mr-1' : 'h-8 w-8 mr-2'} text-white`} />
-          <h1 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold`}>
-            نظام المطبخ
-          </h1>
+      <header className="bg-primary border-b border-secondary/20 p-4 flex justify-between items-center shadow-lg">
+        <div className="flex items-center gap-3">
+          <img src={seaLogo} alt="SEA" className="h-10 w-10 rounded-full object-cover shadow-lg" />
+          <div>
+            <h1 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-primary-foreground`}>
+              SEA Kitchen
+            </h1>
+            {!isMobile && <p className="text-xs text-secondary">نظام المطبخ</p>}
+          </div>
         </div>
         
         <div className="flex items-center gap-2">
           {!isMobile && (
-            <span className="font-medium">مرحباً، {user.name}</span>
+            <span className="font-medium text-secondary">مرحباً، {user.name}</span>
           )}
           <Button 
             variant="outline" 
             size={isMobile ? "sm" : "default"}
             onClick={logout}
-            className={`text-white border-white hover:bg-opacity-20 hover:bg-white ${isMobile ? 'text-xs px-2' : ''}`}
+            className={`bg-secondary text-primary hover:bg-secondary/90 border-secondary ${isMobile ? 'text-xs px-2' : ''}`}
           >
             {isMobile ? 'خروج' : 'تسجيل الخروج'}
           </Button>
@@ -55,20 +59,23 @@ export const Header = () => {
 
   // الاحتفاظ بالشريط العلوي الأصلي للأدوار الأخرى
   return (
-    <header className="bg-restaurant-primary text-white p-4 flex justify-between items-center shadow-md">
-      <div className="flex items-center">
-        {getHeaderIcon()}
-        <h1 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold`}>
-          {user?.role === 'drinks' ? 'شاشة المشروبات' : 'نظام إدارة المطعم'}
-        </h1>
+    <header className="bg-primary border-b border-secondary/20 p-4 flex justify-between items-center shadow-md">
+      <div className="flex items-center gap-3">
+        <img src={seaLogo} alt="SEA" className={`${isMobile ? 'h-10 w-10' : 'h-12 w-12'} rounded-full object-cover shadow-lg`} />
+        <div>
+          <h1 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-primary-foreground`}>
+            {user?.role === 'drinks' ? 'SEA Drinks' : 'SEA Restaurant'}
+          </h1>
+          {!isMobile && <p className="text-sm text-secondary">نكهة البحر الأصيلة</p>}
+        </div>
       </div>
       
       {user && (
         <div className="flex items-center gap-2">
           {!isMobile && (
             <>
-              <span className="font-medium">مرحباً، {user.name}</span>
-              <span className="text-xs bg-restaurant-accent text-white px-2 py-1 rounded-full">
+              <span className="font-medium text-secondary">مرحباً، {user.name}</span>
+              <span className="text-xs bg-secondary text-primary px-2 py-1 rounded-full font-medium">
                 {getRoleLabel(user.role)}
               </span>
             </>
@@ -77,7 +84,7 @@ export const Header = () => {
             variant="outline" 
             size={isMobile ? "sm" : "default"}
             onClick={logout}
-            className={`text-white border-white hover:bg-opacity-20 hover:bg-white ${isMobile ? 'text-xs px-2' : ''}`}
+            className={`bg-secondary text-primary hover:bg-secondary/90 border-secondary ${isMobile ? 'text-xs px-2' : ''}`}
           >
             {isMobile ? 'خروج' : 'تسجيل الخروج'}
           </Button>

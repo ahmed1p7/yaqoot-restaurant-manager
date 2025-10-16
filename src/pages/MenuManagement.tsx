@@ -1,282 +1,328 @@
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
+import { MenuItem } from "@/types";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { MenuItem, MenuCategory } from "@/types";
-import { ChefHat, Pencil, Trash } from "lucide-react";
-import { ImageUploader } from "@/components/menu/ImageUploader";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ShoppingCart, X, Plus, Minus, Send } from "lucide-react";
+import { toast } from "sonner";
+import seaLogo from "@/assets/sea-logo.jpg";
 
-const translateCategory = (category: string): string => {
-  switch (category) {
-    case "appetizers": return "مقبلات";
-    case "main_dishes": return "أطباق رئيسية";
-    case "desserts": return "حلويات";
-    case "drinks": return "مشروبات";
-    case "sides": return "أطباق جانبية";
-    default: return category;
-  }
-};
+const categories = [
+  { id: "appetizers", name: "المقبلات", icon: "🍤" },
+  { id: "main_dishes", name: "الأطباق الرئيسية", icon: "🍜" },
+  { id: "desserts", name: "الحلويات", icon: "🍰" },
+  { id: "drinks", name: "المشروبات", icon: "🥤" },
+  { id: "sides", name: "الأطباق الجانبية", icon: "🥗" },
+];
+
+interface CartItem extends MenuItem {
+  quantity: number;
+}
 
 export const MenuManagement = () => {
-  const { menuItems, addMenuItem, updateMenuItem, deleteMenuItem, departments } = useApp();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<MenuCategory | "all">("all");
-  const [currentItem, setCurrentItem] = useState<MenuItem | null>(null);
-  const [formData, setFormData] = useState<Omit<MenuItem, "id">>({
-    name: "",
-    description: "",
-    price: 0,
-    category: "main_dishes",
-    image: "/placeholder.svg",
-    isAvailable: true,
-    departmentId: departments && departments.length > 0 ? departments[0].id : "1"
-  });
-  
-  const handleOpenDialog = (item?: MenuItem) => {
-    if (item) {
-      setCurrentItem(item);
-      setFormData({
-        name: item.name,
-        description: item.description,
-        price: item.price,
-        category: item.category,
-        image: item.image || "/placeholder.svg",
-        isAvailable: item.isAvailable,
-        departmentId: item.departmentId
-      });
+  const { menuItems } = useApp();
+  const [activeCategory, setActiveCategory] = useState("appetizers");
+  const [selectedDish, setSelectedDish] = useState<MenuItem | null>(null);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [showCart, setShowCart] = useState(false);
+
+  const filteredItems = menuItems.filter(
+    (item) => item.category === activeCategory
+  );
+
+  const addToCart = (item: MenuItem) => {
+    const existingItem = cart.find((cartItem) => cartItem.id === item.id);
+    if (existingItem) {
+      setCart(
+        cart.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem
+        )
+      );
     } else {
-      setCurrentItem(null);
-      setFormData({
-        name: "",
-        description: "",
-        price: 0,
-        category: "main_dishes",
-        image: "/placeholder.svg",
-        isAvailable: true,
-        departmentId: departments && departments.length > 0 ? departments[0].id : "1"
-      });
+      setCart([...cart, { ...item, quantity: 1 }]);
     }
-    setIsDialogOpen(true);
+    toast.success(`تمت إضافة ${item.name} إلى السلة`);
   };
-  
-  const handleSubmit = () => {
-    if (currentItem) {
-      updateMenuItem({ ...formData, id: currentItem.id });
-    } else {
-      addMenuItem(formData);
+
+  const updateQuantity = (id: string, delta: number) => {
+    setCart(
+      cart
+        .map((item) =>
+          item.id === id ? { ...item, quantity: item.quantity + delta } : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  };
+
+  const getTotalPrice = () => {
+    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  };
+
+  const getTotalItems = () => {
+    return cart.reduce((sum, item) => sum + item.quantity, 0);
+  };
+
+  const sendOrder = () => {
+    if (cart.length === 0) {
+      toast.error("السلة فارغة");
+      return;
     }
-    setIsDialogOpen(false);
+    toast.success("تم إرسال الطلب بنجاح!");
+    setCart([]);
+    setShowCart(false);
   };
-  
-  const handleDelete = (id: string) => {
-    if (confirm("هل أنت متأكد من حذف هذا الطبق؟")) {
-      deleteMenuItem(id);
-    }
-  };
-  
-  const filteredItems = activeTab === "all"
-    ? menuItems
-    : menuItems.filter((item) => item.category === activeTab);
-  
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">إدارة قائمة الطعام</h1>
-        <Button onClick={() => handleOpenDialog()} className="bg-restaurant-primary hover:bg-restaurant-primary-dark">
-          <span className="mr-2">+</span> إضافة طبق جديد
-        </Button>
+    <div className="min-h-screen bg-gradient-to-br from-primary via-muted to-primary/90">
+      {/* Header */}
+      <div className="bg-primary/95 backdrop-blur-sm border-b border-secondary/20 sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img src={seaLogo} alt="SEA" className="h-12 w-12 rounded-full object-cover shadow-lg" />
+              <div>
+                <h1 className="text-2xl font-bold text-primary-foreground">SEA Restaurant</h1>
+                <p className="text-sm text-secondary">نكهة البحر الأصيلة</p>
+              </div>
+            </div>
+            
+            <Button
+              onClick={() => setShowCart(!showCart)}
+              className="relative bg-secondary hover:bg-secondary/90 text-primary"
+              size="lg"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {getTotalItems() > 0 && (
+                <Badge className="absolute -top-2 -right-2 bg-accent text-accent-foreground">
+                  {getTotalItems()}
+                </Badge>
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
-      
-      <Tabs defaultValue="all" value={activeTab} onValueChange={(value) => setActiveTab(value as MenuCategory | "all")}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="all">الكل</TabsTrigger>
-          <TabsTrigger value="appetizers">مقبلات</TabsTrigger>
-          <TabsTrigger value="main_dishes">أطباق رئيسية</TabsTrigger>
-          <TabsTrigger value="desserts">حلويات</TabsTrigger>
-          <TabsTrigger value="drinks">مشروبات</TabsTrigger>
-          <TabsTrigger value="sides">أطباق جانبية</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value={activeTab} className="mt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredItems.map((item) => (
-              <Card key={item.id} className={`overflow-hidden ${!item.isAvailable ? 'opacity-60' : ''}`}>
-                <div className="h-40 bg-gray-200 flex items-center justify-center">
-                  {item.image ? (
-                    <img 
-                      src={item.image} 
-                      alt={item.name} 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <ChefHat className="w-12 h-12 text-gray-400" />
-                  )}
-                </div>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium">{item.name}</h3>
-                    <span className="text-restaurant-primary font-bold">{item.price} ريال</span>
-                  </div>
-                  <p className="text-sm text-gray-500 mb-3 line-clamp-2">{item.description}</p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs px-2 py-1 bg-restaurant-secondary rounded-full">
-                      {translateCategory(item.category)}
-                    </span>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleOpenDialog(item)}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        className="text-red-500 border-red-200 hover:bg-red-50"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        <Trash className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+
+      <div className="container mx-auto px-4 py-6">
+        {/* Categories */}
+        <div className="mb-6 bg-primary/50 backdrop-blur-sm rounded-2xl p-2 shadow-xl border border-secondary/20">
+          <div className="grid grid-cols-5 gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => {
+                  setActiveCategory(cat.id);
+                  setSelectedDish(null);
+                }}
+                className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-300 ${
+                  activeCategory === cat.id
+                    ? "bg-secondary text-primary shadow-lg scale-105"
+                    : "bg-primary/30 text-secondary hover:bg-primary/40"
+                }`}
+              >
+                <span className="text-2xl">{cat.icon}</span>
+                <span className="text-xs font-medium text-center">{cat.name}</span>
+              </button>
             ))}
           </div>
-          
-          {filteredItems.length === 0 && (
-            <div className="text-center py-12">
-              <ChefHat className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-700">لا توجد أطباق في هذا القسم</h3>
-              <p className="text-gray-500">اضغط على "إضافة طبق جديد" لإضافة أطباق</p>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-      
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {currentItem ? "تعديل طبق" : "إضافة طبق جديد"}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">اسم الطبق</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="description">الوصف</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="price">السعر</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="category">التصنيف</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value: string) => setFormData({ 
-                    ...formData, 
-                    category: value as MenuCategory 
-                  })}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Menu Items Grid */}
+          <div className={`${selectedDish || showCart ? "lg:col-span-2" : "lg:col-span-3"}`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filteredItems.map((item) => (
+                <Card
+                  key={item.id}
+                  onClick={() => setSelectedDish(item)}
+                  className="group cursor-pointer overflow-hidden bg-card/80 backdrop-blur-sm border-2 border-secondary/20 hover:border-secondary hover:shadow-2xl transition-all duration-300 hover:scale-105"
                 >
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="appetizers">مقبلات</SelectItem>
-                    <SelectItem value="main_dishes">أطباق رئيسية</SelectItem>
-                    <SelectItem value="desserts">حلويات</SelectItem>
-                    <SelectItem value="drinks">مشروبات</SelectItem>
-                    <SelectItem value="sides">أطباق جانبية</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="department">القسم</Label>
-              <Select
-                value={formData.departmentId}
-                onValueChange={(value) => setFormData({ ...formData, departmentId: value })}
-              >
-                <SelectTrigger id="department">
-                  <SelectValue placeholder="اختر القسم" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments?.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="dishImage">صورة الطبق</Label>
-              <ImageUploader
-                currentImage={formData.image}
-                onImageChange={(imageUrl) => setFormData({ ...formData, image: imageUrl })}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <Label htmlFor="isAvailable">متوفر</Label>
-              <Switch
-                id="isAvailable"
-                checked={formData.isAvailable}
-                onCheckedChange={(checked) => setFormData({ ...formData, isAvailable: checked })}
-              />
+                  <div className="relative aspect-square overflow-hidden">
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-muted to-primary/20 flex items-center justify-center">
+                        <span className="text-6xl opacity-30">🍽️</span>
+                      </div>
+                    )}
+                    {!item.isAvailable && (
+                      <div className="absolute inset-0 bg-destructive/80 flex items-center justify-center">
+                        <span className="text-destructive-foreground font-bold">غير متوفر</span>
+                      </div>
+                    )}
+                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                      ${item.price}
+                    </div>
+                  </div>
+                  
+                  <div className="p-4">
+                    <h3 className="font-bold text-lg mb-1 text-card-foreground">{item.name}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                  </div>
+                </Card>
+              ))}
             </div>
           </div>
-          
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDialogOpen(false)}
-            >
-              إلغاء
-            </Button>
-            <Button onClick={handleSubmit} className="bg-restaurant-primary hover:bg-restaurant-primary-dark">
-              {currentItem ? "تحديث" : "إضافة"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+          {/* Dish Details Panel */}
+          {selectedDish && !showCart && (
+            <div className="lg:col-span-1">
+              <Card className="sticky top-24 bg-card/95 backdrop-blur-sm border-2 border-secondary shadow-2xl overflow-hidden">
+                <div className="relative">
+                  <Button
+                    onClick={() => setSelectedDish(null)}
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 left-2 z-10 bg-primary/80 hover:bg-primary text-primary-foreground rounded-full"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                  
+                  <div className="aspect-square overflow-hidden">
+                    {selectedDish.image ? (
+                      <img
+                        src={selectedDish.image}
+                        alt={selectedDish.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-muted to-primary/20 flex items-center justify-center">
+                        <span className="text-8xl opacity-30">🍽️</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-card-foreground mb-2">{selectedDish.name}</h2>
+                    <p className="text-muted-foreground">{selectedDish.description}</p>
+                  </div>
+
+                  <div className="bg-primary/10 rounded-lg p-4 border border-secondary/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">السعر</span>
+                      <span className="text-3xl font-bold text-primary">${selectedDish.price}</span>
+                    </div>
+                    {selectedDish.isAvailable ? (
+                      <Badge className="w-full justify-center bg-secondary text-primary">متوفر</Badge>
+                    ) : (
+                      <Badge variant="destructive" className="w-full justify-center">غير متوفر</Badge>
+                    )}
+                  </div>
+
+                  <Button
+                    onClick={() => addToCart(selectedDish)}
+                    disabled={!selectedDish.isAvailable}
+                    className="w-full bg-secondary hover:bg-secondary/90 text-primary text-lg py-6"
+                    size="lg"
+                  >
+                    إضافة إلى السلة
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* Cart Panel */}
+          {showCart && (
+            <div className="lg:col-span-1">
+              <Card className="sticky top-24 bg-card/95 backdrop-blur-sm border-2 border-secondary shadow-2xl">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-card-foreground flex items-center gap-2">
+                      <ShoppingCart className="h-6 w-6" />
+                      السلة
+                    </h2>
+                    <Button
+                      onClick={() => setShowCart(false)}
+                      variant="ghost"
+                      size="icon"
+                      className="hover:bg-destructive/20"
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </div>
+
+                  {cart.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <ShoppingCart className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                      <p>السلة فارغة</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-4 max-h-96 overflow-y-auto mb-6">
+                        {cart.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-secondary/20"
+                          >
+                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                              {item.image ? (
+                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-muted flex items-center justify-center">
+                                  <span className="text-2xl">🍽️</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-sm truncate">{item.name}</h3>
+                              <p className="text-primary font-bold">${item.price}</p>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <Button
+                                onClick={() => updateQuantity(item.id, -1)}
+                                size="icon"
+                                variant="outline"
+                                className="h-8 w-8 rounded-full"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="font-bold w-8 text-center">{item.quantity}</span>
+                              <Button
+                                onClick={() => updateQuantity(item.id, 1)}
+                                size="icon"
+                                className="h-8 w-8 rounded-full bg-secondary hover:bg-secondary/90 text-primary"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-secondary/20">
+                        <div className="flex justify-between text-lg">
+                          <span className="text-muted-foreground">الإجمالي الفرعي</span>
+                          <span className="font-bold">${getTotalPrice().toFixed(2)}</span>
+                        </div>
+                        
+                        <Button
+                          onClick={sendOrder}
+                          className="w-full bg-secondary hover:bg-secondary/90 text-primary text-lg py-6"
+                          size="lg"
+                        >
+                          <Send className="h-5 w-5 ml-2" />
+                          إرسال الطلب
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </Card>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
