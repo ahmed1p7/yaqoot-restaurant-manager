@@ -2,49 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from "@/contexts/AppContext";
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { OrderItem, OrderStatus, MenuItem } from '@/types';
-import { QuickOrderBar } from "@/components/menu/QuickOrderBar";
-import { CurrentOrderPanel } from "@/components/menu/CurrentOrderPanel";
 import { PeopleCountDialog } from "@/components/tables/PeopleCountDialog";
-import { Plus, CupSoda, Utensils, CakeSlice, Send } from 'lucide-react';
+import { Plus, Minus, ArrowRight, Heart, ShoppingCart, Soup, UtensilsCrossed, Cake, Coffee, Salad, X } from 'lucide-react';
+import seaLogo from "@/assets/sea-logo.jpg";
+
+const categories = [
+  { id: "appetizers", name: "المقبلات", icon: Salad },
+  { id: "main_dishes", name: "الأطباق الرئيسية", icon: UtensilsCrossed },
+  { id: "desserts", name: "الحلويات", icon: Cake },
+  { id: "drinks", name: "المشروبات", icon: Coffee },
+  { id: "sides", name: "الأطباق الجانبية", icon: Soup },
+];
 
 export const MenuView = () => {
-  // تحويل التصنيفات إلى مسميات عربية
-  const mapCategoryToArabic = (category: string): string => {
-    switch(category) {
-      case "drinks": return "مشروبات";
-      case "main_dishes": return "أطباق رئيسية";
-      case "desserts": return "حلويات";
-      case "appetizers": return "مقبلات";
-      case "sides": return "أطباق جانبية";
-      default: return category;
-    }
-  }
-  
-  // Map Arabic categories back to English
-  const mapArabicToCategory = (arabicName: string): string => {
-    switch(arabicName) {
-      case "مشروبات": return "drinks";
-      case "أطباق رئيسية": return "main_dishes";
-      case "حلويات": return "desserts";
-      case "مقبلات": return "appetizers";
-      case "أطباق جانبية": return "sides";
-      default: return arabicName;
-    }
-  }
-
   const { 
     menuItems, 
     createOrder, 
     tables, 
     orders, 
-    getMostOrderedItems, 
     cancelOrderItem, 
     updateTablePeopleCount 
   } = useApp();
@@ -52,10 +33,11 @@ export const MenuView = () => {
   const [searchParams] = useSearchParams();
   const tableId = searchParams.get("table");
   const selectedTable = tableId ? parseInt(tableId) : null;
-  const [category, setCategory] = useState<string | undefined>(undefined);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("appetizers");
+  const [selectedDish, setSelectedDish] = useState<MenuItem | null>(null);
   const [currentOrderItems, setCurrentOrderItems] = useState<OrderItem[]>([]);
   const [isPeopleDialogOpen, setIsPeopleDialogOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
   
   // Find current order for this table
   useEffect(() => {
@@ -85,48 +67,44 @@ export const MenuView = () => {
     return null;
   }
 
-  const handleAddToOrder = (item: any) => {
+  const filteredItems = menuItems.filter(
+    (item) => item.category === activeCategory && item.isAvailable
+  );
+
+  const handleAddToCart = (item: MenuItem, qty: number = quantity) => {
     const existingTable = tables.find(t => t.id === selectedTable);
     const existingOrderId = existingTable?.currentOrderId;
     const existingOrder = existingOrderId ? orders.find(o => o.id === existingOrderId) : undefined;
-
-    let quantity = 1;
-    if (existingOrder) {
-      const existingItem = existingOrder.items.find(i => i.menuItemId === item.id);
-      if (existingItem) {
-        quantity = existingItem.quantity + 1;
-      }
-    }
 
     const orderItem: OrderItem = {
       menuItemId: item.id,
       name: item.name,
       price: item.price,
-      quantity: quantity,
+      quantity: qty,
       notes: '',
       completed: false
     };
 
-    // Update local state to show the item immediately
+    // Update local state
     const itemExists = currentOrderItems.some(i => i.menuItemId === item.id);
     if (itemExists) {
       setCurrentOrderItems(prevItems => 
         prevItems.map(i => i.menuItemId === item.id ? 
-          { ...i, quantity: i.quantity + 1 } : i
+          { ...i, quantity: i.quantity + qty } : i
         )
       );
     } else {
       setCurrentOrderItems(prevItems => [...prevItems, orderItem]);
     }
 
-    // Create the order
+    // Create/update the order
     const orderData = {
       tableNumber: selectedTable,
       items: itemExists ? currentOrderItems.map(i => 
-        i.menuItemId === item.id ? { ...i, quantity: i.quantity + 1 } : i
+        i.menuItemId === item.id ? { ...i, quantity: i.quantity + qty } : i
       ) : [...currentOrderItems, orderItem],
       totalAmount: calculateTotalAmount(itemExists ? 
-        currentOrderItems.map(i => i.menuItemId === item.id ? { ...i, quantity: i.quantity + 1 } : i) 
+        currentOrderItems.map(i => i.menuItemId === item.id ? { ...i, quantity: i.quantity + qty } : i) 
         : [...currentOrderItems, orderItem]
       ),
       peopleCount: tables.find(t => t.id === selectedTable)?.peopleCount,
@@ -138,73 +116,17 @@ export const MenuView = () => {
 
     createOrder(orderData);
     
-    // Show success toast
-    toast.success(`تمت إضافة ${item.name} للطلب`, {
-      description: "يمكنك تعديل الكمية لاحقاً"
-    });
+    toast.success(`تمت إضافة ${item.name} للطلب`);
+    setSelectedDish(null);
+    setQuantity(1);
   };
 
   const calculateTotalAmount = (items: OrderItem[]) => {
     return items.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
-  const handleUpdateQuantity = (menuItemId: string, quantity: number) => {
-    const updatedItems = currentOrderItems.map(item => 
-      item.menuItemId === menuItemId ? { ...item, quantity } : item
-    );
-    
-    setCurrentOrderItems(updatedItems);
-    
-    const orderData = {
-      tableNumber: selectedTable,
-      items: updatedItems,
-      totalAmount: calculateTotalAmount(updatedItems),
-      peopleCount: tables.find(t => t.id === selectedTable)?.peopleCount,
-      status: 'pending' as OrderStatus,
-      waiterId: '',
-      delayed: false,
-      isPaid: false
-    };
-    
-    createOrder(orderData);
-    toast.success("تم تحديث الكمية");
-  };
-
-  const handleUpdateNote = (menuItemId: string, note: string) => {
-    const updatedItems = currentOrderItems.map(item => 
-      item.menuItemId === menuItemId ? { ...item, notes: note } : item
-    );
-    
-    setCurrentOrderItems(updatedItems);
-    
-    const orderData = {
-      tableNumber: selectedTable,
-      items: updatedItems,
-      totalAmount: calculateTotalAmount(updatedItems),
-      peopleCount: tables.find(t => t.id === selectedTable)?.peopleCount,
-      status: 'pending' as OrderStatus,
-      waiterId: '',
-      delayed: false,
-      isPaid: false
-    };
-    
-    createOrder(orderData);
-    toast.success("تم حفظ الملاحظات");
-  };
-
-  const handleRemoveItem = (menuItemId: string) => {
-    // First update local state
-    const updatedItems = currentOrderItems.filter(item => item.menuItemId !== menuItemId);
-    setCurrentOrderItems(updatedItems);
-    
-    // Then update the order through API
-    cancelOrderItem(existingOrder()?.id || '', menuItemId);
-  };
-  
-  const existingOrder = () => {
-    const existingTable = tables.find(t => t.id === selectedTable);
-    const existingOrderId = existingTable?.currentOrderId;
-    return existingOrderId ? orders.find(o => o.id === existingOrderId) : undefined;
+  const getTotalItems = () => {
+    return currentOrderItems.reduce((sum, item) => sum + item.quantity, 0);
   };
 
   const getCurrentTablePeopleCount = () => {
@@ -217,166 +139,244 @@ export const MenuView = () => {
     setIsPeopleDialogOpen(false);
   };
 
-  // عملية إرسال الطلب إلى المطبخ
   const handleSendOrder = () => {
     if (currentOrderItems.length === 0) {
-      toast.error("لا يمكن إرسال طلب فارغ");
+      toast.error("السلة فارغة");
       return;
     }
-
-    const existingTable = tables.find(t => t.id === selectedTable);
-    const existingOrderId = existingTable?.currentOrderId;
-
-    const orderData = {
-      tableNumber: selectedTable,
-      items: currentOrderItems,
-      totalAmount: calculateTotalAmount(currentOrderItems),
-      peopleCount: tables.find(t => t.id === selectedTable)?.peopleCount || 1,
-      status: 'pending' as OrderStatus,
-      waiterId: '',
-      delayed: false,
-      isPaid: false
-    };
-
-    createOrder(orderData);
     
-    toast.success("تم إرسال الطلب إلى المطبخ بنجاح", {
-      description: "سيتم إشعار المطبخ بالطلب الجديد"
-    });
-    
-    // Navigate to tables page after sending the order
+    toast.success("تم إرسال الطلب بنجاح!");
     navigate('/tables');
   };
 
-  // Fix: Filter menu items by category using proper mapping
-  const filteredMenuItems = menuItems.filter(item => {
-    // If category is selected, filter by it
-    if (category) {
-      const mappedCategory = mapArabicToCategory(mapCategoryToArabic(category));
-      if (item.category !== mappedCategory) {
-        return false;
-      }
-    }
-    
-    // Also apply search filter if there's a search query
-    if (searchQuery && !item.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    
-    return true;
-  });
-
-  // تجميع الأطباق حسب التصنيف
-  const groupedMenuItems: Record<string, MenuItem[]> = {};
-  menuItems.forEach(item => {
-    if (!groupedMenuItems[item.category]) {
-      groupedMenuItems[item.category] = [];
-    }
-    groupedMenuItems[item.category].push(item);
-  });
-
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">
-          قائمة الطعام
-          {selectedTable && (
-            <span className="ml-2 bg-primary text-white px-2 py-1 text-sm rounded-md">
-              الطاولة {selectedTable}
-            </span>
-          )}
-        </h1>
-        <Input
-          type="search"
-          placeholder="بحث في قائمة الطعام..."
-          className="max-w-xs"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+    <div className="min-h-screen bg-gradient-to-br from-primary via-muted to-primary/90">
+      {/* Header */}
+      <div className="bg-primary/95 backdrop-blur-sm border-b border-secondary/20 sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img src={seaLogo} alt="SEA" className="h-12 w-12 rounded-full object-cover shadow-lg" />
+              <div>
+                <h1 className="text-2xl font-bold text-primary-foreground">SEA Restaurant</h1>
+                <p className="text-sm text-secondary">الطاولة {selectedTable}</p>
+              </div>
+            </div>
+            
+            <Button
+              onClick={() => navigate('/tables')}
+              className="relative bg-secondary hover:bg-secondary/90 text-primary"
+              size="lg"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {getTotalItems() > 0 && (
+                <Badge className="absolute -top-2 -right-2 bg-accent text-accent-foreground">
+                  {getTotalItems()}
+                </Badge>
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Current Order Panel with Send Button */}
-      <CurrentOrderPanel 
-        items={currentOrderItems}
-        onUpdateQuantity={handleUpdateQuantity}
-        onUpdateNote={handleUpdateNote}
-        onRemoveItem={handleRemoveItem}
-        onSendOrder={handleSendOrder}
-        tableNumber={selectedTable}
-        peopleCount={getCurrentTablePeopleCount()}
-        onOpenPeopleDialog={() => setIsPeopleDialogOpen(true)}
-      />
+      <div className="container mx-auto px-4 py-6">
+        {/* Categories */}
+        <div className="mb-6 bg-primary/50 backdrop-blur-sm rounded-2xl p-2 shadow-xl border border-secondary/20">
+          <div className="grid grid-cols-5 gap-2">
+            {categories.map((cat) => {
+              const Icon = cat.icon;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    setActiveCategory(cat.id);
+                    setSelectedDish(null);
+                  }}
+                  className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-300 ${
+                    activeCategory === cat.id
+                      ? "bg-secondary text-primary shadow-lg scale-105"
+                      : "bg-primary/30 text-secondary hover:bg-primary/40"
+                  }`}
+                >
+                  <Icon className="h-6 w-6" />
+                  <span className="text-xs font-medium text-center">{cat.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-      {/* Quick Order Bar */}
-      <QuickOrderBar
-        items={getMostOrderedItems(5)}
-        onAddItem={handleAddToOrder}
-      />
+        {/* Subcategories for Soup */}
+        {activeCategory === "appetizers" && (
+          <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
+            <Button variant="outline" size="sm" className="whitespace-nowrap">الكل</Button>
+            <Button variant="outline" size="sm" className="whitespace-nowrap">سلطات</Button>
+            <Button variant="outline" size="sm" className="whitespace-nowrap">شوربات</Button>
+            <Button variant="outline" size="sm" className="whitespace-nowrap">مقبلات ساخنة</Button>
+          </div>
+        )}
 
-      {/* Menu Tabs and Items - تحسين طريقة عرض التصنيفات */}
-      <Tabs defaultValue="all" className="space-y-4">
-        <TabsList className="flex flex-wrap">
-          <TabsTrigger value="all" onClick={() => setCategory(undefined)} className="flex items-center gap-1">
-            الكل
-          </TabsTrigger>
-          <TabsTrigger value="drinks" onClick={() => setCategory("drinks")} className="flex items-center gap-1">
-            <CupSoda className="h-4 w-4" /> مشروبات
-          </TabsTrigger>
-          <TabsTrigger value="main_dishes" onClick={() => setCategory("main_dishes")} className="flex items-center gap-1">
-            <Utensils className="h-4 w-4" /> أطباق رئيسية
-          </TabsTrigger>
-          <TabsTrigger value="desserts" onClick={() => setCategory("desserts")} className="flex items-center gap-1">
-            <CakeSlice className="h-4 w-4" /> حلويات
-          </TabsTrigger>
-          <TabsTrigger value="appetizers" onClick={() => setCategory("appetizers")} className="flex items-center gap-1">
-            مقبلات
-          </TabsTrigger>
-          <TabsTrigger value="sides" onClick={() => setCategory("sides")} className="flex items-center gap-1">
-            أطباق جانبية
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="all" />
-        <TabsContent value="drinks" />
-        <TabsContent value="main_dishes" />
-        <TabsContent value="desserts" />
-        <TabsContent value="appetizers" />
-        <TabsContent value="sides" />
-
-        <ScrollArea className="h-[450px] w-full rounded-md border p-4">
-          {filteredMenuItems.length > 0 ? (
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {filteredMenuItems.map(item => (
-                <Card key={item.id} className="cursor-pointer hover:bg-gray-50 transition-all border border-primary/10">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="outline" className="text-xs">
-                        {mapCategoryToArabic(item.category)}
-                      </Badge>
-                    </div>
-                    <h3 className="font-medium text-lg">{item.name}</h3>
-                    <p className="text-sm text-gray-500 mb-3">{item.description}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Menu Items Grid */}
+          <div className={`${selectedDish ? "lg:col-span-2" : "lg:col-span-3"}`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filteredItems.map((item) => (
+                <Card
+                  key={item.id}
+                  onClick={() => {
+                    setSelectedDish(item);
+                    setQuantity(1);
+                  }}
+                  className="group cursor-pointer overflow-hidden bg-card/95 backdrop-blur-sm border-2 border-secondary/20 hover:border-secondary hover:shadow-2xl transition-all duration-300 hover:scale-105"
+                >
+                  <div className="relative aspect-square overflow-hidden">
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-muted to-primary/20 flex items-center justify-center">
+                        <span className="text-6xl opacity-30">🍽️</span>
+                      </div>
+                    )}
+                    <Badge className="absolute top-2 left-2 bg-secondary text-primary font-bold">
+                      متوفر
+                    </Badge>
+                    {item.volume && (
+                      <div className="absolute top-2 right-2 bg-primary/90 text-primary-foreground px-2 py-1 rounded-lg text-xs">
+                        +{item.volume.replace('ml', '').replace('g', '')}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="p-4">
+                    <h3 className="font-bold text-lg mb-1 text-card-foreground">{item.name}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{item.description}</p>
+                    {item.ingredients && (
+                      <p className="text-xs text-muted-foreground/70 line-clamp-1 mb-2">
+                        {item.ingredients}
+                      </p>
+                    )}
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold text-primary">{item.price} ريال</span>
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleAddToOrder(item)}
-                        className="gap-1"
-                      >
-                        <Plus className="h-4 w-4" /> إضافة
-                      </Button>
+                      <span className="text-xl font-bold text-primary">${item.price}</span>
+                      <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
-                  </CardContent>
+                  </div>
                 </Card>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-16">
-              <p className="text-lg text-gray-500">لا توجد أطباق متطابقة مع البحث</p>
+          </div>
+
+          {/* Dish Details Panel */}
+          {selectedDish && (
+            <div className="lg:col-span-1">
+              <Card className="sticky top-24 bg-card/95 backdrop-blur-sm border-2 border-secondary shadow-2xl overflow-hidden">
+                <div className="relative">
+                  <Button
+                    onClick={() => setSelectedDish(null)}
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 left-2 z-10 bg-primary/80 hover:bg-primary text-primary-foreground rounded-full"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                  
+                  <div className="aspect-square overflow-hidden">
+                    {selectedDish.image ? (
+                      <img
+                        src={selectedDish.image}
+                        alt={selectedDish.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-muted to-primary/20 flex items-center justify-center">
+                        <span className="text-8xl opacity-30">🍽️</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  <div className="flex items-start justify-between">
+                    <h2 className="text-2xl font-bold text-card-foreground">{selectedDish.name}</h2>
+                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80">
+                      <Heart className="h-6 w-6" />
+                    </Button>
+                  </div>
+
+                  {/* Nutritional Info */}
+                  {(selectedDish.volume || selectedDish.calories) && (
+                    <div className="bg-primary text-primary-foreground rounded-lg p-3 flex items-center justify-between">
+                      {selectedDish.volume && (
+                        <span className="font-semibold">{selectedDish.volume}</span>
+                      )}
+                      {selectedDish.calories && (
+                        <span className="font-semibold">{selectedDish.calories}cal</span>
+                      )}
+                      <Heart className="h-5 w-5 fill-primary-foreground" />
+                      <span className="font-bold">348</span>
+                    </div>
+                  )}
+
+                  {/* Description */}
+                  <p className="text-muted-foreground leading-relaxed">{selectedDish.description}</p>
+
+                  {/* Ingredients */}
+                  {selectedDish.ingredients && (
+                    <div className="bg-muted/30 rounded-lg p-4">
+                      <h3 className="font-semibold mb-2 text-sm">المكونات:</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {selectedDish.ingredients}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Price */}
+                  <div className="text-center py-2">
+                    <span className="text-4xl font-bold text-primary">${selectedDish.price}</span>
+                  </div>
+
+                  {/* Quantity Selector */}
+                  <div className="flex items-center justify-center gap-4 bg-primary/10 rounded-full p-2">
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setQuantity(Math.max(1, quantity - 1));
+                      }}
+                      size="icon"
+                      className="rounded-full h-10 w-10 bg-primary hover:bg-primary/90"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="font-bold text-2xl w-12 text-center">{quantity}</span>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setQuantity(quantity + 1);
+                      }}
+                      size="icon"
+                      className="rounded-full h-10 w-10 bg-primary hover:bg-primary/90"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {/* Order Button */}
+                  <Button
+                    onClick={() => handleAddToCart(selectedDish, quantity)}
+                    className="w-full bg-secondary hover:bg-secondary/90 text-primary text-lg py-6 rounded-full"
+                    size="lg"
+                  >
+                    إضافة للطلب
+                  </Button>
+                </div>
+              </Card>
             </div>
           )}
-        </ScrollArea>
-      </Tabs>
+        </div>
+      </div>
       
       {/* People Count Dialog */}
       <PeopleCountDialog

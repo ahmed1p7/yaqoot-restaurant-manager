@@ -5,121 +5,157 @@ export const mockMenuItems: MenuItem[] = [
   {
     id: '1',
     name: 'سلطة البيت',
-    description: 'سلطة طازجة مع خضروات موسمية وصلصة خاصة',
+    description: 'سلطة طازجة ومنعشة مع مجموعة متنوعة من الخضروات الطازجة',
     price: 25,
     category: 'appetizers',
     image: '/placeholder.svg',
     isAvailable: true,
-    departmentId: '1'
+    departmentId: '1',
+    ingredients: 'خس، طماطم، خيار، جزر، فلفل أخضر، ذرة، زيتون، صلصة خاصة، زيت زيتون',
+    calories: '180',
+    volume: '300g'
   },
   {
     id: '2',
     name: 'حمص',
-    description: 'حمص مطحون مع طحينة وزيت زيتون',
+    description: 'حمص كريمي ناعم مع طحينة طازجة وزيت زيتون بكر',
     price: 15,
     category: 'appetizers',
     image: '/placeholder.svg',
     isAvailable: true,
-    departmentId: '1'
+    departmentId: '1',
+    ingredients: 'حمص، طحينة، ثوم، ليمون، زيت زيتون، كمون، ملح',
+    calories: '320',
+    volume: '250g'
   },
   {
     id: '3',
     name: 'شوربة عدس',
-    description: 'شوربة عدس تقليدية مع خبز محمص',
+    description: 'شوربة عدس دافئة ومغذية مع التوابل التقليدية',
     price: 18,
     category: 'appetizers',
     image: '/placeholder.svg',
     isAvailable: true,
-    departmentId: '1'
+    departmentId: '1',
+    ingredients: 'عدس، بصل، جزر، كرفس، ثوم، كمون، كركم، ليمون، خبز محمص',
+    calories: '245',
+    volume: '350ml'
   },
   {
     id: '4',
     name: 'مشاوي مشكلة',
-    description: 'تشكيلة من اللحوم المشوية مع أرز وخضار',
+    description: 'تشكيلة فاخرة من اللحوم المشوية على الفحم مع التتبيلة الخاصة',
     price: 85,
     category: 'main_dishes',
     image: '/placeholder.svg',
     isAvailable: true,
-    departmentId: '1'
+    departmentId: '1',
+    ingredients: 'لحم غنم، دجاج، كفتة، أرز بسمتي، خضار مشوية، صلصة ثومية، خبز',
+    calories: '850',
+    volume: '550g'
   },
   {
     id: '5',
     name: 'دجاج مشوي',
-    description: 'نصف دجاجة مشوية متبلة مع بطاطا',
+    description: 'نصف دجاجة طازجة مشوية بالتتبيلة السرية',
     price: 65,
     category: 'main_dishes',
     image: '/placeholder.svg',
     isAvailable: true,
-    departmentId: '1'
+    departmentId: '1',
+    ingredients: 'دجاج طازج، توابل خاصة، ليمون، ثوم، بطاطا مشوية، سلطة',
+    calories: '650',
+    volume: '450g'
   },
   {
     id: '6',
     name: 'سمك مشوي',
-    description: 'سمك طازج مشوي مع صلصة الليمون',
+    description: 'سمك طازج من البحر مشوي بالكمال مع صلصة الليمون والأعشاب',
     price: 90,
     category: 'main_dishes',
     image: '/placeholder.svg',
     isAvailable: true,
-    departmentId: '1'
+    departmentId: '1',
+    ingredients: 'سمك طازج، ليمون، بقدونس، ثوم، زيت زيتون، أرز، خضار مطبوخة',
+    calories: '420',
+    volume: '400g'
   },
   {
     id: '7',
     name: 'كنافة',
-    description: 'كنافة بالجبن مع قطر',
+    description: 'كنافة فاخرة بالجبن الطازج مع القطر الذهبي والفستق الحلبي',
     price: 30,
     category: 'desserts',
     image: '/placeholder.svg',
     isAvailable: true,
-    departmentId: '3'
+    departmentId: '3',
+    ingredients: 'كنافة، جبن عكاوي، سمن، قطر، فستق حلبي',
+    calories: '480',
+    volume: '200g'
   },
   {
     id: '8',
     name: 'أم علي',
-    description: 'حلوى أم علي الساخنة بالمكسرات',
+    description: 'حلوى أم علي الساخنة الغنية بالمكسرات والزبيب',
     price: 25,
     category: 'desserts',
     image: '/placeholder.svg',
     isAvailable: true,
-    departmentId: '3'
+    departmentId: '3',
+    ingredients: 'عجين، حليب، سكر، جوز، لوز، زبيب، جوز هند، قشطة',
+    calories: '520',
+    volume: '250g'
   },
   {
     id: '9',
     name: 'عصير برتقال',
-    description: 'عصير برتقال طازج',
+    description: 'عصير برتقال طازج معصور يومياً',
     price: 15,
     category: 'drinks',
     image: '/placeholder.svg',
     isAvailable: true,
-    departmentId: '2'
+    departmentId: '2',
+    ingredients: 'برتقال طازج',
+    calories: '120',
+    volume: '300ml'
   },
   {
     id: '10',
     name: 'قهوة عربية',
-    description: 'قهوة عربية تقليدية',
+    description: 'قهوة عربية أصيلة مع الهيل',
     price: 10,
     category: 'drinks',
     image: '/placeholder.svg',
     isAvailable: true,
-    departmentId: '2'
+    departmentId: '2',
+    ingredients: 'بن عربي، هيل، زعفران',
+    calories: '5',
+    volume: '150ml'
   },
   {
     id: '11',
     name: 'شاي',
-    description: 'شاي مغربي بالنعناع',
+    description: 'شاي أحمر مع النعناع الطازج',
     price: 8,
     category: 'drinks',
     image: '/placeholder.svg',
     isAvailable: true,
-    departmentId: '2'
+    departmentId: '2',
+    ingredients: 'شاي، نعناع طازج، سكر',
+    calories: '30',
+    volume: '200ml'
   },
   {
     id: '12',
     name: 'بطاطا مقلية',
-    description: 'بطاطا مقلية مقرمشة',
+    description: 'بطاطا ذهبية مقلية ومقرمشة',
     price: 18,
     category: 'sides',
     image: '/placeholder.svg',
     isAvailable: true,
-    departmentId: '1'
+    departmentId: '1',
+    ingredients: 'بطاطا، زيت نباتي، ملح، بابريكا',
+    calories: '312',
+    volume: '200g'
   }
 ];

@@ -18,6 +18,9 @@ export interface MenuItem {
   category: MenuCategory;
   isAvailable: boolean;
   departmentId: string;
+  ingredients?: string;
+  calories?: string;
+  volume?: string;
 }
 
 export type MenuCategory = 'appetizers' | 'main_dishes' | 'desserts' | 'drinks' | 'sides';
