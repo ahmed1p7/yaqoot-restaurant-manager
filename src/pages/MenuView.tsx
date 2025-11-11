@@ -9,15 +9,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { OrderItem, OrderStatus, MenuItem } from '@/types';
 import { PeopleCountDialog } from "@/components/tables/PeopleCountDialog";
-import { Plus, Minus, ArrowRight, Heart, ShoppingCart, Soup, UtensilsCrossed, Cake, Coffee, Salad, X } from 'lucide-react';
+import { 
+  Plus, Minus, ArrowRight, Heart, ShoppingCart, Soup, UtensilsCrossed, 
+  Cake, Coffee, Salad, X, Search, ChevronRight, Sparkles, Clock,
+  Users, Receipt, Flame, Star
+} from 'lucide-react';
 import seaLogo from "@/assets/sea-logo.jpg";
 
 const categories = [
-  { id: "appetizers", name: "المقبلات", icon: Salad },
-  { id: "main_dishes", name: "الأطباق الرئيسية", icon: UtensilsCrossed },
-  { id: "desserts", name: "الحلويات", icon: Cake },
-  { id: "drinks", name: "المشروبات", icon: Coffee },
-  { id: "sides", name: "الأطباق الجانبية", icon: Soup },
+  { id: "appetizers", name: "المقبلات", icon: Salad, color: "from-emerald-500 to-teal-600" },
+  { id: "main_dishes", name: "الأطباق الرئيسية", icon: UtensilsCrossed, color: "from-orange-500 to-red-600" },
+  { id: "desserts", name: "الحلويات", icon: Cake, color: "from-pink-500 to-rose-600" },
+  { id: "drinks", name: "المشروبات", icon: Coffee, color: "from-blue-500 to-cyan-600" },
+  { id: "sides", name: "الأطباق الجانبية", icon: Soup, color: "from-purple-500 to-indigo-600" },
 ];
 
 export const MenuView = () => {
@@ -38,6 +42,8 @@ export const MenuView = () => {
   const [currentOrderItems, setCurrentOrderItems] = useState<OrderItem[]>([]);
   const [isPeopleDialogOpen, setIsPeopleDialogOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showCart, setShowCart] = useState(false);
   
   // Find current order for this table
   useEffect(() => {
@@ -68,7 +74,9 @@ export const MenuView = () => {
   }
 
   const filteredItems = menuItems.filter(
-    (item) => item.category === activeCategory && item.isAvailable
+    (item) => item.category === activeCategory && item.isAvailable &&
+    (searchQuery === "" || item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+     item.description?.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleAddToCart = (item: MenuItem, qty: number = quantity) => {
@@ -121,6 +129,23 @@ export const MenuView = () => {
     setQuantity(1);
   };
 
+  const handleRemoveFromCart = (menuItemId: string) => {
+    setCurrentOrderItems(prevItems => prevItems.filter(i => i.menuItemId !== menuItemId));
+    toast.success("تم حذف الطبق من السلة");
+  };
+
+  const handleUpdateQuantity = (menuItemId: string, delta: number) => {
+    setCurrentOrderItems(prevItems => 
+      prevItems.map(i => {
+        if (i.menuItemId === menuItemId) {
+          const newQuantity = Math.max(1, i.quantity + delta);
+          return { ...i, quantity: newQuantity };
+        }
+        return i;
+      })
+    );
+  };
+
   const calculateTotalAmount = (items: OrderItem[]) => {
     return items.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
@@ -145,50 +170,108 @@ export const MenuView = () => {
       return;
     }
     
-    toast.success("تم إرسال الطلب بنجاح!");
-    navigate('/tables');
+    // Update the order
+    const orderData = {
+      tableNumber: selectedTable,
+      items: currentOrderItems,
+      totalAmount: calculateTotalAmount(currentOrderItems),
+      peopleCount: tables.find(t => t.id === selectedTable)?.peopleCount,
+      status: 'pending' as OrderStatus,
+      waiterId: '',
+      delayed: false,
+      isPaid: false
+    };
+
+    createOrder(orderData);
+    
+    toast.success("تم إرسال الطلب للمطبخ بنجاح!");
+    setShowCart(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary via-accent to-primary backdrop-blur-md border-b border-white/10 sticky top-0 z-40 shadow-xl">
-        <div className="container mx-auto px-6 py-5">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
+      {/* Enhanced Header */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-lg">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-5">
-              <div className="relative">
-                <img src={seaLogo} alt="SEA" className="h-16 w-16 rounded-2xl object-cover shadow-2xl ring-4 ring-white/20" />
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
+            {/* Logo & Info */}
+            <div className="flex items-center gap-4">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity"></div>
+                <img 
+                  src={seaLogo} 
+                  alt="SEA" 
+                  className="relative h-16 w-16 rounded-2xl object-cover shadow-xl ring-4 ring-white/50" 
+                />
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center">
+                  <Sparkles className="w-3 h-3 text-white" />
+                </div>
               </div>
+              
               <div>
-                <h1 className="text-3xl font-bold text-primary-foreground tracking-tight">SEA Restaurant</h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="h-2 w-2 rounded-full bg-secondary animate-pulse"></div>
-                  <p className="text-sm text-primary-foreground/90 font-medium">الطاولة {selectedTable}</p>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  SEA Restaurant
+                </h1>
+                <div className="flex items-center gap-3 mt-1">
+                  <Badge className="bg-gradient-to-r from-primary to-accent text-white font-bold shadow-md">
+                    <Users className="w-3 h-3 mr-1" />
+                    طاولة {selectedTable}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    <Clock className="w-3 h-3 mr-1" />
+                    {new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+                  </Badge>
                 </div>
               </div>
             </div>
-            
-            <Button
-              onClick={() => navigate('/tables')}
-              className="relative bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/30 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105"
-              size="lg"
-            >
-              <ShoppingCart className="h-6 w-6" />
-              {getTotalItems() > 0 && (
-                <Badge className="absolute -top-2 -right-2 bg-secondary text-primary font-bold shadow-lg animate-bounce">
-                  {getTotalItems()}
-                </Badge>
-              )}
-            </Button>
+
+            {/* Actions */}
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => setShowCart(!showCart)}
+                className="relative bg-gradient-to-r from-secondary to-accent hover:shadow-2xl text-primary font-bold transition-all duration-300 hover:scale-105"
+                size="lg"
+              >
+                <ShoppingCart className="h-5 w-5 mr-2" />
+                السلة
+                {getTotalItems() > 0 && (
+                  <Badge className="absolute -top-2 -right-2 bg-red-500 text-white font-bold shadow-lg animate-bounce px-2">
+                    {getTotalItems()}
+                  </Badge>
+                )}
+              </Button>
+
+              <Button
+                onClick={() => navigate('/tables')}
+                variant="outline"
+                className="border-2 hover:bg-slate-100"
+              >
+                <X className="h-5 w-5 ml-2" />
+                إغلاق
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
       <div className="container mx-auto px-6 py-8">
+        {/* Search Bar */}
+        <div className="mb-8">
+          <div className="relative max-w-2xl mx-auto">
+            <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <Input
+              type="text"
+              placeholder="ابحث عن طبق..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pr-12 h-14 text-lg bg-white/80 backdrop-blur-sm border-2 border-slate-200 focus:border-primary rounded-2xl shadow-lg"
+            />
+          </div>
+        </div>
+
         {/* Categories */}
-        <div className="mb-8 bg-white/80 backdrop-blur-lg rounded-3xl p-3 shadow-2xl border border-border/50">
-          <div className="grid grid-cols-5 gap-3">
+        <div className="mb-8">
+          <div className="flex items-center gap-4 overflow-x-auto pb-4 scrollbar-hide">
             {categories.map((cat) => {
               const Icon = cat.icon;
               return (
@@ -198,212 +281,411 @@ export const MenuView = () => {
                     setActiveCategory(cat.id);
                     setSelectedDish(null);
                   }}
-                  className={`flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-300 transform ${
+                  className={`flex-shrink-0 flex flex-col items-center gap-3 p-5 rounded-2xl transition-all duration-300 transform min-w-[140px] ${
                     activeCategory === cat.id
-                      ? "bg-gradient-to-br from-primary to-accent text-white shadow-xl scale-105 ring-4 ring-primary/20"
-                      : "bg-gradient-to-br from-muted/50 to-muted/30 text-foreground hover:bg-muted hover:scale-105 shadow-md"
+                      ? `bg-gradient-to-br ${cat.color} text-white shadow-2xl scale-105 ring-4 ring-white/30`
+                      : "bg-white text-foreground hover:bg-slate-50 hover:scale-105 shadow-lg border-2 border-slate-200"
                   }`}
                 >
-                  <div className={`p-2 rounded-xl ${activeCategory === cat.id ? 'bg-white/20' : 'bg-white/50'}`}>
-                    <Icon className="h-7 w-7" />
+                  <div className={`p-3 rounded-xl ${activeCategory === cat.id ? 'bg-white/20' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`}>
+                    <Icon className="h-8 w-8" />
                   </div>
                   <span className="text-sm font-bold text-center leading-tight">{cat.name}</span>
+                  {activeCategory === cat.id && (
+                    <div className="h-1 w-12 bg-white rounded-full"></div>
+                  )}
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Subcategories for Appetizers */}
-        {activeCategory === "appetizers" && (
-          <div className="mb-6 flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            <Button variant="outline" size="sm" className="whitespace-nowrap bg-white/70 backdrop-blur-sm hover:bg-primary hover:text-white border-2 shadow-md transition-all duration-300">الكل</Button>
-            <Button variant="outline" size="sm" className="whitespace-nowrap bg-white/70 backdrop-blur-sm hover:bg-primary hover:text-white border-2 shadow-md transition-all duration-300">سلطات</Button>
-            <Button variant="outline" size="sm" className="whitespace-nowrap bg-white/70 backdrop-blur-sm hover:bg-primary hover:text-white border-2 shadow-md transition-all duration-300">شوربات</Button>
-            <Button variant="outline" size="sm" className="whitespace-nowrap bg-white/70 backdrop-blur-sm hover:bg-primary hover:text-white border-2 shadow-md transition-all duration-300">مقبلات ساخنة</Button>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Menu Items Grid */}
-          <div className={`${selectedDish ? "lg:col-span-2" : "lg:col-span-3"}`}>
+          <div className={showCart ? "lg:col-span-8" : "lg:col-span-12"}>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredItems.map((item) => (
                 <Card
                   key={item.id}
+                  className="group cursor-pointer overflow-hidden bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border-2 border-slate-200 hover:border-primary rounded-3xl"
                   onClick={() => {
                     setSelectedDish(item);
                     setQuantity(1);
                   }}
-                  className="group cursor-pointer overflow-hidden bg-gradient-to-br from-white via-white to-muted/20 backdrop-blur-lg border-2 border-border/50 hover:border-primary hover:shadow-2xl transition-all duration-500 hover:scale-[1.03] hover:-translate-y-2"
                 >
-                  <div className="relative aspect-square overflow-hidden">
+                  <div className="relative aspect-[4/3] overflow-hidden">
                     {item.image ? (
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover group-hover:scale-125 group-hover:rotate-2 transition-all duration-700"
-                      />
+                      <>
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      </>
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-muted via-muted/50 to-accent/10 flex items-center justify-center">
+                      <div className="w-full h-full bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50 flex items-center justify-center">
                         <span className="text-7xl opacity-40">🍽️</span>
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <Badge className="absolute top-3 left-3 bg-green-500 text-white font-bold shadow-lg border border-white/20 backdrop-blur-sm">
-                      متوفر
-                    </Badge>
+                    
+                    {/* Badges */}
+                    <div className="absolute top-3 left-3 flex flex-col gap-2">
+                      <Badge className="bg-green-500 text-white font-bold shadow-xl border-2 border-white/50 backdrop-blur-sm">
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        متوفر
+                      </Badge>
+                      {item.calories && (
+                        <Badge className="bg-orange-500 text-white font-bold shadow-xl border-2 border-white/50 backdrop-blur-sm">
+                          <Flame className="w-3 h-3 mr-1" />
+                          {item.calories}
+                        </Badge>
+                      )}
+                    </div>
+
                     {item.volume && (
-                      <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-3 py-1.5 rounded-xl text-xs font-bold shadow-lg backdrop-blur-sm border border-white/20">
+                      <Badge className="absolute top-3 right-3 bg-white/90 text-primary font-bold shadow-xl backdrop-blur-sm">
                         {item.volume}
-                      </div>
+                      </Badge>
                     )}
+
+                    {/* Quick Add Button */}
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCart(item, 1);
+                      }}
+                      size="sm"
+                      className="absolute bottom-3 right-3 bg-white/90 hover:bg-white text-primary shadow-xl backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0"
+                    >
+                      <Plus className="w-4 h-4 ml-1" />
+                      إضافة سريعة
+                    </Button>
                   </div>
                   
-                  <div className="p-5">
-                    <h3 className="font-bold text-xl mb-2 text-foreground group-hover:text-primary transition-colors">{item.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3 leading-relaxed">{item.description}</p>
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-bold text-xl text-foreground group-hover:text-primary transition-colors leading-tight flex-1">
+                        {item.name}
+                      </h3>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toast.success("تمت الإضافة للمفضلة");
+                        }}
+                      >
+                        <Heart className="h-5 w-5" />
+                      </Button>
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
+                      {item.description}
+                    </p>
+                    
                     {item.ingredients && (
-                      <p className="text-xs text-muted-foreground/70 line-clamp-1 mb-3 italic">
+                      <p className="text-xs text-slate-500 line-clamp-1 mb-4 italic bg-slate-50 p-2 rounded-lg">
                         {item.ingredients}
                       </p>
                     )}
-                    <div className="flex justify-between items-center pt-2 border-t border-border/50">
-                      <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">${item.price}</span>
-                      <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                        <ArrowRight className="h-5 w-5" />
+                    
+                    <div className="flex justify-between items-center pt-3 border-t border-slate-100">
+                      <div className="flex flex-col">
+                        <span className="text-xs text-muted-foreground mb-1">السعر</span>
+                        <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                          ${item.price}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-amber-500">
+                        <Star className="w-4 h-4 fill-amber-500" />
+                        <span className="font-bold text-sm">4.8</span>
                       </div>
                     </div>
-                  </div>
+                  </CardContent>
                 </Card>
               ))}
             </div>
           </div>
 
-          {/* Dish Details Panel */}
-          {selectedDish && (
-            <div className="lg:col-span-1">
-              <Card className="sticky top-24 bg-gradient-to-br from-white via-white to-muted/20 backdrop-blur-xl border-2 border-primary/30 shadow-2xl overflow-hidden rounded-3xl">
-                <div className="relative">
-                  <Button
-                    onClick={() => setSelectedDish(null)}
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-4 left-4 z-10 bg-white/90 hover:bg-white text-primary rounded-full shadow-xl border-2 border-primary/20 backdrop-blur-sm"
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                  
-                  <div className="aspect-square overflow-hidden relative">
-                    {selectedDish.image ? (
-                      <>
-                        <img
-                          src={selectedDish.image}
-                          alt={selectedDish.name}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-                      </>
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-muted via-muted/50 to-accent/20 flex items-center justify-center">
-                        <span className="text-9xl opacity-40">🍽️</span>
+          {/* Shopping Cart Panel */}
+          {showCart && (
+            <div className="lg:col-span-4">
+              <Card className="sticky top-24 bg-white rounded-3xl shadow-2xl border-2 border-slate-200 overflow-hidden">
+                <div className="bg-gradient-to-r from-primary to-accent text-white p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-2xl font-bold flex items-center gap-2">
+                      <Receipt className="w-6 h-6" />
+                      سلة الطلبات
+                    </h2>
+                    <Button
+                      onClick={() => setShowCart(false)}
+                      variant="ghost"
+                      size="icon"
+                      className="text-white hover:bg-white/20"
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </div>
+                  <p className="text-white/90 text-sm">
+                    الطاولة {selectedTable} • {getTotalItems()} عنصر
+                  </p>
+                </div>
+
+                <ScrollArea className="h-[calc(100vh-400px)]">
+                  <div className="p-6 space-y-4">
+                    {currentOrderItems.length === 0 ? (
+                      <div className="text-center py-12">
+                        <ShoppingCart className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+                        <p className="text-muted-foreground text-lg">السلة فارغة</p>
+                        <p className="text-sm text-slate-400 mt-2">أضف بعض الأطباق للبدء</p>
                       </div>
+                    ) : (
+                      currentOrderItems.map((item, index) => {
+                        const menuItem = menuItems.find(m => m.id === item.menuItemId);
+                        return (
+                          <div 
+                            key={index}
+                            className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-2xl p-4 border-2 border-slate-100 hover:border-primary transition-colors"
+                          >
+                            <div className="flex gap-3">
+                              {menuItem?.image && (
+                                <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-slate-200">
+                                  <img 
+                                    src={menuItem.image} 
+                                    alt={item.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              )}
+                              
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between mb-2">
+                                  <h4 className="font-bold text-foreground leading-tight">
+                                    {item.name}
+                                  </h4>
+                                  <Button
+                                    onClick={() => handleRemoveFromCart(item.menuItemId)}
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-red-500 hover:bg-red-50 flex-shrink-0"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2 bg-white rounded-full p-1 border-2 border-slate-200">
+                                    <Button
+                                      onClick={() => handleUpdateQuantity(item.menuItemId, -1)}
+                                      size="icon"
+                                      className="h-7 w-7 rounded-full bg-slate-100 hover:bg-primary hover:text-white"
+                                      disabled={item.quantity <= 1}
+                                    >
+                                      <Minus className="h-3 w-3" />
+                                    </Button>
+                                    <span className="font-bold text-sm w-8 text-center">{item.quantity}</span>
+                                    <Button
+                                      onClick={() => handleUpdateQuantity(item.menuItemId, 1)}
+                                      size="icon"
+                                      className="h-7 w-7 rounded-full bg-primary hover:bg-accent text-white"
+                                    >
+                                      <Plus className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                  
+                                  <span className="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                                    ${(item.price * item.quantity).toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
                     )}
                   </div>
-                </div>
+                </ScrollArea>
 
-                <div className="p-7 space-y-5">
-                  <div className="flex items-start justify-between">
-                    <h2 className="text-3xl font-bold text-foreground leading-tight">{selectedDish.name}</h2>
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50 transition-all duration-300">
-                      <Heart className="h-7 w-7" />
-                    </Button>
-                  </div>
-
-                  {/* Nutritional Info */}
-                  {(selectedDish.volume || selectedDish.calories) && (
-                    <div className="bg-gradient-to-r from-primary to-accent text-white rounded-2xl p-4 flex items-center justify-between shadow-lg">
-                      {selectedDish.volume && (
-                        <div className="flex flex-col">
-                          <span className="text-xs opacity-80">الحجم</span>
-                          <span className="font-bold text-lg">{selectedDish.volume}</span>
-                        </div>
-                      )}
-                      {selectedDish.calories && (
-                        <div className="flex flex-col items-end">
-                          <span className="text-xs opacity-80">السعرات</span>
-                          <span className="font-bold text-lg">{selectedDish.calories}</span>
-                        </div>
-                      )}
-                      <div className="p-2 bg-white/20 rounded-full">
-                        <Heart className="h-5 w-5 fill-white" />
+                {currentOrderItems.length > 0 && (
+                  <div className="border-t-2 border-slate-200 p-6 bg-gradient-to-br from-slate-50 to-white">
+                    <div className="space-y-3 mb-6">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">المجموع الفرعي</span>
+                        <span className="font-semibold">${calculateTotalAmount(currentOrderItems).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">الضريبة (10%)</span>
+                        <span className="font-semibold">${(calculateTotalAmount(currentOrderItems) * 0.1).toFixed(2)}</span>
+                      </div>
+                      <div className="h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
+                      <div className="flex justify-between text-xl font-bold">
+                        <span>المجموع الكلي</span>
+                        <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                          ${(calculateTotalAmount(currentOrderItems) * 1.1).toFixed(2)}
+                        </span>
                       </div>
                     </div>
-                  )}
 
-                  {/* Description */}
-                  <div className="bg-muted/30 rounded-2xl p-4 border border-border/50">
-                    <p className="text-muted-foreground leading-relaxed text-sm">{selectedDish.description}</p>
-                  </div>
-
-                  {/* Ingredients */}
-                  {selectedDish.ingredients && (
-                    <div className="bg-gradient-to-br from-accent/10 to-primary/5 rounded-2xl p-5 border border-accent/20 shadow-sm">
-                      <h3 className="font-bold mb-3 text-foreground flex items-center gap-2">
-                        <div className="w-1 h-5 bg-gradient-to-b from-primary to-accent rounded-full"></div>
-                        المكونات
-                      </h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {selectedDish.ingredients}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Price */}
-                  <div className="text-center py-4 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 rounded-2xl">
-                    <p className="text-xs text-muted-foreground mb-1">السعر</p>
-                    <span className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">${selectedDish.price}</span>
-                  </div>
-
-                  {/* Quantity Selector */}
-                  <div className="flex items-center justify-center gap-6 bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 rounded-full p-3 border border-border/50">
                     <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setQuantity(Math.max(1, quantity - 1));
-                      }}
-                      size="icon"
-                      className="rounded-full h-12 w-12 bg-gradient-to-br from-primary to-accent hover:shadow-xl transition-all duration-300 hover:scale-110"
+                      onClick={handleSendOrder}
+                      className="w-full bg-gradient-to-r from-primary via-accent to-primary hover:shadow-2xl text-white text-lg font-bold py-7 rounded-2xl transition-all duration-300 hover:scale-[1.02] shadow-xl"
+                      size="lg"
                     >
-                      <Minus className="h-5 w-5" />
-                    </Button>
-                    <span className="font-bold text-3xl w-16 text-center bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{quantity}</span>
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setQuantity(quantity + 1);
-                      }}
-                      size="icon"
-                      className="rounded-full h-12 w-12 bg-gradient-to-br from-primary to-accent hover:shadow-xl transition-all duration-300 hover:scale-110"
-                    >
-                      <Plus className="h-5 w-5" />
+                      <Receipt className="w-5 h-5 ml-2" />
+                      إرسال الطلب للمطبخ
                     </Button>
                   </div>
-
-                  {/* Order Button */}
-                  <Button
-                    onClick={() => handleAddToCart(selectedDish, quantity)}
-                    className="w-full bg-gradient-to-r from-secondary via-accent to-secondary hover:shadow-2xl text-primary text-xl font-bold py-7 rounded-full transition-all duration-300 hover:scale-[1.02] shadow-lg"
-                    size="lg"
-                  >
-                    إضافة للطلب
-                  </Button>
-                </div>
+                )}
               </Card>
             </div>
           )}
         </div>
       </div>
+
+      {/* Dish Detail Modal */}
+      {selectedDish && !showCart && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedDish(null)}
+        >
+          <Card 
+            className="max-w-2xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative">
+              <Button
+                onClick={() => setSelectedDish(null)}
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 left-4 z-10 bg-white/90 hover:bg-white text-primary rounded-full shadow-xl"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+              
+              <div className="aspect-video overflow-hidden relative">
+                {selectedDish.image ? (
+                  <>
+                    <img
+                      src={selectedDish.image}
+                      alt={selectedDish.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                  </>
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50 flex items-center justify-center">
+                    <span className="text-9xl opacity-40">🍽️</span>
+                  </div>
+                )}
+                
+                <div className="absolute bottom-6 left-6 right-6">
+                  <h2 className="text-4xl font-bold text-white drop-shadow-2xl mb-2">
+                    {selectedDish.name}
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
+                    ))}
+                    <span className="text-white font-bold ml-2">(4.8)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-8 space-y-6">
+              {/* Nutritional Info */}
+              {(selectedDish.volume || selectedDish.calories) && (
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedDish.volume && (
+                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-4 border-2 border-blue-200">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Coffee className="w-5 h-5 text-blue-600" />
+                        <span className="text-xs text-blue-600 font-semibold">الحجم</span>
+                      </div>
+                      <span className="font-bold text-2xl text-blue-900">{selectedDish.volume}</span>
+                    </div>
+                  )}
+                  {selectedDish.calories && (
+                    <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-4 border-2 border-orange-200">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Flame className="w-5 h-5 text-orange-600" />
+                        <span className="text-xs text-orange-600 font-semibold">السعرات</span>
+                      </div>
+                      <span className="font-bold text-2xl text-orange-900">{selectedDish.calories}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Description */}
+              <div>
+                <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                  <div className="w-1 h-6 bg-gradient-to-b from-primary to-accent rounded-full"></div>
+                  الوصف
+                </h3>
+                <p className="text-muted-foreground leading-relaxed bg-slate-50 p-4 rounded-2xl">
+                  {selectedDish.description}
+                </p>
+              </div>
+
+              {/* Ingredients */}
+              {selectedDish.ingredients && (
+                <div>
+                  <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                    <div className="w-1 h-6 bg-gradient-to-b from-accent to-secondary rounded-full"></div>
+                    المكونات
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed bg-gradient-to-br from-emerald-50 to-teal-50 p-4 rounded-2xl border-2 border-emerald-200">
+                    {selectedDish.ingredients}
+                  </p>
+                </div>
+              )}
+
+              {/* Price & Quantity */}
+              <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-6 border-2 border-slate-200">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">السعر</p>
+                    <span className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                      ${selectedDish.price}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 bg-white rounded-full p-2 border-2 border-slate-200 shadow-lg">
+                    <Button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      size="icon"
+                      className="rounded-full h-12 w-12 bg-slate-100 hover:bg-primary hover:text-white"
+                    >
+                      <Minus className="h-5 w-5" />
+                    </Button>
+                    <span className="font-bold text-3xl w-16 text-center">{quantity}</span>
+                    <Button
+                      onClick={() => setQuantity(quantity + 1)}
+                      size="icon"
+                      className="rounded-full h-12 w-12 bg-gradient-to-br from-primary to-accent text-white"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => handleAddToCart(selectedDish, quantity)}
+                  className="w-full bg-gradient-to-r from-primary via-accent to-secondary hover:shadow-2xl text-white text-xl font-bold py-7 rounded-2xl transition-all duration-300 hover:scale-[1.02] shadow-xl"
+                  size="lg"
+                >
+                  <ShoppingCart className="w-6 h-6 ml-2" />
+                  إضافة للسلة • ${(selectedDish.price * quantity).toFixed(2)}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
       
       {/* People Count Dialog */}
       <PeopleCountDialog
