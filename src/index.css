@@ -5,52 +5,63 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 202 95% 13%;
+    --background: 220 25% 97%;
+    --foreground: 210 50% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 202 95% 13%;
+    --card-foreground: 210 50% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 202 95% 13%;
+    --popover-foreground: 210 50% 10%;
 
-    --primary: 202 95% 13%;
-    --primary-foreground: 184 75% 77%;
+    --primary: 210 80% 30%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 184 75% 77%;
-    --secondary-foreground: 202 95% 13%;
+    --secondary: 190 70% 50%;
+    --secondary-foreground: 210 50% 10%;
 
-    --muted: 193 48% 45%;
-    --muted-foreground: 0 0% 98%;
+    --muted: 210 15% 90%;
+    --muted-foreground: 210 20% 40%;
 
-    --accent: 184 75% 77%;
-    --accent-foreground: 202 95% 13%;
+    --accent: 200 85% 45%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 193 48% 45%;
-    --input: 193 48% 45%;
-    --ring: 202 95% 13%;
+    --border: 210 20% 85%;
+    --input: 210 20% 85%;
+    --ring: 210 80% 30%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    --sidebar-background: 202 95% 13%;
-    --sidebar-foreground: 184 75% 77%;
-    --sidebar-primary: 184 75% 77%;
-    --sidebar-primary-foreground: 202 95% 13%;
-    --sidebar-accent: 193 48% 45%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 201 59% 35%;
-    --sidebar-ring: 184 75% 77%;
+    --sidebar-background: 210 50% 10%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 190 70% 50%;
+    --sidebar-primary-foreground: 210 50% 10%;
+    --sidebar-accent: 210 30% 20%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 210 40% 15%;
+    --sidebar-ring: 190 70% 50%;
     
     /* Kitchen and Drinks Screen Colors */
-    --kitchen-primary: 202 95% 13%;
-    --kitchen-light: 184 75% 95%;
-    --kitchen-dark: 201 59% 35%;
-    --drinks-primary: 202 95% 13%;
-    --drinks-light: 184 75% 95%;
-    --drinks-dark: 201 59% 35%;
+    --kitchen-primary: 25 95% 53%;
+    --kitchen-light: 25 100% 96%;
+    --kitchen-dark: 15 90% 45%;
+    --drinks-primary: 200 85% 45%;
+    --drinks-light: 200 100% 96%;
+    --drinks-dark: 200 75% 38%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(210 80% 30%) 0%, hsl(200 85% 45%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(190 70% 50%) 0%, hsl(180 65% 60%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(220 25% 99%) 100%);
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.15);
   }
 }
 
@@ -66,63 +77,85 @@
 
 @layer components {
   .menu-grid {
-    @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4;
+    @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6;
   }
   
   .dashboard-card {
-    @apply bg-white rounded-lg shadow-md p-6 transition-all hover:shadow-lg;
+    @apply bg-gradient-to-br from-card via-card to-muted/10 rounded-2xl p-6 transition-all duration-300 hover:shadow-xl border border-border/50;
   }
 
   .order-item {
-    @apply flex justify-between items-center border-b border-muted py-3;
+    @apply flex justify-between items-center border-b border-border py-3 transition-colors hover:bg-muted/30;
+  }
+  
+  /* Professional Card Styles */
+  .pro-card {
+    @apply bg-card rounded-2xl shadow-lg border border-border/50 overflow-hidden backdrop-blur-sm transition-all duration-300 hover:shadow-2xl hover:scale-[1.02];
+  }
+  
+  .pro-card-hover {
+    @apply transform transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl;
   }
   
   /* Kitchen and Drinks Screen Components */
   .kitchen-header {
-    @apply bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 rounded-lg shadow-lg;
+    @apply bg-gradient-to-r from-[hsl(var(--kitchen-primary))] to-[hsl(var(--kitchen-dark))] text-white p-6 rounded-2xl shadow-xl border border-white/10;
   }
   
   .drinks-header {
-    @apply bg-gradient-to-r from-blue-600 to-cyan-500 text-white p-4 rounded-lg shadow-lg;
+    @apply bg-gradient-to-r from-[hsl(var(--drinks-primary))] to-[hsl(var(--drinks-dark))] text-white p-6 rounded-2xl shadow-xl border border-white/10;
   }
   
   .kitchen-card {
-    @apply border-2 border-orange-200 hover:border-orange-400 transition-all shadow-lg rounded-xl overflow-hidden;
+    @apply border-2 border-[hsl(var(--kitchen-light))] hover:border-[hsl(var(--kitchen-primary))] transition-all duration-300 shadow-xl rounded-2xl overflow-hidden backdrop-blur-sm hover:scale-[1.02];
   }
   
   .drinks-card {
-    @apply border-2 border-blue-200 hover:border-blue-400 transition-all shadow-lg rounded-xl overflow-hidden;
+    @apply border-2 border-[hsl(var(--drinks-light))] hover:border-[hsl(var(--drinks-primary))] transition-all duration-300 shadow-xl rounded-2xl overflow-hidden backdrop-blur-sm hover:scale-[1.02];
   }
   
   .kitchen-card-header {
-    @apply bg-gradient-to-r from-orange-50 to-red-50 p-3 border-b border-orange-100;
+    @apply bg-gradient-to-r from-[hsl(var(--kitchen-light))] to-[hsl(var(--kitchen-light))]/50 p-4 border-b border-[hsl(var(--kitchen-primary))]/20;
   }
   
   .drinks-card-header {
-    @apply bg-gradient-to-r from-blue-50 to-cyan-50 p-3 border-b border-blue-100;
+    @apply bg-gradient-to-r from-[hsl(var(--drinks-light))] to-[hsl(var(--drinks-light))]/50 p-4 border-b border-[hsl(var(--drinks-primary))]/20;
   }
   
   .kitchen-badge {
-    @apply bg-orange-500 text-white;
+    @apply bg-[hsl(var(--kitchen-primary))] text-white shadow-md;
   }
   
   .drinks-badge {
-    @apply bg-blue-600 text-white;
+    @apply bg-[hsl(var(--drinks-primary))] text-white shadow-md;
   }
   
   .kitchen-button {
-    @apply bg-orange-500 hover:bg-orange-600 text-white shadow-sm;
+    @apply bg-[hsl(var(--kitchen-primary))] hover:bg-[hsl(var(--kitchen-dark))] text-white shadow-md transition-all duration-200 hover:shadow-lg;
   }
   
   .drinks-button {
-    @apply bg-blue-600 hover:bg-blue-700 text-white shadow-sm;
+    @apply bg-[hsl(var(--drinks-primary))] hover:bg-[hsl(var(--drinks-dark))] text-white shadow-md transition-all duration-200 hover:shadow-lg;
   }
   
   .kitchen-empty {
-    @apply text-center py-16 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-100 shadow-sm;
+    @apply text-center py-20 bg-gradient-to-br from-[hsl(var(--kitchen-light))] to-white rounded-2xl border-2 border-[hsl(var(--kitchen-primary))]/20 shadow-lg;
   }
   
   .drinks-empty {
-    @apply text-center py-16 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100 shadow-sm;
+    @apply text-center py-20 bg-gradient-to-br from-[hsl(var(--drinks-light))] to-white rounded-2xl border-2 border-[hsl(var(--drinks-primary))]/20 shadow-lg;
+  }
+  
+  /* Gradient Backgrounds */
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+  
+  .gradient-card {
+    background: var(--gradient-card);
   }
 }

@@ -150,27 +150,33 @@ export const MenuView = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary via-muted to-primary/90">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
       {/* Header */}
-      <div className="bg-primary/95 backdrop-blur-sm border-b border-secondary/20 sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4">
+      <div className="bg-gradient-to-r from-primary via-accent to-primary backdrop-blur-md border-b border-white/10 sticky top-0 z-40 shadow-xl">
+        <div className="container mx-auto px-6 py-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <img src={seaLogo} alt="SEA" className="h-12 w-12 rounded-full object-cover shadow-lg" />
+            <div className="flex items-center gap-5">
+              <div className="relative">
+                <img src={seaLogo} alt="SEA" className="h-16 w-16 rounded-2xl object-cover shadow-2xl ring-4 ring-white/20" />
+                <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
+              </div>
               <div>
-                <h1 className="text-2xl font-bold text-primary-foreground">SEA Restaurant</h1>
-                <p className="text-sm text-secondary">الطاولة {selectedTable}</p>
+                <h1 className="text-3xl font-bold text-primary-foreground tracking-tight">SEA Restaurant</h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="h-2 w-2 rounded-full bg-secondary animate-pulse"></div>
+                  <p className="text-sm text-primary-foreground/90 font-medium">الطاولة {selectedTable}</p>
+                </div>
               </div>
             </div>
             
             <Button
               onClick={() => navigate('/tables')}
-              className="relative bg-secondary hover:bg-secondary/90 text-primary"
+              className="relative bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/30 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105"
               size="lg"
             >
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingCart className="h-6 w-6" />
               {getTotalItems() > 0 && (
-                <Badge className="absolute -top-2 -right-2 bg-accent text-accent-foreground">
+                <Badge className="absolute -top-2 -right-2 bg-secondary text-primary font-bold shadow-lg animate-bounce">
                   {getTotalItems()}
                 </Badge>
               )}
@@ -179,10 +185,10 @@ export const MenuView = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-6 py-8">
         {/* Categories */}
-        <div className="mb-6 bg-primary/50 backdrop-blur-sm rounded-2xl p-2 shadow-xl border border-secondary/20">
-          <div className="grid grid-cols-5 gap-2">
+        <div className="mb-8 bg-white/80 backdrop-blur-lg rounded-3xl p-3 shadow-2xl border border-border/50">
+          <div className="grid grid-cols-5 gap-3">
             {categories.map((cat) => {
               const Icon = cat.icon;
               return (
@@ -192,34 +198,36 @@ export const MenuView = () => {
                     setActiveCategory(cat.id);
                     setSelectedDish(null);
                   }}
-                  className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-300 ${
+                  className={`flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-300 transform ${
                     activeCategory === cat.id
-                      ? "bg-secondary text-primary shadow-lg scale-105"
-                      : "bg-primary/30 text-secondary hover:bg-primary/40"
+                      ? "bg-gradient-to-br from-primary to-accent text-white shadow-xl scale-105 ring-4 ring-primary/20"
+                      : "bg-gradient-to-br from-muted/50 to-muted/30 text-foreground hover:bg-muted hover:scale-105 shadow-md"
                   }`}
                 >
-                  <Icon className="h-6 w-6" />
-                  <span className="text-xs font-medium text-center">{cat.name}</span>
+                  <div className={`p-2 rounded-xl ${activeCategory === cat.id ? 'bg-white/20' : 'bg-white/50'}`}>
+                    <Icon className="h-7 w-7" />
+                  </div>
+                  <span className="text-sm font-bold text-center leading-tight">{cat.name}</span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Subcategories for Soup */}
+        {/* Subcategories for Appetizers */}
         {activeCategory === "appetizers" && (
-          <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
-            <Button variant="outline" size="sm" className="whitespace-nowrap">الكل</Button>
-            <Button variant="outline" size="sm" className="whitespace-nowrap">سلطات</Button>
-            <Button variant="outline" size="sm" className="whitespace-nowrap">شوربات</Button>
-            <Button variant="outline" size="sm" className="whitespace-nowrap">مقبلات ساخنة</Button>
+          <div className="mb-6 flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            <Button variant="outline" size="sm" className="whitespace-nowrap bg-white/70 backdrop-blur-sm hover:bg-primary hover:text-white border-2 shadow-md transition-all duration-300">الكل</Button>
+            <Button variant="outline" size="sm" className="whitespace-nowrap bg-white/70 backdrop-blur-sm hover:bg-primary hover:text-white border-2 shadow-md transition-all duration-300">سلطات</Button>
+            <Button variant="outline" size="sm" className="whitespace-nowrap bg-white/70 backdrop-blur-sm hover:bg-primary hover:text-white border-2 shadow-md transition-all duration-300">شوربات</Button>
+            <Button variant="outline" size="sm" className="whitespace-nowrap bg-white/70 backdrop-blur-sm hover:bg-primary hover:text-white border-2 shadow-md transition-all duration-300">مقبلات ساخنة</Button>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Menu Items Grid */}
           <div className={`${selectedDish ? "lg:col-span-2" : "lg:col-span-3"}`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredItems.map((item) => (
                 <Card
                   key={item.id}
@@ -227,41 +235,44 @@ export const MenuView = () => {
                     setSelectedDish(item);
                     setQuantity(1);
                   }}
-                  className="group cursor-pointer overflow-hidden bg-card/95 backdrop-blur-sm border-2 border-secondary/20 hover:border-secondary hover:shadow-2xl transition-all duration-300 hover:scale-105"
+                  className="group cursor-pointer overflow-hidden bg-gradient-to-br from-white via-white to-muted/20 backdrop-blur-lg border-2 border-border/50 hover:border-primary hover:shadow-2xl transition-all duration-500 hover:scale-[1.03] hover:-translate-y-2"
                 >
                   <div className="relative aspect-square overflow-hidden">
                     {item.image ? (
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-125 group-hover:rotate-2 transition-all duration-700"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-muted to-primary/20 flex items-center justify-center">
-                        <span className="text-6xl opacity-30">🍽️</span>
+                      <div className="w-full h-full bg-gradient-to-br from-muted via-muted/50 to-accent/10 flex items-center justify-center">
+                        <span className="text-7xl opacity-40">🍽️</span>
                       </div>
                     )}
-                    <Badge className="absolute top-2 left-2 bg-secondary text-primary font-bold">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <Badge className="absolute top-3 left-3 bg-green-500 text-white font-bold shadow-lg border border-white/20 backdrop-blur-sm">
                       متوفر
                     </Badge>
                     {item.volume && (
-                      <div className="absolute top-2 right-2 bg-primary/90 text-primary-foreground px-2 py-1 rounded-lg text-xs">
-                        +{item.volume.replace('ml', '').replace('g', '')}
+                      <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-3 py-1.5 rounded-xl text-xs font-bold shadow-lg backdrop-blur-sm border border-white/20">
+                        {item.volume}
                       </div>
                     )}
                   </div>
                   
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg mb-1 text-card-foreground">{item.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{item.description}</p>
+                  <div className="p-5">
+                    <h3 className="font-bold text-xl mb-2 text-foreground group-hover:text-primary transition-colors">{item.name}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3 leading-relaxed">{item.description}</p>
                     {item.ingredients && (
-                      <p className="text-xs text-muted-foreground/70 line-clamp-1 mb-2">
+                      <p className="text-xs text-muted-foreground/70 line-clamp-1 mb-3 italic">
                         {item.ingredients}
                       </p>
                     )}
-                    <div className="flex justify-between items-center">
-                      <span className="text-xl font-bold text-primary">${item.price}</span>
-                      <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <div className="flex justify-between items-center pt-2 border-t border-border/50">
+                      <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">${item.price}</span>
+                      <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                        <ArrowRight className="h-5 w-5" />
+                      </div>
                     </div>
                   </div>
                 </Card>
@@ -272,61 +283,76 @@ export const MenuView = () => {
           {/* Dish Details Panel */}
           {selectedDish && (
             <div className="lg:col-span-1">
-              <Card className="sticky top-24 bg-card/95 backdrop-blur-sm border-2 border-secondary shadow-2xl overflow-hidden">
+              <Card className="sticky top-24 bg-gradient-to-br from-white via-white to-muted/20 backdrop-blur-xl border-2 border-primary/30 shadow-2xl overflow-hidden rounded-3xl">
                 <div className="relative">
                   <Button
                     onClick={() => setSelectedDish(null)}
                     variant="ghost"
                     size="icon"
-                    className="absolute top-2 left-2 z-10 bg-primary/80 hover:bg-primary text-primary-foreground rounded-full"
+                    className="absolute top-4 left-4 z-10 bg-white/90 hover:bg-white text-primary rounded-full shadow-xl border-2 border-primary/20 backdrop-blur-sm"
                   >
                     <X className="h-5 w-5" />
                   </Button>
                   
-                  <div className="aspect-square overflow-hidden">
+                  <div className="aspect-square overflow-hidden relative">
                     {selectedDish.image ? (
-                      <img
-                        src={selectedDish.image}
-                        alt={selectedDish.name}
-                        className="w-full h-full object-cover"
-                      />
+                      <>
+                        <img
+                          src={selectedDish.image}
+                          alt={selectedDish.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                      </>
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-muted to-primary/20 flex items-center justify-center">
-                        <span className="text-8xl opacity-30">🍽️</span>
+                      <div className="w-full h-full bg-gradient-to-br from-muted via-muted/50 to-accent/20 flex items-center justify-center">
+                        <span className="text-9xl opacity-40">🍽️</span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="p-6 space-y-4">
+                <div className="p-7 space-y-5">
                   <div className="flex items-start justify-between">
-                    <h2 className="text-2xl font-bold text-card-foreground">{selectedDish.name}</h2>
-                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80">
-                      <Heart className="h-6 w-6" />
+                    <h2 className="text-3xl font-bold text-foreground leading-tight">{selectedDish.name}</h2>
+                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50 transition-all duration-300">
+                      <Heart className="h-7 w-7" />
                     </Button>
                   </div>
 
                   {/* Nutritional Info */}
                   {(selectedDish.volume || selectedDish.calories) && (
-                    <div className="bg-primary text-primary-foreground rounded-lg p-3 flex items-center justify-between">
+                    <div className="bg-gradient-to-r from-primary to-accent text-white rounded-2xl p-4 flex items-center justify-between shadow-lg">
                       {selectedDish.volume && (
-                        <span className="font-semibold">{selectedDish.volume}</span>
+                        <div className="flex flex-col">
+                          <span className="text-xs opacity-80">الحجم</span>
+                          <span className="font-bold text-lg">{selectedDish.volume}</span>
+                        </div>
                       )}
                       {selectedDish.calories && (
-                        <span className="font-semibold">{selectedDish.calories}cal</span>
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs opacity-80">السعرات</span>
+                          <span className="font-bold text-lg">{selectedDish.calories}</span>
+                        </div>
                       )}
-                      <Heart className="h-5 w-5 fill-primary-foreground" />
-                      <span className="font-bold">348</span>
+                      <div className="p-2 bg-white/20 rounded-full">
+                        <Heart className="h-5 w-5 fill-white" />
+                      </div>
                     </div>
                   )}
 
                   {/* Description */}
-                  <p className="text-muted-foreground leading-relaxed">{selectedDish.description}</p>
+                  <div className="bg-muted/30 rounded-2xl p-4 border border-border/50">
+                    <p className="text-muted-foreground leading-relaxed text-sm">{selectedDish.description}</p>
+                  </div>
 
                   {/* Ingredients */}
                   {selectedDish.ingredients && (
-                    <div className="bg-muted/30 rounded-lg p-4">
-                      <h3 className="font-semibold mb-2 text-sm">المكونات:</h3>
+                    <div className="bg-gradient-to-br from-accent/10 to-primary/5 rounded-2xl p-5 border border-accent/20 shadow-sm">
+                      <h3 className="font-bold mb-3 text-foreground flex items-center gap-2">
+                        <div className="w-1 h-5 bg-gradient-to-b from-primary to-accent rounded-full"></div>
+                        المكونات
+                      </h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         {selectedDish.ingredients}
                       </p>
@@ -334,39 +360,40 @@ export const MenuView = () => {
                   )}
 
                   {/* Price */}
-                  <div className="text-center py-2">
-                    <span className="text-4xl font-bold text-primary">${selectedDish.price}</span>
+                  <div className="text-center py-4 bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 rounded-2xl">
+                    <p className="text-xs text-muted-foreground mb-1">السعر</p>
+                    <span className="text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">${selectedDish.price}</span>
                   </div>
 
                   {/* Quantity Selector */}
-                  <div className="flex items-center justify-center gap-4 bg-primary/10 rounded-full p-2">
+                  <div className="flex items-center justify-center gap-6 bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 rounded-full p-3 border border-border/50">
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();
                         setQuantity(Math.max(1, quantity - 1));
                       }}
                       size="icon"
-                      className="rounded-full h-10 w-10 bg-primary hover:bg-primary/90"
+                      className="rounded-full h-12 w-12 bg-gradient-to-br from-primary to-accent hover:shadow-xl transition-all duration-300 hover:scale-110"
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus className="h-5 w-5" />
                     </Button>
-                    <span className="font-bold text-2xl w-12 text-center">{quantity}</span>
+                    <span className="font-bold text-3xl w-16 text-center bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{quantity}</span>
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();
                         setQuantity(quantity + 1);
                       }}
                       size="icon"
-                      className="rounded-full h-10 w-10 bg-primary hover:bg-primary/90"
+                      className="rounded-full h-12 w-12 bg-gradient-to-br from-primary to-accent hover:shadow-xl transition-all duration-300 hover:scale-110"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-5 w-5" />
                     </Button>
                   </div>
 
                   {/* Order Button */}
                   <Button
                     onClick={() => handleAddToCart(selectedDish, quantity)}
-                    className="w-full bg-secondary hover:bg-secondary/90 text-primary text-lg py-6 rounded-full"
+                    className="w-full bg-gradient-to-r from-secondary via-accent to-secondary hover:shadow-2xl text-primary text-xl font-bold py-7 rounded-full transition-all duration-300 hover:scale-[1.02] shadow-lg"
                     size="lg"
                   >
                     إضافة للطلب
