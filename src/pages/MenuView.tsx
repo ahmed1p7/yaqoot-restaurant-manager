@@ -334,19 +334,6 @@ export const MenuView = () => {
                         {item.volume}
                       </Badge>
                     )}
-
-                    {/* Quick Add Button - Always Visible */}
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(item, 1);
-                      }}
-                      size="sm"
-                      className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-primary to-accent hover:from-accent hover:to-primary text-white shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 font-bold"
-                    >
-                      <ShoppingCart className="w-4 h-4 ml-1" />
-                      أضف للسلة
-                    </Button>
                   </div>
                   
                   <CardContent className="p-5">
@@ -377,7 +364,7 @@ export const MenuView = () => {
                       </p>
                     )}
                     
-                    <div className="flex justify-between items-center pt-3 border-t border-slate-100">
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                       <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground mb-1">السعر</span>
                         <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -385,9 +372,23 @@ export const MenuView = () => {
                         </span>
                       </div>
                       
-                      <div className="flex items-center gap-2 text-amber-500">
-                        <Star className="w-4 h-4 fill-amber-500" />
-                        <span className="font-bold text-sm">4.8</span>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 text-amber-500">
+                          <Star className="w-4 h-4 fill-amber-500" />
+                          <span className="font-bold text-sm">4.8</span>
+                        </div>
+                        
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(item, 1);
+                          }}
+                          size="sm"
+                          className="bg-gradient-to-r from-primary to-accent hover:from-accent hover:to-primary text-white shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 font-bold px-4"
+                        >
+                          <ShoppingCart className="w-4 h-4 ml-1" />
+                          إضافة
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -397,11 +398,11 @@ export const MenuView = () => {
         </div>
       </div>
 
-      {/* Floating Cart Button - Fixed Bottom Right */}
-      <div className="fixed bottom-6 right-6 z-40">
+      {/* Floating Cart Button - Center Bottom */}
+      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40">
         <Button
           onClick={() => setShowCart(true)}
-          className="relative bg-white hover:bg-slate-50 text-foreground font-bold transition-all duration-200 hover:shadow-xl px-6 py-6 rounded-xl shadow-lg border-2 border-slate-200 backdrop-blur-xl flex items-center gap-3"
+          className="relative bg-white hover:bg-slate-50 text-foreground font-bold transition-all duration-200 hover:shadow-xl px-8 py-6 rounded-2xl shadow-lg border-2 border-slate-200 backdrop-blur-xl flex items-center gap-3"
           size="lg"
         >
           <div className="relative">
@@ -413,8 +414,8 @@ export const MenuView = () => {
             )}
           </div>
           <div className="flex flex-col items-start">
-            <span className="text-xs text-muted-foreground">السلة</span>
-            <span className="text-base font-bold">
+            <span className="text-sm text-muted-foreground">سلة الطلبات</span>
+            <span className="text-lg font-bold">
               ${calculateTotalAmount(currentOrderItems).toFixed(2)}
             </span>
           </div>
