@@ -397,20 +397,27 @@ export const MenuView = () => {
         </div>
       </div>
 
-      {/* Floating Cart Button - Static & Professional */}
-      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40">
+      {/* Floating Cart Button - Fixed Bottom Right */}
+      <div className="fixed bottom-6 right-6 z-40">
         <Button
           onClick={() => setShowCart(true)}
-          className="relative bg-white hover:bg-slate-50 text-primary font-bold transition-all duration-300 hover:shadow-2xl px-10 py-7 rounded-2xl shadow-xl border-2 border-primary/20 backdrop-blur-xl"
+          className="relative bg-white hover:bg-slate-50 text-foreground font-bold transition-all duration-200 hover:shadow-xl px-6 py-6 rounded-xl shadow-lg border-2 border-slate-200 backdrop-blur-xl flex items-center gap-3"
           size="lg"
         >
-          <ShoppingCart className="h-7 w-7 ml-2" />
-          <span className="text-xl">سلة الطلبات</span>
-          {getTotalItems() > 0 && (
-            <Badge className="mr-3 bg-primary text-white font-bold shadow-lg px-3 py-1 text-lg">
-              {getTotalItems()}
-            </Badge>
-          )}
+          <div className="relative">
+            <ShoppingCart className="h-6 w-6" />
+            {getTotalItems() > 0 && (
+              <Badge className="absolute -top-2 -right-2 bg-primary text-white font-bold shadow-md px-2 py-0.5 text-xs min-w-[20px] h-5 flex items-center justify-center">
+                {getTotalItems()}
+              </Badge>
+            )}
+          </div>
+          <div className="flex flex-col items-start">
+            <span className="text-xs text-muted-foreground">السلة</span>
+            <span className="text-base font-bold">
+              ${calculateTotalAmount(currentOrderItems).toFixed(2)}
+            </span>
+          </div>
         </Button>
       </div>
 
