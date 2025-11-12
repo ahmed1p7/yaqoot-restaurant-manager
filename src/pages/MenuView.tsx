@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { OrderItem, OrderStatus, MenuItem } from '@/types';
 import { PeopleCountDialog } from "@/components/tables/PeopleCountDialog";
 import { 
   Plus, Minus, ArrowRight, Heart, ShoppingCart, Soup, UtensilsCrossed, 
   Cake, Coffee, Salad, X, Search, ChevronRight, Sparkles, Clock,
-  Users, Receipt, Flame, Star
+  Users, Receipt, Flame, Star, Trash2
 } from 'lucide-react';
 import seaLogo from "@/assets/sea-logo.jpg";
 
@@ -228,20 +229,6 @@ export const MenuView = () => {
             {/* Actions */}
             <div className="flex items-center gap-3">
               <Button
-                onClick={() => setShowCart(!showCart)}
-                className="relative bg-gradient-to-r from-secondary to-accent hover:shadow-2xl text-primary font-bold transition-all duration-300 hover:scale-105"
-                size="lg"
-              >
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                السلة
-                {getTotalItems() > 0 && (
-                  <Badge className="absolute -top-2 -right-2 bg-red-500 text-white font-bold shadow-lg animate-bounce px-2">
-                    {getTotalItems()}
-                  </Badge>
-                )}
-              </Button>
-
-              <Button
                 onClick={() => navigate('/tables')}
                 variant="outline"
                 className="border-2 hover:bg-slate-100"
@@ -300,10 +287,9 @@ export const MenuView = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Menu Items Grid */}
-          <div className={showCart ? "lg:col-span-8" : "lg:col-span-12"}>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {/* Menu Items Grid */}
+        <div className="pb-32">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredItems.map((item) => (
                 <Card
                   key={item.id}
@@ -349,17 +335,17 @@ export const MenuView = () => {
                       </Badge>
                     )}
 
-                    {/* Quick Add Button */}
+                    {/* Quick Add Button with Animation */}
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleAddToCart(item, 1);
                       }}
                       size="sm"
-                      className="absolute bottom-3 right-3 bg-white/90 hover:bg-white text-primary shadow-xl backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0"
+                      className="absolute bottom-3 right-3 bg-gradient-to-r from-primary to-accent hover:from-accent hover:to-primary text-white shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 hover:scale-110 active:scale-95 font-bold"
                     >
-                      <Plus className="w-4 h-4 ml-1" />
-                      إضافة سريعة
+                      <ShoppingCart className="w-4 h-4 ml-1" />
+                      أضف للسلة
                     </Button>
                   </div>
                   
@@ -407,146 +393,164 @@ export const MenuView = () => {
                   </CardContent>
                 </Card>
               ))}
-            </div>
           </div>
-
-          {/* Shopping Cart Panel */}
-          {showCart && (
-            <div className="lg:col-span-4">
-              <Card className="sticky top-24 bg-white rounded-3xl shadow-2xl border-2 border-slate-200 overflow-hidden">
-                <div className="bg-gradient-to-r from-primary to-accent text-white p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-2xl font-bold flex items-center gap-2">
-                      <Receipt className="w-6 h-6" />
-                      سلة الطلبات
-                    </h2>
-                    <Button
-                      onClick={() => setShowCart(false)}
-                      variant="ghost"
-                      size="icon"
-                      className="text-white hover:bg-white/20"
-                    >
-                      <X className="h-5 w-5" />
-                    </Button>
-                  </div>
-                  <p className="text-white/90 text-sm">
-                    الطاولة {selectedTable} • {getTotalItems()} عنصر
-                  </p>
-                </div>
-
-                <ScrollArea className="h-[calc(100vh-400px)]">
-                  <div className="p-6 space-y-4">
-                    {currentOrderItems.length === 0 ? (
-                      <div className="text-center py-12">
-                        <ShoppingCart className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-                        <p className="text-muted-foreground text-lg">السلة فارغة</p>
-                        <p className="text-sm text-slate-400 mt-2">أضف بعض الأطباق للبدء</p>
-                      </div>
-                    ) : (
-                      currentOrderItems.map((item, index) => {
-                        const menuItem = menuItems.find(m => m.id === item.menuItemId);
-                        return (
-                          <div 
-                            key={index}
-                            className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-2xl p-4 border-2 border-slate-100 hover:border-primary transition-colors"
-                          >
-                            <div className="flex gap-3">
-                              {menuItem?.image && (
-                                <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-slate-200">
-                                  <img 
-                                    src={menuItem.image} 
-                                    alt={item.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                              )}
-                              
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between mb-2">
-                                  <h4 className="font-bold text-foreground leading-tight">
-                                    {item.name}
-                                  </h4>
-                                  <Button
-                                    onClick={() => handleRemoveFromCart(item.menuItemId)}
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-red-500 hover:bg-red-50 flex-shrink-0"
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                                
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2 bg-white rounded-full p-1 border-2 border-slate-200">
-                                    <Button
-                                      onClick={() => handleUpdateQuantity(item.menuItemId, -1)}
-                                      size="icon"
-                                      className="h-7 w-7 rounded-full bg-slate-100 hover:bg-primary hover:text-white"
-                                      disabled={item.quantity <= 1}
-                                    >
-                                      <Minus className="h-3 w-3" />
-                                    </Button>
-                                    <span className="font-bold text-sm w-8 text-center">{item.quantity}</span>
-                                    <Button
-                                      onClick={() => handleUpdateQuantity(item.menuItemId, 1)}
-                                      size="icon"
-                                      className="h-7 w-7 rounded-full bg-primary hover:bg-accent text-white"
-                                    >
-                                      <Plus className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                  
-                                  <span className="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                                    ${(item.price * item.quantity).toFixed(2)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </ScrollArea>
-
-                {currentOrderItems.length > 0 && (
-                  <div className="border-t-2 border-slate-200 p-6 bg-gradient-to-br from-slate-50 to-white">
-                    <div className="space-y-3 mb-6">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">المجموع الفرعي</span>
-                        <span className="font-semibold">${calculateTotalAmount(currentOrderItems).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">الضريبة (10%)</span>
-                        <span className="font-semibold">${(calculateTotalAmount(currentOrderItems) * 0.1).toFixed(2)}</span>
-                      </div>
-                      <div className="h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
-                      <div className="flex justify-between text-xl font-bold">
-                        <span>المجموع الكلي</span>
-                        <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                          ${(calculateTotalAmount(currentOrderItems) * 1.1).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <Button
-                      onClick={handleSendOrder}
-                      className="w-full bg-gradient-to-r from-primary via-accent to-primary hover:shadow-2xl text-white text-lg font-bold py-7 rounded-2xl transition-all duration-300 hover:scale-[1.02] shadow-xl"
-                      size="lg"
-                    >
-                      <Receipt className="w-5 h-5 ml-2" />
-                      إرسال الطلب للمطبخ
-                    </Button>
-                  </div>
-                )}
-              </Card>
-            </div>
-          )}
         </div>
       </div>
 
+      {/* Floating Cart Bubble */}
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40">
+        <Button
+          onClick={() => setShowCart(true)}
+          className="relative bg-gradient-to-r from-primary via-accent to-primary hover:shadow-2xl text-white font-bold transition-all duration-300 hover:scale-110 active:scale-95 px-8 py-8 rounded-full shadow-2xl border-4 border-white/50 backdrop-blur-xl animate-bounce hover:animate-none"
+          size="lg"
+        >
+          <ShoppingCart className="h-8 w-8 ml-2" />
+          <span className="text-xl">السلة</span>
+          {getTotalItems() > 0 && (
+            <>
+              <Badge className="absolute -top-2 -right-2 bg-red-500 text-white font-bold shadow-xl animate-pulse px-3 py-1 text-lg border-3 border-white">
+                {getTotalItems()}
+              </Badge>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-full animate-ping opacity-20"></div>
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* Cart Sheet */}
+      <Sheet open={showCart} onOpenChange={setShowCart}>
+        <SheetContent side="bottom" className="h-[85vh] p-0 rounded-t-3xl">
+          <div className="flex flex-col h-full">
+            <SheetHeader className="bg-gradient-to-r from-primary via-accent to-primary text-white p-6 rounded-t-3xl">
+              <SheetTitle className="text-3xl font-bold text-white flex items-center gap-3">
+                <Receipt className="w-8 h-8" />
+                سلة الطلبات
+              </SheetTitle>
+              <p className="text-white/90 text-lg mt-2">
+                الطاولة {selectedTable} • {getTotalItems()} عنصر
+              </p>
+            </SheetHeader>
+
+            <ScrollArea className="flex-1 p-6">
+              {currentOrderItems.length === 0 ? (
+                <div className="text-center py-20">
+                  <div className="relative inline-block">
+                    <ShoppingCart className="w-32 h-32 mx-auto text-slate-200 mb-6" />
+                    <Sparkles className="w-12 h-12 absolute top-0 right-0 text-amber-400 animate-bounce" />
+                  </div>
+                  <p className="text-muted-foreground text-2xl font-bold mb-2">السلة فارغة</p>
+                  <p className="text-lg text-slate-400">أضف بعض الأطباق اللذيذة للبدء! 🍽️</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {currentOrderItems.map((item, index) => {
+                    const menuItem = menuItems.find(m => m.id === item.menuItemId);
+                    return (
+                      <div 
+                        key={index}
+                        className="bg-gradient-to-br from-white via-slate-50 to-blue-50 rounded-2xl p-5 border-2 border-slate-200 hover:border-primary hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                      >
+                        <div className="flex gap-4">
+                          {menuItem?.image && (
+                            <div className="w-28 h-28 rounded-2xl overflow-hidden flex-shrink-0 ring-4 ring-white shadow-lg">
+                              <img 
+                                src={menuItem.image} 
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <h4 className="font-bold text-xl text-foreground leading-tight mb-1">
+                                  {item.name}
+                                </h4>
+                                <p className="text-sm text-muted-foreground">
+                                  ${item.price} × {item.quantity}
+                                </p>
+                              </div>
+                              <Button
+                                onClick={() => handleRemoveFromCart(item.menuItemId)}
+                                variant="ghost"
+                                size="icon"
+                                className="h-10 w-10 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </Button>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3 bg-white rounded-full p-2 border-2 border-slate-200 shadow-md">
+                                <Button
+                                  onClick={() => handleUpdateQuantity(item.menuItemId, -1)}
+                                  size="icon"
+                                  className="h-10 w-10 rounded-full bg-slate-100 hover:bg-red-500 hover:text-white transition-all duration-200 hover:scale-110 active:scale-90"
+                                  disabled={item.quantity <= 1}
+                                >
+                                  <Minus className="h-5 w-5" />
+                                </Button>
+                                <span className="font-bold text-2xl w-12 text-center">{item.quantity}</span>
+                                <Button
+                                  onClick={() => handleUpdateQuantity(item.menuItemId, 1)}
+                                  size="icon"
+                                  className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-accent text-white transition-all duration-200 hover:scale-110 active:scale-90 shadow-lg"
+                                >
+                                  <Plus className="h-5 w-5" />
+                                </Button>
+                              </div>
+                              
+                              <span className="font-bold text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                                ${(item.price * item.quantity).toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </ScrollArea>
+
+            {currentOrderItems.length > 0 && (
+              <div className="border-t-4 border-slate-200 p-6 bg-gradient-to-br from-slate-50 via-white to-blue-50">
+                <div className="space-y-4 mb-6">
+                  <div className="flex justify-between text-lg">
+                    <span className="text-muted-foreground font-medium">المجموع الفرعي</span>
+                    <span className="font-bold text-xl">${calculateTotalAmount(currentOrderItems).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-lg">
+                    <span className="text-muted-foreground font-medium">الضريبة (10%)</span>
+                    <span className="font-bold text-xl">${(calculateTotalAmount(currentOrderItems) * 0.1).toFixed(2)}</span>
+                  </div>
+                  <div className="h-1 bg-gradient-to-r from-transparent via-primary to-transparent rounded-full"></div>
+                  <div className="flex justify-between text-2xl font-bold">
+                    <span>المجموع الكلي</span>
+                    <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent text-3xl">
+                      ${(calculateTotalAmount(currentOrderItems) * 1.1).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleSendOrder}
+                  className="w-full bg-gradient-to-r from-primary via-accent to-primary hover:shadow-2xl text-white text-2xl font-bold py-8 rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-xl"
+                  size="lg"
+                >
+                  <Receipt className="w-7 h-7 ml-3" />
+                  إرسال الطلب للمطبخ
+                  <ArrowRight className="w-7 h-7 mr-3" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
       {/* Dish Detail Modal */}
-      {selectedDish && !showCart && (
+      {selectedDish && (
         <div 
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setSelectedDish(null)}
@@ -658,7 +662,7 @@ export const MenuView = () => {
                     <Button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
                       size="icon"
-                      className="rounded-full h-12 w-12 bg-slate-100 hover:bg-primary hover:text-white"
+                      className="rounded-full h-12 w-12 bg-slate-100 hover:bg-red-500 hover:text-white transition-all duration-200 hover:scale-110 active:scale-90"
                     >
                       <Minus className="h-5 w-5" />
                     </Button>
@@ -666,7 +670,7 @@ export const MenuView = () => {
                     <Button
                       onClick={() => setQuantity(quantity + 1)}
                       size="icon"
-                      className="rounded-full h-12 w-12 bg-gradient-to-br from-primary to-accent text-white"
+                      className="rounded-full h-12 w-12 bg-gradient-to-br from-primary to-accent text-white transition-all duration-200 hover:scale-110 active:scale-90 shadow-lg"
                     >
                       <Plus className="h-5 w-5" />
                     </Button>
@@ -675,11 +679,12 @@ export const MenuView = () => {
 
                 <Button
                   onClick={() => handleAddToCart(selectedDish, quantity)}
-                  className="w-full bg-gradient-to-r from-primary via-accent to-secondary hover:shadow-2xl text-white text-xl font-bold py-7 rounded-2xl transition-all duration-300 hover:scale-[1.02] shadow-xl"
+                  className="w-full bg-gradient-to-r from-primary via-accent to-primary hover:shadow-2xl text-white text-xl font-bold py-7 rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-xl"
                   size="lg"
                 >
                   <ShoppingCart className="w-6 h-6 ml-2" />
                   إضافة للسلة • ${(selectedDish.price * quantity).toFixed(2)}
+                  <ArrowRight className="w-6 h-6 mr-2" />
                 </Button>
               </div>
             </div>
