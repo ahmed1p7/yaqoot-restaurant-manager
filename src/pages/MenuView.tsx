@@ -335,14 +335,14 @@ export const MenuView = () => {
                       </Badge>
                     )}
 
-                    {/* Quick Add Button with Animation */}
+                    {/* Quick Add Button - Always Visible */}
                     <Button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleAddToCart(item, 1);
                       }}
                       size="sm"
-                      className="absolute bottom-3 right-3 bg-gradient-to-r from-primary to-accent hover:from-accent hover:to-primary text-white shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0 hover:scale-110 active:scale-95 font-bold"
+                      className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-primary to-accent hover:from-accent hover:to-primary text-white shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 font-bold"
                     >
                       <ShoppingCart className="w-4 h-4 ml-1" />
                       أضف للسلة
@@ -397,22 +397,19 @@ export const MenuView = () => {
         </div>
       </div>
 
-      {/* Floating Cart Bubble */}
+      {/* Floating Cart Button - Static & Professional */}
       <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40">
         <Button
           onClick={() => setShowCart(true)}
-          className="relative bg-gradient-to-r from-primary via-accent to-primary hover:shadow-2xl text-white font-bold transition-all duration-300 hover:scale-110 active:scale-95 px-8 py-8 rounded-full shadow-2xl border-4 border-white/50 backdrop-blur-xl animate-bounce hover:animate-none"
+          className="relative bg-white hover:bg-slate-50 text-primary font-bold transition-all duration-300 hover:shadow-2xl px-10 py-7 rounded-2xl shadow-xl border-2 border-primary/20 backdrop-blur-xl"
           size="lg"
         >
-          <ShoppingCart className="h-8 w-8 ml-2" />
-          <span className="text-xl">السلة</span>
+          <ShoppingCart className="h-7 w-7 ml-2" />
+          <span className="text-xl">سلة الطلبات</span>
           {getTotalItems() > 0 && (
-            <>
-              <Badge className="absolute -top-2 -right-2 bg-red-500 text-white font-bold shadow-xl animate-pulse px-3 py-1 text-lg border-3 border-white">
-                {getTotalItems()}
-              </Badge>
-              <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-full animate-ping opacity-20"></div>
-            </>
+            <Badge className="mr-3 bg-primary text-white font-bold shadow-lg px-3 py-1 text-lg">
+              {getTotalItems()}
+            </Badge>
           )}
         </Button>
       </div>
