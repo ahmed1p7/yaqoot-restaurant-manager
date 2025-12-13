@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -5,12 +6,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useNavigate } from "react-router-dom";
 import { TableActions } from "@/components/tables/TableActions";
 import { PaymentDialog } from "@/components/tables/PaymentDialog";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge"; 
-import { User, Search, Table as TableIcon, DollarSign } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { PageHeader, SearchInput } from "@/components/shared";
+import { User, Table as TableIcon, DollarSign, Users, Utensils, LayoutGrid } from "lucide-react";
 import { toast } from "sonner";
 import { Order } from "@/types";
+import { cn } from "@/lib/utils";
 
 export const Tables = () => {
   const { tables, orders, user, menuItems, getMostOrderedItems, getOrdersByTable, resetTable, markTableAsPaid } = useApp();
@@ -22,86 +24,47 @@ export const Tables = () => {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedTableForPayment, setSelectedTableForPayment] = useState<number | null>(null);
   
-  // Calculate daily statistics for admin
   const calculateDailyStatistics = () => {
-    // Get all completed orders for the day (in a real app, this would filter by date)
     const completedOrders = orders.filter(order => order.isPaid);
-    
-    // Total revenue
     const totalRevenue = completedOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-    
-    // Total customers
     const totalCustomers = completedOrders.reduce((sum, order) => sum + (order.peopleCount || 1), 0);
-    
-    // Total tables served
     const tablesServed = new Set(completedOrders.map(order => order.tableNumber)).size;
-    
-    // Average order value
     const avgOrderValue = completedOrders.length > 0 ? totalRevenue / completedOrders.length : 0;
     
-    return {
-      totalRevenue,
-      totalCustomers,
-      tablesServed,
-      ordersCount: completedOrders.length,
-      avgOrderValue
-    };
+    return { totalRevenue, totalCustomers, tablesServed, ordersCount: completedOrders.length, avgOrderValue };
   };
   
-  // Filter tables based on search query
   const filteredTables = tables
     .filter(table => table.name.includes(searchQuery))
     .sort((a, b) => {
-      // Sort by reservation status first, then by occupation, then by table number
-      if (a.isReserved !== b.isReserved) {
-        return a.isReserved ? -1 : 1;
-      }
-      if (a.isOccupied !== b.isOccupied) {
-        return a.isOccupied ? -1 : 1;
-      }
+      if (a.isReserved !== b.isReserved) return a.isReserved ? -1 : 1;
+      if (a.isOccupied !== b.isOccupied) return a.isOccupied ? -1 : 1;
       return a.id - b.id;
     });
   
-  // Get current order for a table
   const getCurrentOrder = (tableId: number): Order | undefined => {
     const table = tables.find(t => t.id === tableId);
     if (!table?.currentOrderId) return undefined;
-    
     return orders.find(o => o.id === table.currentOrderId);
   };
   
   const handleCreateOrder = (tableId: number) => {
-    // Check if the table has a completed order (isPaid) and reset it first
     const currentOrder = getCurrentOrder(tableId);
     if (currentOrder?.isPaid) {
       resetTable(tableId);
-      toast.success(`تم إعادة تهيئة الطاولة ${tableId} للاستخدام`);
     }
-    
-    // Navigate to the menu view page with table ID as a parameter
     navigate(`/menu-view?table=${tableId}`);
   };
   
   const handleViewTable = (tableId: number) => {
-    // Navigate to menu view page to see and edit orders
     navigate(`/menu-view?table=${tableId}`);
   };
   
-  const handleCloseDay = () => {
-    // In a real app, this would mark all tables as available, close all open orders, etc.
-    setShowCloseDayDialog(true);
-  };
+  const handleCloseDay = () => setShowCloseDayDialog(true);
 
   const handleConfirmCloseDay = () => {
-    // Reset all tables
     tables.forEach(table => {
-      if (table.isOccupied) {
-        resetTable(table.id);
-      }
-    });
-    
-    toast.success("تم إغلاق اليوم بنجاح", {
-      description: "تم تصفير جميع الطاولات وإرسال التقرير"
+      if (table.isOccupied) resetTable(table.id);
     });
     setShowCloseDayDialog(false);
   };
@@ -112,94 +75,107 @@ export const Tables = () => {
   };
   
   const handleConfirmPayment = (method: 'cash' | 'card', discount: number) => {
-    // In a real app, we would track the payment method and discount
     if (selectedTableForPayment) {
       markTableAsPaid(selectedTableForPayment);
-      
-      // After payment is processed, clear the table for reuse
       resetTable(selectedTableForPayment);
-      toast.success(`تم إعادة تهيئة الطاولة ${selectedTableForPayment} للاستخدام`);
     }
     setShowPaymentDialog(false);
     setSelectedTableForPayment(null);
   };
 
-  // Get the order for the selected payment table
   const selectedPaymentOrder = selectedTableForPayment ? getCurrentOrder(selectedTableForPayment) : undefined;
 
+  const getTableStatus = (table: typeof tables[0], isPaid: boolean) => {
+    if (isPaid) return 'paid';
+    if (table.isReserved) return 'reserved';
+    if (table.isOccupied) return 'occupied';
+    return 'available';
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">الطاولات</h1>
-        
-        <div className="flex items-center gap-2">
-          {/* Admin-only buttons */}
-          {user?.role === 'admin' && (
-            <Button 
-              onClick={handleCloseDay} 
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <DollarSign className="h-4 w-4 mr-1" />
-              إغلاق اليوم
-            </Button>
-          )}
-          
-          {/* Search bar */}
-          <div className="relative">
-            <Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-400" />
-            <Input
-              className="pl-2 pr-8 w-[200px]"
-              placeholder="بحث عن طاولة..."
+    <div className="space-y-8 animate-fade-in">
+      <PageHeader
+        title="إدارة الطاولات"
+        subtitle={`${tables.length} طاولة متاحة`}
+        icon={LayoutGrid}
+        actions={
+          <div className="flex items-center gap-3">
+            {user?.role === 'admin' && (
+              <Button onClick={handleCloseDay} className="sea-btn-gold">
+                <DollarSign className="h-4 w-4 ml-2" />
+                إغلاق اليوم
+              </Button>
+            )}
+            <SearchInput
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={setSearchQuery}
+              placeholder="بحث عن طاولة..."
+              className="w-[200px]"
+              size="sm"
             />
           </div>
-        </div>
-      </div>
+        }
+      />
       
-      {/* Tables grid */}
+      {/* Tables Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {filteredTables.map((table) => {
           const currentOrder = getCurrentOrder(table.id);
-          const isPaid = currentOrder?.isPaid;
+          const isPaid = currentOrder?.isPaid ?? false;
+          const status = getTableStatus(table, isPaid);
           
           return (
             <Card 
               key={table.id} 
-              className={`
-                ${table.isReserved ? 'border-purple-300' :
-                  table.isOccupied && !isPaid ? 'border-blue-300' : 'border-gray-200'}
-                hover:border-2 transition-all cursor-pointer
-              `}
+              className={cn(
+                "table-card cursor-pointer transition-all duration-300",
+                status === 'occupied' && "table-card-occupied",
+                status === 'reserved' && "table-card-reserved",
+                status === 'available' && "table-card-available",
+                status === 'paid' && "table-card-paid"
+              )}
               onClick={() => user?.role === 'admin' ? setSelectedTable(table.id) : handleViewTable(table.id)}
             >
               <CardContent className="p-4 space-y-3">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-medium flex items-center gap-1">
-                    <TableIcon className="h-4 w-4" />
-                    {table.name}
-                    {table.isReserved && (
-                      <Badge className="bg-purple-500 text-xs px-2 py-0.5 rounded ml-2">
-                        محجوزة
-                      </Badge>
-                    )}
-                    {table.isOccupied && !isPaid && (
-                      <Badge variant="outline" className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded ml-2">
-                        مشغولة
-                      </Badge>
-                    )}
-                    {isPaid && (
-                      <Badge variant="outline" className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded ml-2">
-                        مدفوعة
-                      </Badge>
-                    )}
-                  </h3>
+                {/* Header */}
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-2">
+                    <div className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center",
+                      status === 'occupied' && "bg-info/10 text-info",
+                      status === 'reserved' && "bg-secondary/10 text-secondary",
+                      status === 'available' && "bg-success/10 text-success",
+                      status === 'paid' && "bg-success/10 text-success"
+                    )}>
+                      <TableIcon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground">{table.name}</h3>
+                      <p className="text-xs text-muted-foreground">سعة {table.capacity}</p>
+                    </div>
+                  </div>
                   
-                  <span className="text-sm text-gray-500">
-                    سعة {table.capacity}
-                  </span>
+                  {/* Status Badge */}
+                  {status === 'reserved' && (
+                    <Badge className="sea-badge-gold text-xs">محجوزة</Badge>
+                  )}
+                  {status === 'occupied' && (
+                    <Badge className="sea-badge-info text-xs">مشغولة</Badge>
+                  )}
+                  {status === 'paid' && (
+                    <Badge className="sea-badge-success text-xs">مدفوعة</Badge>
+                  )}
                 </div>
                 
+                {/* People Count */}
+                {table.peopleCount && table.peopleCount > 0 && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Users className="w-4 h-4" />
+                    <span>{table.peopleCount} أشخاص</span>
+                  </div>
+                )}
+                
+                {/* Actions */}
                 <TableActions
                   table={table}
                   currentOrder={currentOrder}
@@ -207,31 +183,24 @@ export const Tables = () => {
                   isAdmin={user?.role === 'admin'}
                 />
                 
-                {/* Show price info only for admin */}
+                {/* Admin Price Info */}
                 {user?.role === 'admin' && currentOrder && (
-                  <div className="border-t pt-2 mt-2 text-sm">
-                    <div className="flex justify-between items-center">
-                      <span>المبلغ:</span>
-                      <span className="font-medium">{currentOrder.totalAmount} ريال</span>
+                  <div className="border-t border-border pt-3 mt-3">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">المبلغ:</span>
+                      <span className="font-bold text-foreground">{currentOrder.totalAmount} ريال</span>
                     </div>
-                    {currentOrder.peopleCount && currentOrder.peopleCount > 1 && (
-                      <div className="flex justify-between items-center text-xs text-gray-500">
-                        <span>المتوسط للشخص:</span>
-                        <span>{(currentOrder.totalAmount / currentOrder.peopleCount).toFixed(2)} ريال</span>
-                      </div>
-                    )}
-                    
-                    {/* Admin-only payment button */}
                     {!currentOrder.isPaid && (
                       <Button 
-                        className="w-full mt-2 bg-green-600 hover:bg-green-700"
+                        className="w-full mt-3 sea-btn-primary"
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
                           handlePaymentClick(table.id);
                         }}
                       >
-                        تسجيل حساب وتحصيل
+                        <DollarSign className="w-4 h-4 ml-2" />
+                        تسجيل الحساب
                       </Button>
                     )}
                   </div>
@@ -242,75 +211,70 @@ export const Tables = () => {
         })}
       </div>
       
-      {/* Close Day Dialog with Statistics */}
+      {/* Close Day Dialog */}
       <Dialog open={showCloseDayDialog} onOpenChange={setShowCloseDayDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl gradient-gold flex items-center justify-center">
+                <DollarSign className="w-5 h-5" />
+              </div>
               ملخص اليوم
             </DialogTitle>
-            <DialogDescription>
-              تقرير مبيعات وإحصائيات اليوم
-            </DialogDescription>
+            <DialogDescription>تقرير مبيعات وإحصائيات اليوم</DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 mt-4">
-            {/* Daily statistics */}
             {(() => {
               const stats = calculateDailyStatistics();
               return (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-blue-50 p-3 rounded-lg">
-                      <div className="text-sm text-gray-500">إجمالي المبيعات</div>
-                      <div className="text-xl font-bold text-blue-700">{stats.totalRevenue} ريال</div>
+                    <div className="sea-card p-4 text-center">
+                      <p className="text-sm text-muted-foreground">إجمالي المبيعات</p>
+                      <p className="text-2xl font-bold text-primary">{stats.totalRevenue} ريال</p>
                     </div>
-                    
-                    <div className="bg-green-50 p-3 rounded-lg">
-                      <div className="text-sm text-gray-500">عدد الطلبات</div>
-                      <div className="text-xl font-bold text-green-700">{stats.ordersCount}</div>
+                    <div className="sea-card p-4 text-center">
+                      <p className="text-sm text-muted-foreground">عدد الطلبات</p>
+                      <p className="text-2xl font-bold text-success">{stats.ordersCount}</p>
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-purple-50 p-3 rounded-lg">
-                      <div className="text-sm text-gray-500">الزبائن</div>
-                      <div className="text-lg font-bold text-purple-700">{stats.totalCustomers}</div>
+                    <div className="sea-card p-3 text-center">
+                      <p className="text-xs text-muted-foreground">الزبائن</p>
+                      <p className="text-xl font-bold">{stats.totalCustomers}</p>
                     </div>
-                    
-                    <div className="bg-orange-50 p-3 rounded-lg">
-                      <div className="text-sm text-gray-500">الطاولات</div>
-                      <div className="text-lg font-bold text-orange-700">{stats.tablesServed}</div>
+                    <div className="sea-card p-3 text-center">
+                      <p className="text-xs text-muted-foreground">الطاولات</p>
+                      <p className="text-xl font-bold">{stats.tablesServed}</p>
                     </div>
-                    
-                    <div className="bg-teal-50 p-3 rounded-lg">
-                      <div className="text-sm text-gray-500">متوسط الطلب</div>
-                      <div className="text-lg font-bold text-teal-700">{stats.avgOrderValue.toFixed(1)}</div>
+                    <div className="sea-card p-3 text-center">
+                      <p className="text-xs text-muted-foreground">متوسط</p>
+                      <p className="text-xl font-bold">{stats.avgOrderValue.toFixed(0)}</p>
                     </div>
                   </div>
                   
-                  <div className="pt-3 mt-3 border-t border-gray-100">
-                    <div className="mb-4">
-                      <h4 className="font-medium mb-2">الأصناف الأكثر طلبًا:</h4>
-                      <div className="space-y-1">
-                        {getMostOrderedItems(5).map((item, index) => (
-                          <div key={item.id} className="flex justify-between text-sm">
-                            <span>{index + 1}. {item.name}</span>
-                            <span className="text-gray-600">{item.price} ريال</span>
-                          </div>
-                        ))}
-                      </div>
+                  <div className="pt-4 border-t border-border">
+                    <h4 className="font-semibold mb-3">الأصناف الأكثر طلباً:</h4>
+                    <div className="space-y-2">
+                      {getMostOrderedItems(5).map((item, index) => (
+                        <div key={item.id} className="flex justify-between text-sm">
+                          <span className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
+                              {index + 1}
+                            </span>
+                            {item.name}
+                          </span>
+                          <span className="font-semibold">{item.price} ريال</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                   
-                  <div className="pt-3 mt-3 border-t border-gray-100">
-                    <Button 
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      onClick={handleConfirmCloseDay}
-                    >
-                      إغلاق اليوم وتصفير الطاولات
-                    </Button>
-                  </div>
+                  <Button className="w-full sea-btn-primary" onClick={handleConfirmCloseDay}>
+                    إغلاق اليوم وتصفير الطاولات
+                  </Button>
                 </div>
               );
             })()}
@@ -318,7 +282,7 @@ export const Tables = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Payment Dialog - Enhanced for admin */}
+      {/* Payment Dialog */}
       <PaymentDialog
         isOpen={showPaymentDialog}
         onClose={() => setShowPaymentDialog(false)}
@@ -330,7 +294,10 @@ export const Tables = () => {
       <Dialog open={selectedTable !== null} onOpenChange={(open) => !open && setSelectedTable(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+                <TableIcon className="w-5 h-5 text-primary-foreground" />
+              </div>
               {tables.find(t => t.id === selectedTable)?.name || `الطاولة ${selectedTable}`}
             </DialogTitle>
           </DialogHeader>
@@ -338,40 +305,41 @@ export const Tables = () => {
           <div className="space-y-4 mt-4">
             {selectedTable && (
               <>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">الحالة:</span>
-                  <Badge className={tables.find(t => t.id === selectedTable)?.isOccupied ? 'bg-blue-500' : 'bg-green-500'}>
-                    {tables.find(t => t.id === selectedTable)?.isOccupied ? 'مشغولة' : 'متاحة'}
-                  </Badge>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="sea-card p-4 text-center">
+                    <p className="text-sm text-muted-foreground">الحالة</p>
+                    <Badge className={tables.find(t => t.id === selectedTable)?.isOccupied ? 'sea-badge-info' : 'sea-badge-success'}>
+                      {tables.find(t => t.id === selectedTable)?.isOccupied ? 'مشغولة' : 'متاحة'}
+                    </Badge>
+                  </div>
+                  <div className="sea-card p-4 text-center">
+                    <p className="text-sm text-muted-foreground">عدد الأشخاص</p>
+                    <p className="text-xl font-bold">{tables.find(t => t.id === selectedTable)?.peopleCount || 0}</p>
+                  </div>
                 </div>
                 
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">عدد الأشخاص:</span>
-                  <span className="font-medium">
-                    {tables.find(t => t.id === selectedTable)?.peopleCount || 0}
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3 mt-6">
+                <div className="grid grid-cols-2 gap-3">
                   <Button 
+                    className="sea-btn-primary"
                     onClick={() => {
                       handleCreateOrder(selectedTable);
                       setSelectedTable(null);
                     }}
                   >
+                    <Utensils className="w-4 h-4 ml-2" />
                     {tables.find(t => t.id === selectedTable)?.isOccupied ? 'تعديل الطلب' : 'طلب جديد'}
                   </Button>
                   
                   {getCurrentOrder(selectedTable) && !getCurrentOrder(selectedTable)?.isPaid && (
                     <Button
-                      variant="outline"
-                      className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                      className="sea-btn-gold"
                       onClick={() => {
                         handlePaymentClick(selectedTable);
                         setSelectedTable(null);
                       }}
                     >
-                      تسجيل حساب وتحصيل
+                      <DollarSign className="w-4 h-4 ml-2" />
+                      تحصيل
                     </Button>
                   )}
                 </div>
