@@ -3,65 +3,103 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════════════════
+   SEA RESTAURANT - Premium Design System
+   A luxurious and elegant restaurant management interface
+═══════════════════════════════════════════════════════════ */
+
 @layer base {
   :root {
-    --background: 220 25% 97%;
-    --foreground: 210 50% 10%;
+    /* ─── Core Brand Colors ─── */
+    --background: 30 30% 98%;
+    --foreground: 30 10% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 210 50% 10%;
+    --card-foreground: 30 10% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 50% 10%;
+    --popover-foreground: 30 10% 15%;
 
-    --primary: 210 80% 30%;
+    /* Burgundy Primary */
+    --primary: 350 55% 35%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 190 70% 50%;
-    --secondary-foreground: 210 50% 10%;
+    /* Gold Secondary */
+    --secondary: 42 70% 50%;
+    --secondary-foreground: 30 10% 15%;
 
-    --muted: 210 15% 90%;
-    --muted-foreground: 210 20% 40%;
+    /* Cream Muted */
+    --muted: 35 30% 92%;
+    --muted-foreground: 30 10% 45%;
 
-    --accent: 200 85% 45%;
-    --accent-foreground: 0 0% 100%;
+    /* Gold Accent */
+    --accent: 42 75% 55%;
+    --accent-foreground: 30 10% 15%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 85%;
-    --input: 210 20% 85%;
-    --ring: 210 80% 30%;
+    --border: 35 20% 88%;
+    --input: 35 20% 88%;
+    --ring: 350 55% 35%;
 
     --radius: 1rem;
 
-    --sidebar-background: 210 50% 10%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 190 70% 50%;
-    --sidebar-primary-foreground: 210 50% 10%;
-    --sidebar-accent: 210 30% 20%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 210 40% 15%;
-    --sidebar-ring: 190 70% 50%;
+    /* ─── Sidebar Theme ─── */
+    --sidebar-background: 30 10% 12%;
+    --sidebar-foreground: 35 25% 92%;
+    --sidebar-primary: 42 70% 50%;
+    --sidebar-primary-foreground: 30 10% 12%;
+    --sidebar-accent: 30 15% 20%;
+    --sidebar-accent-foreground: 35 25% 92%;
+    --sidebar-border: 30 15% 18%;
+    --sidebar-ring: 42 70% 50%;
     
-    /* Kitchen and Drinks Screen Colors */
+    /* ─── Semantic Colors ─── */
+    --success: 145 63% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 30 10% 15%;
+    --info: 200 85% 45%;
+    --info-foreground: 0 0% 100%;
+    
+    /* ─── Kitchen Screen ─── */
     --kitchen-primary: 25 95% 53%;
     --kitchen-light: 25 100% 96%;
     --kitchen-dark: 15 90% 45%;
+    
+    /* ─── Drinks Screen ─── */
     --drinks-primary: 200 85% 45%;
     --drinks-light: 200 100% 96%;
     --drinks-dark: 200 75% 38%;
     
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(210 80% 30%) 0%, hsl(200 85% 45%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(190 70% 50%) 0%, hsl(180 65% 60%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(220 25% 99%) 100%);
+    /* ─── Premium Gradients ─── */
+    --gradient-primary: linear-gradient(135deg, hsl(350 55% 35%) 0%, hsl(350 45% 45%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(42 70% 50%) 0%, hsl(38 80% 55%) 100%);
+    --gradient-dark: linear-gradient(135deg, hsl(30 10% 15%) 0%, hsl(30 10% 20%) 100%);
+    --gradient-cream: linear-gradient(145deg, hsl(35 30% 98%) 0%, hsl(35 25% 94%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
     
-    /* Shadows */
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
-    --shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.15);
+    /* ─── Premium Shadows ─── */
+    --shadow-sm: 0 2px 8px rgba(139, 38, 53, 0.08);
+    --shadow-md: 0 4px 16px rgba(139, 38, 53, 0.1);
+    --shadow-lg: 0 8px 32px rgba(139, 38, 53, 0.12);
+    --shadow-xl: 0 16px 48px rgba(139, 38, 53, 0.15);
+    --shadow-gold: 0 4px 24px rgba(212, 175, 55, 0.3);
+    --shadow-glow: 0 0 40px rgba(212, 175, 55, 0.2);
+  }
+  
+  .dark {
+    --background: 30 10% 8%;
+    --foreground: 35 25% 95%;
+    --card: 30 10% 12%;
+    --card-foreground: 35 25% 95%;
+    --popover: 30 10% 10%;
+    --popover-foreground: 35 25% 95%;
+    --muted: 30 10% 18%;
+    --muted-foreground: 35 15% 65%;
+    --border: 30 10% 18%;
+    --input: 30 10% 18%;
   }
 }
 
@@ -71,91 +109,377 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-muted/30 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/30 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/50;
   }
 }
 
 @layer components {
-  .menu-grid {
-    @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6;
+  /* ═══════════════════════════════════════════════════════════
+     LAYOUT COMPONENTS
+  ═══════════════════════════════════════════════════════════ */
+  
+  .sea-container {
+    @apply container mx-auto px-4 sm:px-6 lg:px-8;
   }
   
-  .dashboard-card {
-    @apply bg-gradient-to-br from-card via-card to-muted/10 rounded-2xl p-6 transition-all duration-300 hover:shadow-xl border border-border/50;
-  }
-
-  .order-item {
-    @apply flex justify-between items-center border-b border-border py-3 transition-colors hover:bg-muted/30;
+  .sea-section {
+    @apply py-8 md:py-12;
   }
   
-  /* Professional Card Styles */
-  .pro-card {
-    @apply bg-card rounded-2xl shadow-lg border border-border/50 overflow-hidden backdrop-blur-sm transition-all duration-300 hover:shadow-2xl hover:scale-[1.02];
+  /* ═══════════════════════════════════════════════════════════
+     CARD COMPONENTS
+  ═══════════════════════════════════════════════════════════ */
+  
+  .sea-card {
+    @apply bg-card rounded-2xl border border-border/50 shadow-lg 
+           backdrop-blur-sm transition-all duration-300 
+           hover:shadow-xl hover:border-primary/20;
   }
   
-  .pro-card-hover {
-    @apply transform transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl;
+  .sea-card-premium {
+    @apply sea-card relative overflow-hidden;
+    background: var(--gradient-glass);
   }
   
-  /* Kitchen and Drinks Screen Components */
+  .sea-card-premium::before {
+    content: '';
+    @apply absolute inset-0 opacity-50;
+    background: linear-gradient(135deg, transparent 0%, rgba(212, 175, 55, 0.05) 100%);
+  }
+  
+  .sea-card-interactive {
+    @apply sea-card cursor-pointer hover:scale-[1.02] active:scale-[0.98];
+  }
+  
+  /* ═══════════════════════════════════════════════════════════
+     BUTTON COMPONENTS
+  ═══════════════════════════════════════════════════════════ */
+  
+  .sea-btn-primary {
+    @apply bg-primary text-primary-foreground font-semibold
+           rounded-xl px-6 py-3 shadow-md
+           transition-all duration-200
+           hover:shadow-lg hover:scale-105 active:scale-95;
+  }
+  
+  .sea-btn-gold {
+    @apply font-semibold rounded-xl px-6 py-3
+           transition-all duration-200
+           hover:shadow-lg hover:scale-105 active:scale-95;
+    background: var(--gradient-gold);
+    color: hsl(var(--foreground));
+    box-shadow: var(--shadow-gold);
+  }
+  
+  .sea-btn-glass {
+    @apply font-semibold rounded-xl px-6 py-3
+           backdrop-blur-md border border-border/50
+           transition-all duration-200
+           hover:bg-card/80 hover:shadow-md active:scale-95;
+    background: var(--gradient-glass);
+  }
+  
+  /* ═══════════════════════════════════════════════════════════
+     DASHBOARD COMPONENTS
+  ═══════════════════════════════════════════════════════════ */
+  
+  .dashboard-stat-card {
+    @apply sea-card p-6 flex flex-col gap-3;
+  }
+  
+  .dashboard-stat-icon {
+    @apply w-12 h-12 rounded-xl flex items-center justify-center
+           text-primary-foreground;
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .dashboard-stat-value {
+    @apply text-3xl font-bold text-foreground;
+  }
+  
+  .dashboard-stat-label {
+    @apply text-sm font-medium text-muted-foreground;
+  }
+  
+  /* ═══════════════════════════════════════════════════════════
+     TABLE COMPONENTS
+  ═══════════════════════════════════════════════════════════ */
+  
+  .table-card {
+    @apply sea-card-interactive p-4 min-h-[160px] flex flex-col justify-between;
+  }
+  
+  .table-card-occupied {
+    @apply border-info/50 bg-gradient-to-br from-info/5 to-transparent;
+  }
+  
+  .table-card-reserved {
+    @apply border-secondary/50 bg-gradient-to-br from-secondary/5 to-transparent;
+  }
+  
+  .table-card-available {
+    @apply border-success/30 bg-gradient-to-br from-success/5 to-transparent;
+  }
+  
+  .table-card-paid {
+    @apply border-success/50 bg-gradient-to-br from-success/10 to-transparent;
+  }
+  
+  /* ═══════════════════════════════════════════════════════════
+     MENU COMPONENTS
+  ═══════════════════════════════════════════════════════════ */
+  
+  .menu-item-card {
+    @apply sea-card-interactive overflow-hidden;
+  }
+  
+  .menu-item-image {
+    @apply aspect-[4/3] w-full object-cover transition-transform duration-500;
+  }
+  
+  .menu-item-card:hover .menu-item-image {
+    @apply scale-110;
+  }
+  
+  .menu-category-btn {
+    @apply flex flex-col items-center gap-2 p-4 rounded-2xl
+           transition-all duration-300 min-w-[120px]
+           border-2 border-transparent;
+  }
+  
+  .menu-category-btn-active {
+    @apply text-primary-foreground border-primary/30;
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .menu-category-btn-inactive {
+    @apply bg-card text-foreground border-border
+           hover:border-primary/30 hover:shadow-md;
+  }
+  
+  /* ═══════════════════════════════════════════════════════════
+     KITCHEN & DRINKS SCREENS
+  ═══════════════════════════════════════════════════════════ */
+  
   .kitchen-header {
-    @apply bg-gradient-to-r from-[hsl(var(--kitchen-primary))] to-[hsl(var(--kitchen-dark))] text-white p-6 rounded-2xl shadow-xl border border-white/10;
-  }
-  
-  .drinks-header {
-    @apply bg-gradient-to-r from-[hsl(var(--drinks-primary))] to-[hsl(var(--drinks-dark))] text-white p-6 rounded-2xl shadow-xl border border-white/10;
+    @apply p-6 rounded-2xl shadow-xl text-white;
+    background: linear-gradient(135deg, hsl(var(--kitchen-primary)) 0%, hsl(var(--kitchen-dark)) 100%);
   }
   
   .kitchen-card {
-    @apply border-2 border-[hsl(var(--kitchen-light))] hover:border-[hsl(var(--kitchen-primary))] transition-all duration-300 shadow-xl rounded-2xl overflow-hidden backdrop-blur-sm hover:scale-[1.02];
-  }
-  
-  .drinks-card {
-    @apply border-2 border-[hsl(var(--drinks-light))] hover:border-[hsl(var(--drinks-primary))] transition-all duration-300 shadow-xl rounded-2xl overflow-hidden backdrop-blur-sm hover:scale-[1.02];
-  }
-  
-  .kitchen-card-header {
-    @apply bg-gradient-to-r from-[hsl(var(--kitchen-light))] to-[hsl(var(--kitchen-light))]/50 p-4 border-b border-[hsl(var(--kitchen-primary))]/20;
-  }
-  
-  .drinks-card-header {
-    @apply bg-gradient-to-r from-[hsl(var(--drinks-light))] to-[hsl(var(--drinks-light))]/50 p-4 border-b border-[hsl(var(--drinks-primary))]/20;
+    @apply sea-card border-2 hover:border-[hsl(var(--kitchen-primary))];
+    border-color: hsl(var(--kitchen-light));
   }
   
   .kitchen-badge {
-    @apply bg-[hsl(var(--kitchen-primary))] text-white shadow-md;
+    @apply font-semibold px-3 py-1 rounded-full text-white shadow-md;
+    background-color: hsl(var(--kitchen-primary));
+  }
+  
+  .kitchen-btn {
+    @apply sea-btn-primary;
+    background: linear-gradient(135deg, hsl(var(--kitchen-primary)) 0%, hsl(var(--kitchen-dark)) 100%);
+  }
+  
+  .drinks-header {
+    @apply p-6 rounded-2xl shadow-xl text-white;
+    background: linear-gradient(135deg, hsl(var(--drinks-primary)) 0%, hsl(var(--drinks-dark)) 100%);
+  }
+  
+  .drinks-card {
+    @apply sea-card border-2 hover:border-[hsl(var(--drinks-primary))];
+    border-color: hsl(var(--drinks-light));
   }
   
   .drinks-badge {
-    @apply bg-[hsl(var(--drinks-primary))] text-white shadow-md;
+    @apply font-semibold px-3 py-1 rounded-full text-white shadow-md;
+    background-color: hsl(var(--drinks-primary));
   }
   
-  .kitchen-button {
-    @apply bg-[hsl(var(--kitchen-primary))] hover:bg-[hsl(var(--kitchen-dark))] text-white shadow-md transition-all duration-200 hover:shadow-lg;
+  .drinks-btn {
+    @apply sea-btn-primary;
+    background: linear-gradient(135deg, hsl(var(--drinks-primary)) 0%, hsl(var(--drinks-dark)) 100%);
   }
   
-  .drinks-button {
-    @apply bg-[hsl(var(--drinks-primary))] hover:bg-[hsl(var(--drinks-dark))] text-white shadow-md transition-all duration-200 hover:shadow-lg;
+  /* ═══════════════════════════════════════════════════════════
+     BADGE COMPONENTS
+  ═══════════════════════════════════════════════════════════ */
+  
+  .sea-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full
+           text-sm font-semibold transition-colors;
   }
   
-  .kitchen-empty {
-    @apply text-center py-20 bg-gradient-to-br from-[hsl(var(--kitchen-light))] to-white rounded-2xl border-2 border-[hsl(var(--kitchen-primary))]/20 shadow-lg;
+  .sea-badge-primary {
+    @apply sea-badge bg-primary/10 text-primary;
   }
   
-  .drinks-empty {
-    @apply text-center py-20 bg-gradient-to-br from-[hsl(var(--drinks-light))] to-white rounded-2xl border-2 border-[hsl(var(--drinks-primary))]/20 shadow-lg;
+  .sea-badge-success {
+    @apply sea-badge text-white;
+    background-color: hsl(var(--success));
   }
   
-  /* Gradient Backgrounds */
+  .sea-badge-warning {
+    @apply sea-badge text-foreground;
+    background-color: hsl(var(--warning));
+  }
+  
+  .sea-badge-info {
+    @apply sea-badge text-white;
+    background-color: hsl(var(--info));
+  }
+  
+  .sea-badge-gold {
+    @apply sea-badge text-foreground;
+    background: var(--gradient-gold);
+  }
+  
+  /* ═══════════════════════════════════════════════════════════
+     GRADIENT UTILITIES
+  ═══════════════════════════════════════════════════════════ */
+  
   .gradient-primary {
     background: var(--gradient-primary);
   }
   
-  .gradient-secondary {
-    background: var(--gradient-secondary);
+  .gradient-gold {
+    background: var(--gradient-gold);
   }
   
-  .gradient-card {
-    background: var(--gradient-card);
+  .gradient-dark {
+    background: var(--gradient-dark);
+  }
+  
+  .gradient-cream {
+    background: var(--gradient-cream);
+  }
+  
+  .gradient-glass {
+    background: var(--gradient-glass);
+  }
+  
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-text-gold {
+    @apply bg-clip-text text-transparent;
+    background: var(--gradient-gold);
+  }
+  
+  /* ═══════════════════════════════════════════════════════════
+     ANIMATION UTILITIES
+  ═══════════════════════════════════════════════════════════ */
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 2s linear infinite;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite;
+  }
+  
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(212, 175, 55, 0.5); }
+  }
+  
+  /* ═══════════════════════════════════════════════════════════
+     EMPTY STATE COMPONENTS
+  ═══════════════════════════════════════════════════════════ */
+  
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-16 px-4 text-center;
+  }
+  
+  .empty-state-icon {
+    @apply w-20 h-20 rounded-full flex items-center justify-center mb-6
+           bg-muted text-muted-foreground;
+  }
+  
+  .empty-state-title {
+    @apply text-xl font-semibold text-foreground mb-2;
+  }
+  
+  .empty-state-description {
+    @apply text-muted-foreground max-w-md;
+  }
+  
+  /* ═══════════════════════════════════════════════════════════
+     FORM COMPONENTS
+  ═══════════════════════════════════════════════════════════ */
+  
+  .sea-input {
+    @apply h-12 rounded-xl border-2 border-border bg-card px-4
+           transition-all duration-200
+           focus:border-primary focus:ring-2 focus:ring-primary/20
+           placeholder:text-muted-foreground;
+  }
+  
+  .sea-input-lg {
+    @apply h-14 text-lg rounded-2xl;
+  }
+  
+  /* ═══════════════════════════════════════════════════════════
+     HEADER & NAVIGATION
+  ═══════════════════════════════════════════════════════════ */
+  
+  .sea-header {
+    @apply sticky top-0 z-50 backdrop-blur-xl border-b border-border/50;
+    background: var(--gradient-glass);
+  }
+  
+  .sea-nav-item {
+    @apply flex items-center gap-2 px-4 py-3 rounded-xl
+           text-muted-foreground font-medium
+           transition-all duration-200
+           hover:bg-muted hover:text-foreground;
+  }
+  
+  .sea-nav-item-active {
+    @apply bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground;
   }
 }
