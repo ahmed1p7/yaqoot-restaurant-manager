@@ -48,12 +48,13 @@ const SimpleBarChart = ({ data }: { data: { name: string; value: number }[] }) =
 };
 
 const StatusBadge = ({ status }: { status: OrderStatus }) => {
-  const statusConfig = {
+  const statusConfig: Record<OrderStatus, { label: string; className: string }> = {
     pending: { label: 'معلق', className: 'bg-warning/10 text-warning border-warning/30' },
     preparing: { label: 'قيد التحضير', className: 'bg-info/10 text-info border-info/30' },
     ready: { label: 'جاهز', className: 'bg-success/10 text-success border-success/30' },
     delivered: { label: 'تم التسليم', className: 'bg-muted text-muted-foreground border-border' },
-    cancelled: { label: 'ملغي', className: 'bg-destructive/10 text-destructive border-destructive/30' }
+    canceled: { label: 'ملغي', className: 'bg-destructive/10 text-destructive border-destructive/30' },
+    completed: { label: 'مكتمل', className: 'bg-success/10 text-success border-success/30' }
   };
   
   const config = statusConfig[status];
@@ -185,7 +186,8 @@ export const Dashboard = () => {
                   preparing: 'قيد التحضير',
                   ready: 'جاهز',
                   delivered: 'تم التسليم',
-                  canceled: 'ملغي'
+                  canceled: 'ملغي',
+                  completed: 'مكتمل'
                 };
                 
                 const statusColors: Record<OrderStatus, string> = {
@@ -193,7 +195,8 @@ export const Dashboard = () => {
                   preparing: 'bg-info',
                   ready: 'bg-success',
                   delivered: 'bg-primary',
-                  canceled: 'bg-destructive'
+                  canceled: 'bg-destructive',
+                  completed: 'bg-success'
                 };
                 
                 return (
