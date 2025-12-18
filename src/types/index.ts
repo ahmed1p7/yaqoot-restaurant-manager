@@ -21,9 +21,20 @@ export interface MenuItem {
   ingredients?: string;
   calories?: string;
   volume?: string;
+  pageId?: string; // Reference to menu page
+  order?: number; // Position within page
 }
 
 export type MenuCategory = 'appetizers' | 'main_dishes' | 'desserts' | 'drinks' | 'sides';
+
+// Menu Page types (for booklet-style menu)
+export interface MenuPage {
+  id: string;
+  title: string;
+  order: number;
+  backgroundColor?: string;
+  items: string[]; // Array of MenuItem IDs
+}
 
 // Order types
 export interface Order {
