@@ -6,16 +6,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useNavigate } from "react-router-dom";
 import { TableActions } from "@/components/tables/TableActions";
 import { PaymentDialog } from "@/components/tables/PaymentDialog";
+import { PeopleCountDialog } from "@/components/tables/PeopleCountDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, SearchInput } from "@/components/shared";
-import { User, Table as TableIcon, DollarSign, Users, Utensils, LayoutGrid } from "lucide-react";
+import { User, Table as TableIcon, DollarSign, Users, Utensils, LayoutGrid, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { Order } from "@/types";
 import { cn } from "@/lib/utils";
 
 export const Tables = () => {
-  const { tables, orders, user, menuItems, getMostOrderedItems, getOrdersByTable, resetTable, markTableAsPaid } = useApp();
+  const { tables, orders, user, menuItems, getMostOrderedItems, getOrdersByTable, resetTable, markTableAsPaid, updateTablePeopleCount } = useApp();
   const navigate = useNavigate();
   
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
@@ -23,6 +24,8 @@ export const Tables = () => {
   const [showCloseDayDialog, setShowCloseDayDialog] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedTableForPayment, setSelectedTableForPayment] = useState<number | null>(null);
+  const [showPeopleCountDialog, setShowPeopleCountDialog] = useState(false);
+  const [selectedTableForPeople, setSelectedTableForPeople] = useState<number | null>(null);
   
   const calculateDailyStatistics = () => {
     const completedOrders = orders.filter(order => order.isPaid);
@@ -81,6 +84,20 @@ export const Tables = () => {
     }
     setShowPaymentDialog(false);
     setSelectedTableForPayment(null);
+  };
+
+  const handlePeopleCountClick = (tableId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedTableForPeople(tableId);
+    setShowPeopleCountDialog(true);
+  };
+
+  const handlePeopleCountConfirm = (count: number) => {
+    if (selectedTableForPeople) {
+      updateTablePeopleCount(selectedTableForPeople, count);
+    }
+    setShowPeopleCountDialog(false);
+    setSelectedTableForPeople(null);
   };
 
   const selectedPaymentOrder = selectedTableForPayment ? getCurrentOrder(selectedTableForPayment) : undefined;
@@ -167,13 +184,15 @@ export const Tables = () => {
                   )}
                 </div>
                 
-                {/* People Count */}
-                {table.peopleCount && table.peopleCount > 0 && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="w-4 h-4" />
-                    <span>{table.peopleCount} أشخاص</span>
-                  </div>
-                )}
+                {/* People Count - Clickable for Waiter */}
+                <button
+                  onClick={(e) => handlePeopleCountClick(table.id, e)}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 p-2 rounded-lg transition-colors w-full"
+                >
+                  <Users className="w-4 h-4" />
+                  <span>{table.peopleCount || 0} أشخاص</span>
+                  <Edit className="w-3 h-3 mr-auto opacity-50" />
+                </button>
                 
                 {/* Actions */}
                 <TableActions
@@ -348,6 +367,18 @@ export const Tables = () => {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* People Count Dialog */}
+      <PeopleCountDialog
+        isOpen={showPeopleCountDialog}
+        onClose={() => {
+          setShowPeopleCountDialog(false);
+          setSelectedTableForPeople(null);
+        }}
+        currentCount={selectedTableForPeople ? tables.find(t => t.id === selectedTableForPeople)?.peopleCount || 0 : 0}
+        onConfirm={handlePeopleCountConfirm}
+        isEditing={true}
+      />
     </div>
   );
 };
