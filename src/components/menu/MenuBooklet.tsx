@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { MenuItem, MenuPage, OrderItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
-  ChevronLeft, ChevronRight, Plus, Minus, ShoppingCart, 
-  Edit, Trash2, Save, X, GripVertical, BookOpen
+  ChevronLeft, ChevronRight, Plus, Minus, 
+  Edit, Trash2, Save, X, BookOpen, ImagePlus, UtensilsCrossed
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ImageUploader } from './ImageUploader';
 
 interface MenuBookletProps {
   menuItems: MenuItem[];
@@ -22,7 +24,9 @@ interface MenuBookletProps {
   onPageCreate?: (page: Omit<MenuPage, 'id'>) => void;
   onPageDelete?: (pageId: string) => void;
   onItemUpdate?: (item: MenuItem) => void;
+  onItemCreate?: (item: Omit<MenuItem, 'id'>) => void;
   onItemDelete?: (itemId: string) => void;
+  onAddItemToPage?: (pageId: string, itemId: string) => void;
 }
 
 export const MenuBooklet: React.FC<MenuBookletProps> = ({
@@ -36,17 +40,27 @@ export const MenuBooklet: React.FC<MenuBookletProps> = ({
   onPageCreate,
   onPageDelete,
   onItemUpdate,
-  onItemDelete
+  onItemCreate,
+  onItemDelete,
+  onAddItemToPage
 }) => {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [isFlipping, setIsFlipping] = useState(false);
   const [flipDirection, setFlipDirection] = useState<'left' | 'right'>('right');
-  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
-  const [quantity, setQuantity] = useState(1);
   const [editingPage, setEditingPage] = useState<MenuPage | null>(null);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [showAddPage, setShowAddPage] = useState(false);
+  const [showAddItem, setShowAddItem] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState('');
+  const [newItem, setNewItem] = useState<Partial<MenuItem>>({
+    name: '',
+    description: '',
+    price: 0,
+    category: 'main_dishes',
+    isAvailable: true,
+    departmentId: '1',
+    image: ''
+  });
 
   const sortedPages = [...menuPages].sort((a, b) => a.order - b.order);
   const currentPage = sortedPages[currentPageIndex];
@@ -76,21 +90,7 @@ export const MenuBooklet: React.FC<MenuBookletProps> = ({
       setTimeout(() => {
         setCurrentPageIndex(newIndex);
         setIsFlipping(false);
-      }, 400);
-    }
-  };
-
-  const handleAddToCart = (item: MenuItem) => {
-    if (onAddToCart) {
-      onAddToCart(item, quantity);
-      setSelectedItem(null);
-      setQuantity(1);
-    }
-  };
-
-  const handleQuickAdd = (item: MenuItem) => {
-    if (onAddToCart) {
-      onAddToCart(item, 1);
+      }, 300);
     }
   };
 
@@ -129,18 +129,53 @@ export const MenuBooklet: React.FC<MenuBookletProps> = ({
     }
   };
 
-  if (!currentPage) {
+  const handleCreateItem = () => {
+    if (newItem.name && newItem.price && onItemCreate && currentPage) {
+      const item = {
+        ...newItem,
+        name: newItem.name!,
+        price: newItem.price!,
+        category: newItem.category || 'main_dishes',
+        isAvailable: true,
+        departmentId: newItem.departmentId || '1'
+      } as Omit<MenuItem, 'id'>;
+      
+      onItemCreate(item);
+      setNewItem({
+        name: '',
+        description: '',
+        price: 0,
+        category: 'main_dishes',
+        isAvailable: true,
+        departmentId: '1',
+        image: ''
+      });
+      setShowAddItem(false);
+    }
+  };
+
+  const handleQuickQuantityChange = (item: MenuItem, delta: number) => {
+    const currentQty = getItemQuantityInCart(item.id);
+    
+    if (currentQty === 0 && delta > 0) {
+      onAddToCart?.(item, 1);
+    } else if (currentQty > 0) {
+      onUpdateQuantity?.(item.id, delta);
+    }
+  };
+
+  if (!currentPage && sortedPages.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[600px] bg-cream rounded-3xl">
-        <div className="text-center">
-          <BookOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-          <p className="text-xl text-muted-foreground">لا توجد صفحات في القائمة</p>
+      <div className="flex items-center justify-center h-[500px] bg-cream rounded-3xl border-2 border-dashed border-primary/20">
+        <div className="text-center p-8">
+          <BookOpen className="w-20 h-20 mx-auto text-primary/30 mb-6" />
+          <p className="text-2xl font-serif text-muted-foreground mb-4">لا توجد صفحات في القائمة</p>
           {isAdmin && (
             <Button 
               onClick={() => setShowAddPage(true)}
-              className="mt-4 sea-btn-primary"
+              className="sea-btn-primary text-lg px-8 py-6"
             >
-              <Plus className="w-4 h-4 ml-2" />
+              <Plus className="w-5 h-5 ml-2" />
               إضافة صفحة جديدة
             </Button>
           )}
@@ -149,41 +184,40 @@ export const MenuBooklet: React.FC<MenuBookletProps> = ({
     );
   }
 
+  if (!currentPage) return null;
+
   const pageItems = getItemsForPage(currentPage);
 
   return (
     <div className="relative">
       {/* Booklet Container */}
       <div className="relative mx-auto max-w-4xl">
-        {/* Book spine effect */}
-        <div className="absolute left-1/2 top-0 bottom-0 w-4 -ml-2 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20 z-10 shadow-lg" />
-        
         {/* Page Container */}
         <div 
           className={cn(
-            "relative min-h-[700px] bg-cream rounded-3xl shadow-2xl overflow-hidden transition-all duration-400",
+            "relative bg-cream rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 border border-primary/10",
             isFlipping && flipDirection === 'right' && "animate-page-flip-right",
             isFlipping && flipDirection === 'left' && "animate-page-flip-left"
           )}
           style={{ backgroundColor: currentPage.backgroundColor || '#F9F5F0' }}
         >
           {/* Page Header */}
-          <div className="relative px-8 py-6 border-b-2 border-primary/20">
-            <div className="flex items-center justify-between">
+          <div className="relative px-4 sm:px-8 py-4 sm:py-6 border-b-2 border-primary/10 bg-gradient-to-l from-primary/5 to-transparent">
+            <div className="flex items-center justify-between gap-2">
               {isAdmin && editingPage?.id === currentPage.id ? (
                 <Input
                   value={editingPage.title}
                   onChange={(e) => setEditingPage({ ...editingPage, title: e.target.value })}
-                  className="text-3xl font-serif bg-transparent border-none focus:ring-0 max-w-xs"
+                  className="text-xl sm:text-2xl font-serif bg-white/80 border-primary/20 max-w-[200px] sm:max-w-xs"
                 />
               ) : (
-                <h2 className="text-4xl font-serif text-primary tracking-wide">
+                <h2 className="text-2xl sm:text-4xl font-serif text-primary tracking-wide">
                   {currentPage.title}
                 </h2>
               )}
               
               {isAdmin && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   {editingPage?.id === currentPage.id ? (
                     <>
                       <Button size="sm" variant="ghost" onClick={() => setEditingPage(null)}>
@@ -201,138 +235,125 @@ export const MenuBooklet: React.FC<MenuBookletProps> = ({
                       <Button 
                         size="sm" 
                         variant="ghost" 
-                        className="text-destructive"
+                        className="text-destructive hover:bg-destructive/10"
                         onClick={() => handleDeletePage(currentPage.id)}
                       >
                         <Trash2 className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        className="sea-btn-primary"
+                        onClick={() => setShowAddItem(true)}
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span className="hidden sm:inline mr-1">طبق</span>
                       </Button>
                     </>
                   )}
                 </div>
               )}
             </div>
-            
-            {/* Decorative line */}
-            <div className="mt-4 h-0.5 bg-gradient-to-r from-transparent via-secondary to-transparent" />
           </div>
 
           {/* Menu Items */}
-          <div className="p-8 space-y-4">
-            {pageItems.map((item, index) => {
+          <div className="p-4 sm:p-6 space-y-3 min-h-[400px] max-h-[60vh] overflow-y-auto">
+            {pageItems.map((item) => {
               const cartQuantity = getItemQuantityInCart(item.id);
               
               return (
                 <div 
                   key={item.id}
                   className={cn(
-                    "group relative flex items-start gap-4 p-4 rounded-xl transition-all duration-300",
-                    "hover:bg-white/50 hover:shadow-lg cursor-pointer",
-                    cartQuantity > 0 && "bg-primary/5 ring-2 ring-primary/20"
+                    "group relative flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl transition-all duration-200",
+                    "bg-white/60 hover:bg-white hover:shadow-lg border border-transparent hover:border-primary/10",
+                    cartQuantity > 0 && "bg-primary/5 border-primary/20 shadow-md"
                   )}
-                  onClick={() => !isAdmin && setSelectedItem(item)}
                 >
-                  {isAdmin && (
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab" />
-                    </div>
-                  )}
-                  
                   {/* Item Image */}
-                  {item.image && (
-                    <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-primary/20">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden flex-shrink-0 bg-muted">
+                    {item.image && item.image !== '/placeholder.svg' ? (
                       <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                    </div>
-                  )}
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
+                        <UtensilsCrossed className="w-6 h-6 sm:w-8 sm:h-8 text-primary/30" />
+                      </div>
+                    )}
+                  </div>
                   
                   {/* Item Details */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="text-xl font-semibold text-foreground leading-tight">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base sm:text-lg font-bold text-foreground leading-tight truncate">
                           {item.name}
                         </h3>
                         {item.description && (
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 line-clamp-2">
                             {item.description}
-                          </p>
-                        )}
-                        {item.ingredients && (
-                          <p className="text-xs text-muted-foreground/70 mt-1 italic">
-                            {item.ingredients}
                           </p>
                         )}
                       </div>
                       
                       {/* Price */}
-                      <div className="text-right flex-shrink-0">
-                        <span className="text-2xl font-bold text-primary">
-                          ${item.price}
-                        </span>
-                        {item.calories && (
-                          <p className="text-xs text-muted-foreground mt-1">{item.calories} cal</p>
-                        )}
-                      </div>
+                      <span className="text-lg sm:text-xl font-bold text-primary whitespace-nowrap">
+                        ${item.price}
+                      </span>
                     </div>
                     
-                    {/* Cart Quantity or Quick Add */}
+                    {/* Quantity Controls - Waiter View */}
                     {!isAdmin && (
                       <div className="flex items-center justify-between mt-3">
-                        {cartQuantity > 0 ? (
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-primary text-primary-foreground">
-                              في السلة: {cartQuantity}
-                            </Badge>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-8 w-8 p-0"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onUpdateQuantity?.(item.id, -1);
-                                }}
-                              >
-                                <Minus className="w-3 h-3" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-8 w-8 p-0"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onUpdateQuantity?.(item.id, 1);
-                                }}
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
+                        <div className="flex items-center gap-2">
                           <Button
                             size="sm"
-                            className="sea-btn-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                            variant={cartQuantity > 0 ? "default" : "outline"}
+                            className={cn(
+                              "h-9 w-9 p-0 rounded-full transition-all",
+                              cartQuantity > 0 && "sea-btn-primary"
+                            )}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleQuickAdd(item);
+                              handleQuickQuantityChange(item, -1);
+                            }}
+                            disabled={cartQuantity === 0}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </Button>
+                          
+                          <span className={cn(
+                            "w-10 text-center font-bold text-lg transition-all",
+                            cartQuantity > 0 ? "text-primary" : "text-muted-foreground"
+                          )}>
+                            {cartQuantity}
+                          </span>
+                          
+                          <Button
+                            size="sm"
+                            className="h-9 w-9 p-0 rounded-full sea-btn-primary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleQuickQuantityChange(item, 1);
                             }}
                           >
-                            <Plus className="w-4 h-4 ml-1" />
-                            إضافة
+                            <Plus className="w-4 h-4" />
                           </Button>
-                        )}
+                        </div>
                         
-                        <span className="text-xs text-muted-foreground">
-                          انقر للتفاصيل
-                        </span>
+                        {cartQuantity > 0 && (
+                          <Badge className="bg-primary/10 text-primary border-primary/20">
+                            ${(item.price * cartQuantity).toFixed(2)}
+                          </Badge>
+                        )}
                       </div>
                     )}
                     
                     {/* Admin Actions */}
                     {isAdmin && (
-                      <div className="flex items-center gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-2 mt-3">
                         <Button 
                           size="sm" 
                           variant="outline"
+                          className="h-8 text-xs"
                           onClick={(e) => {
                             e.stopPropagation();
                             setEditingItem(item);
@@ -344,7 +365,7 @@ export const MenuBooklet: React.FC<MenuBookletProps> = ({
                         <Button 
                           size="sm" 
                           variant="outline"
-                          className="text-destructive border-destructive"
+                          className="h-8 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
                           onClick={(e) => {
                             e.stopPropagation();
                             onItemDelete?.(item.id);
@@ -361,17 +382,29 @@ export const MenuBooklet: React.FC<MenuBookletProps> = ({
             })}
             
             {pageItems.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">لا توجد أصناف في هذه الصفحة</p>
+              <div className="text-center py-16">
+                <UtensilsCrossed className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
+                <p className="text-lg text-muted-foreground">لا توجد أصناف في هذه الصفحة</p>
+                {isAdmin && (
+                  <Button 
+                    className="mt-4 sea-btn-primary"
+                    onClick={() => setShowAddItem(true)}
+                  >
+                    <Plus className="w-4 h-4 ml-2" />
+                    إضافة طبق
+                  </Button>
+                )}
               </div>
             )}
           </div>
 
           {/* Page Number */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-            <span className="text-sm text-muted-foreground font-serif">
-              {currentPageIndex + 1} / {sortedPages.length}
-            </span>
+          <div className="py-3 border-t border-primary/10 bg-white/50">
+            <div className="text-center">
+              <span className="text-sm text-muted-foreground font-serif">
+                صفحة {currentPageIndex + 1} من {sortedPages.length}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -380,40 +413,40 @@ export const MenuBooklet: React.FC<MenuBookletProps> = ({
           variant="ghost"
           size="lg"
           className={cn(
-            "absolute left-2 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full",
-            "bg-white/90 shadow-xl hover:bg-white hover:scale-110 transition-all",
-            currentPageIndex === 0 && "opacity-50 cursor-not-allowed"
+            "absolute left-0 sm:-left-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full",
+            "bg-white shadow-lg hover:bg-primary hover:text-primary-foreground transition-all",
+            currentPageIndex === 0 && "opacity-30 cursor-not-allowed"
           )}
           onClick={() => handlePageFlip('prev')}
           disabled={currentPageIndex === 0 || isFlipping}
         >
-          <ChevronRight className="w-8 h-8 text-primary" />
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
         </Button>
         
         <Button
           variant="ghost"
           size="lg"
           className={cn(
-            "absolute right-2 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full",
-            "bg-white/90 shadow-xl hover:bg-white hover:scale-110 transition-all",
-            currentPageIndex === sortedPages.length - 1 && "opacity-50 cursor-not-allowed"
+            "absolute right-0 sm:-right-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full",
+            "bg-white shadow-lg hover:bg-primary hover:text-primary-foreground transition-all",
+            currentPageIndex === sortedPages.length - 1 && "opacity-30 cursor-not-allowed"
           )}
           onClick={() => handlePageFlip('next')}
           disabled={currentPageIndex === sortedPages.length - 1 || isFlipping}
         >
-          <ChevronLeft className="w-8 h-8 text-primary" />
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
         </Button>
 
         {/* Page Indicators */}
-        <div className="flex justify-center gap-2 mt-6">
+        <div className="flex justify-center gap-2 mt-4 flex-wrap">
           {sortedPages.map((page, index) => (
             <button
               key={page.id}
               className={cn(
-                "w-3 h-3 rounded-full transition-all",
+                "h-2 rounded-full transition-all",
                 index === currentPageIndex 
-                  ? "bg-primary scale-125" 
-                  : "bg-primary/30 hover:bg-primary/50"
+                  ? "bg-primary w-8" 
+                  : "bg-primary/30 hover:bg-primary/50 w-2"
               )}
               onClick={() => setCurrentPageIndex(index)}
             />
@@ -421,116 +454,99 @@ export const MenuBooklet: React.FC<MenuBookletProps> = ({
           
           {isAdmin && (
             <button
-              className="w-8 h-8 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center transition-all"
+              className="w-6 h-6 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center transition-all"
               onClick={() => setShowAddPage(true)}
             >
-              <Plus className="w-4 h-4 text-primary" />
+              <Plus className="w-3 h-3 text-primary" />
             </button>
           )}
         </div>
       </div>
 
-      {/* Item Detail Dialog */}
-      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="sm:max-w-md">
-          {selectedItem && (
-            <>
-              {selectedItem.image && (
-                <div className="aspect-video rounded-xl overflow-hidden mb-4">
-                  <img 
-                    src={selectedItem.image} 
-                    alt={selectedItem.name} 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              
-              <DialogHeader>
-                <DialogTitle className="text-2xl">{selectedItem.name}</DialogTitle>
-              </DialogHeader>
-              
-              <div className="space-y-4">
-                {selectedItem.description && (
-                  <p className="text-muted-foreground">{selectedItem.description}</p>
-                )}
-                
-                {selectedItem.ingredients && (
-                  <div>
-                    <h4 className="font-semibold mb-1">المكونات:</h4>
-                    <p className="text-sm text-muted-foreground">{selectedItem.ingredients}</p>
-                  </div>
-                )}
-                
-                <div className="flex items-center justify-between">
-                  {selectedItem.calories && (
-                    <Badge variant="outline">{selectedItem.calories} سعرة</Badge>
-                  )}
-                  {selectedItem.volume && (
-                    <Badge variant="outline">{selectedItem.volume}</Badge>
-                  )}
-                </div>
-                
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <span className="text-3xl font-bold text-primary">${selectedItem.price}</span>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 bg-muted rounded-full p-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0 rounded-full"
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      >
-                        <Minus className="w-4 h-4" />
-                      </Button>
-                      <span className="w-8 text-center font-bold">{quantity}</span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0 rounded-full"
-                        onClick={() => setQuantity(quantity + 1)}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <DialogFooter>
-                <Button 
-                  className="w-full sea-btn-primary"
-                  onClick={() => handleAddToCart(selectedItem)}
-                >
-                  <ShoppingCart className="w-4 h-4 ml-2" />
-                  إضافة للسلة • ${(selectedItem.price * quantity).toFixed(2)}
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-
       {/* Add Page Dialog */}
       <Dialog open={showAddPage} onOpenChange={setShowAddPage}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>إضافة صفحة جديدة</DialogTitle>
+            <DialogTitle className="text-xl">إضافة صفحة جديدة</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <Input
-              placeholder="عنوان الصفحة (مثال: I Contorni)"
-              value={newPageTitle}
-              onChange={(e) => setNewPageTitle(e.target.value)}
-            />
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">عنوان الصفحة</label>
+              <Input
+                placeholder="مثال: الأطباق الرئيسية"
+                value={newPageTitle}
+                onChange={(e) => setNewPageTitle(e.target.value)}
+                className="text-lg"
+              />
+            </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowAddPage(false)}>إلغاء</Button>
-            <Button className="sea-btn-primary" onClick={handleCreatePage}>
+            <Button className="sea-btn-primary" onClick={handleCreatePage} disabled={!newPageTitle}>
               <Plus className="w-4 h-4 ml-2" />
-              إضافة
+              إضافة الصفحة
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Item Dialog */}
+      <Dialog open={showAddItem} onOpenChange={setShowAddItem}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">إضافة طبق جديد</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">اسم الطبق *</label>
+              <Input
+                placeholder="مثال: مشاوي مشكلة"
+                value={newItem.name}
+                onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium mb-2 block">الوصف</label>
+              <Textarea
+                placeholder="وصف قصير للطبق..."
+                value={newItem.description}
+                onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                rows={2}
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium mb-2 block">السعر *</label>
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={newItem.price || ''}
+                onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
+              />
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium mb-2 block">صورة الطبق</label>
+              <ImageUploader
+                currentImage={newItem.image}
+                onImageChange={(url) => setNewItem({ ...newItem, image: url })}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowAddItem(false)}>إلغاء</Button>
+            <Button 
+              className="sea-btn-primary" 
+              onClick={handleCreateItem}
+              disabled={!newItem.name || !newItem.price}
+            >
+              <Plus className="w-4 h-4 ml-2" />
+              إضافة الطبق
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -538,50 +554,63 @@ export const MenuBooklet: React.FC<MenuBookletProps> = ({
 
       {/* Edit Item Dialog */}
       <Dialog open={!!editingItem} onOpenChange={() => setEditingItem(null)}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>تعديل الصنف</DialogTitle>
+            <DialogTitle className="text-xl">تعديل الطبق</DialogTitle>
           </DialogHeader>
           
           {editingItem && (
-            <div className="space-y-4">
+            <div className="space-y-4 py-4">
               <div>
-                <label className="text-sm font-medium">الاسم</label>
+                <label className="text-sm font-medium mb-2 block">اسم الطبق</label>
                 <Input
                   value={editingItem.name}
                   onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
                 />
               </div>
+              
               <div>
-                <label className="text-sm font-medium">الوصف</label>
-                <Input
+                <label className="text-sm font-medium mb-2 block">الوصف</label>
+                <Textarea
                   value={editingItem.description || ''}
                   onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
+                  rows={2}
                 />
               </div>
+              
               <div>
-                <label className="text-sm font-medium">السعر</label>
+                <label className="text-sm font-medium mb-2 block">السعر</label>
                 <Input
                   type="number"
                   value={editingItem.price}
                   onChange={(e) => setEditingItem({ ...editingItem, price: parseFloat(e.target.value) || 0 })}
                 />
               </div>
+              
               <div>
-                <label className="text-sm font-medium">المكونات</label>
-                <Input
+                <label className="text-sm font-medium mb-2 block">المكونات</label>
+                <Textarea
                   value={editingItem.ingredients || ''}
                   onChange={(e) => setEditingItem({ ...editingItem, ingredients: e.target.value })}
+                  rows={2}
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-2 block">صورة الطبق</label>
+                <ImageUploader
+                  currentImage={editingItem.image}
+                  onImageChange={(url) => setEditingItem({ ...editingItem, image: url })}
                 />
               </div>
             </div>
           )}
           
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditingItem(null)}>إلغاء</Button>
             <Button className="sea-btn-primary" onClick={handleSaveItem}>
               <Save className="w-4 h-4 ml-2" />
-              حفظ
+              حفظ التغييرات
             </Button>
           </DialogFooter>
         </DialogContent>
