@@ -3,44 +3,47 @@ import { MenuPage } from '@/types';
 export const mockMenuPages: MenuPage[] = [
   {
     id: 'page-1',
-    title: 'I Antipasti',
+    title: 'المقبلات',
     order: 1,
     backgroundColor: '#F9F5F0',
-    items: ['menu-1', 'menu-2', 'menu-3']
+    items: ['1', '2', '3']
   },
   {
     id: 'page-2',
-    title: 'I Primi Piatti',
+    title: 'الأطباق الرئيسية',
     order: 2,
     backgroundColor: '#F9F5F0',
-    items: ['menu-4', 'menu-5', 'menu-6']
+    items: ['4', '5', '6']
   },
   {
     id: 'page-3',
-    title: 'I Secondi',
+    title: 'الحلويات',
     order: 3,
     backgroundColor: '#F9F5F0',
-    items: ['menu-7', 'menu-8', 'menu-9']
+    items: ['7', '8']
   },
   {
     id: 'page-4',
-    title: 'I Contorni',
+    title: 'الأطباق الجانبية',
     order: 4,
     backgroundColor: '#F9F5F0',
-    items: ['menu-10', 'menu-11']
+    items: ['12']
+  }
+];
+
+export const mockDrinksPages: MenuPage[] = [
+  {
+    id: 'drinks-page-1',
+    title: 'المشروبات الباردة',
+    order: 1,
+    backgroundColor: '#F0F5F9',
+    items: ['9']
   },
   {
-    id: 'page-5',
-    title: 'I Dolci',
-    order: 5,
-    backgroundColor: '#F9F5F0',
-    items: ['menu-12', 'menu-13', 'menu-14']
-  },
-  {
-    id: 'page-6',
-    title: 'Le Bevande',
-    order: 6,
-    backgroundColor: '#F9F5F0',
-    items: ['menu-15', 'menu-16']
+    id: 'drinks-page-2',
+    title: 'المشروبات الساخنة',
+    order: 2,
+    backgroundColor: '#F0F5F9',
+    items: ['10', '11']
   }
 ];

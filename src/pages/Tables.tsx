@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +9,7 @@ import { PeopleCountDialog } from "@/components/tables/PeopleCountDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, SearchInput } from "@/components/shared";
-import { User, Table as TableIcon, DollarSign, Users, Utensils, LayoutGrid, Edit } from "lucide-react";
+import { User, Table as TableIcon, DollarSign, Users, Utensils, LayoutGrid, Edit, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Order } from "@/types";
 import { cn } from "@/lib/utils";
@@ -26,6 +25,8 @@ export const Tables = () => {
   const [selectedTableForPayment, setSelectedTableForPayment] = useState<number | null>(null);
   const [showPeopleCountDialog, setShowPeopleCountDialog] = useState(false);
   const [selectedTableForPeople, setSelectedTableForPeople] = useState<number | null>(null);
+  
+  const isAdmin = user?.role === 'admin';
   
   const calculateDailyStatistics = () => {
     const completedOrders = orders.filter(order => order.isPaid);
@@ -51,15 +52,21 @@ export const Tables = () => {
     return orders.find(o => o.id === table.currentOrderId);
   };
   
+  // Handle clicking on the table card itself - opens the table/menu
+  const handleTableClick = (tableId: number) => {
+    if (isAdmin) {
+      setSelectedTable(tableId);
+    } else {
+      // Waiter clicks on table = open menu
+      navigate(`/menu-view?table=${tableId}`);
+    }
+  };
+  
   const handleCreateOrder = (tableId: number) => {
     const currentOrder = getCurrentOrder(tableId);
     if (currentOrder?.isPaid) {
       resetTable(tableId);
     }
-    navigate(`/menu-view?table=${tableId}`);
-  };
-  
-  const handleViewTable = (tableId: number) => {
     navigate(`/menu-view?table=${tableId}`);
   };
   
@@ -86,8 +93,9 @@ export const Tables = () => {
     setSelectedTableForPayment(null);
   };
 
+  // Handle clicking ONLY on the people count area - opens people dialog
   const handlePeopleCountClick = (tableId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent table click
     setSelectedTableForPeople(tableId);
     setShowPeopleCountDialog(true);
   };
@@ -110,32 +118,33 @@ export const Tables = () => {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="إدارة الطاولات"
         subtitle={`${tables.length} طاولة متاحة`}
         icon={LayoutGrid}
         actions={
-          <div className="flex items-center gap-3">
-            {user?.role === 'admin' && (
-              <Button onClick={handleCloseDay} className="sea-btn-gold">
-                <DollarSign className="h-4 w-4 ml-2" />
-                إغلاق اليوم
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            {isAdmin && (
+              <Button onClick={handleCloseDay} className="sea-btn-gold" size="sm">
+                <DollarSign className="h-4 w-4 ml-1 sm:ml-2" />
+                <span className="hidden sm:inline">إغلاق اليوم</span>
+                <span className="sm:hidden">إغلاق</span>
               </Button>
             )}
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="بحث عن طاولة..."
-              className="w-[200px]"
+              placeholder="بحث..."
+              className="w-[120px] sm:w-[200px]"
               size="sm"
             />
           </div>
         }
       />
       
-      {/* Tables Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      {/* Tables Grid - Responsive */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
         {filteredTables.map((table) => {
           const currentOrder = getCurrentOrder(table.id);
           const isPaid = currentOrder?.isPaid ?? false;
@@ -145,83 +154,95 @@ export const Tables = () => {
             <Card 
               key={table.id} 
               className={cn(
-                "table-card cursor-pointer transition-all duration-300",
+                "table-card cursor-pointer transition-all duration-300 hover:scale-[1.02]",
                 status === 'occupied' && "table-card-occupied",
                 status === 'reserved' && "table-card-reserved",
                 status === 'available' && "table-card-available",
                 status === 'paid' && "table-card-paid"
               )}
-              onClick={() => user?.role === 'admin' ? setSelectedTable(table.id) : handleViewTable(table.id)}
+              onClick={() => handleTableClick(table.id)}
             >
-              <CardContent className="p-4 space-y-3">
+              <CardContent className="p-3 sm:p-4 space-y-2 sm:space-y-3">
                 {/* Header */}
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-2">
                     <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center",
+                      "w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center",
                       status === 'occupied' && "bg-info/10 text-info",
                       status === 'reserved' && "bg-secondary/10 text-secondary",
                       status === 'available' && "bg-success/10 text-success",
                       status === 'paid' && "bg-success/10 text-success"
                     )}>
-                      <TableIcon className="w-5 h-5" />
+                      <TableIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-foreground">{table.name}</h3>
-                      <p className="text-xs text-muted-foreground">سعة {table.capacity}</p>
+                      <h3 className="font-bold text-foreground text-sm sm:text-base">{table.name}</h3>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">سعة {table.capacity}</p>
                     </div>
                   </div>
                   
                   {/* Status Badge */}
-                  {status === 'reserved' && (
-                    <Badge className="sea-badge-gold text-xs">محجوزة</Badge>
-                  )}
-                  {status === 'occupied' && (
-                    <Badge className="sea-badge-info text-xs">مشغولة</Badge>
-                  )}
-                  {status === 'paid' && (
-                    <Badge className="sea-badge-success text-xs">مدفوعة</Badge>
-                  )}
+                  <div className="flex flex-col gap-1">
+                    {status === 'reserved' && (
+                      <Badge className="sea-badge-gold text-[10px] sm:text-xs px-1.5 sm:px-2">محجوزة</Badge>
+                    )}
+                    {status === 'occupied' && (
+                      <Badge className="sea-badge-info text-[10px] sm:text-xs px-1.5 sm:px-2">مشغولة</Badge>
+                    )}
+                    {status === 'paid' && (
+                      <Badge className="sea-badge-success text-[10px] sm:text-xs px-1.5 sm:px-2">مدفوعة</Badge>
+                    )}
+                  </div>
                 </div>
                 
-                {/* People Count - Clickable for Waiter */}
+                {/* People Count - Separate clickable area */}
                 <button
                   onClick={(e) => handlePeopleCountClick(table.id, e)}
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 p-2 rounded-lg transition-colors w-full"
+                  className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 p-1.5 sm:p-2 rounded-lg transition-colors w-full"
                 >
-                  <Users className="w-4 h-4" />
+                  <Users className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span>{table.peopleCount || 0} أشخاص</span>
-                  <Edit className="w-3 h-3 mr-auto opacity-50" />
+                  <Edit className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-auto opacity-50" />
                 </button>
+
+                {/* Order Info for occupied tables */}
+                {currentOrder && !currentOrder.isPaid && (
+                  <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground bg-muted/30 rounded-lg p-1.5 sm:p-2">
+                    <Clock className="w-3 h-3" />
+                    <span>{currentOrder.items.length} أصناف</span>
+                    <span className="mx-1">•</span>
+                    <span className="font-bold text-primary">${currentOrder.totalAmount}</span>
+                  </div>
+                )}
                 
-                {/* Actions */}
-                <TableActions
-                  table={table}
-                  currentOrder={currentOrder}
-                  onCreateOrder={handleCreateOrder}
-                  isAdmin={user?.role === 'admin'}
-                />
+                {/* Quick Actions - Only for Admin */}
+                {isAdmin && (
+                  <TableActions
+                    table={table}
+                    currentOrder={currentOrder}
+                    onCreateOrder={handleCreateOrder}
+                    isAdmin={true}
+                  />
+                )}
                 
                 {/* Admin Price Info */}
-                {user?.role === 'admin' && currentOrder && (
-                  <div className="border-t border-border pt-3 mt-3">
-                    <div className="flex justify-between items-center text-sm">
+                {isAdmin && currentOrder && !currentOrder.isPaid && (
+                  <div className="border-t border-border pt-2 sm:pt-3 mt-2 sm:mt-3">
+                    <div className="flex justify-between items-center text-xs sm:text-sm">
                       <span className="text-muted-foreground">المبلغ:</span>
                       <span className="font-bold text-foreground">{currentOrder.totalAmount} ريال</span>
                     </div>
-                    {!currentOrder.isPaid && (
-                      <Button 
-                        className="w-full mt-3 sea-btn-primary"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlePaymentClick(table.id);
-                        }}
-                      >
-                        <DollarSign className="w-4 h-4 ml-2" />
-                        تسجيل الحساب
-                      </Button>
-                    )}
+                    <Button 
+                      className="w-full mt-2 sm:mt-3 sea-btn-primary text-xs sm:text-sm"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePaymentClick(table.id);
+                      }}
+                    >
+                      <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 ml-1 sm:ml-2" />
+                      تسجيل الحساب
+                    </Button>
                   </div>
                 )}
               </CardContent>
@@ -309,7 +330,7 @@ export const Tables = () => {
         onConfirmPayment={handleConfirmPayment}
       />
       
-      {/* Table Details Dialog */}
+      {/* Table Details Dialog - Admin Only */}
       <Dialog open={selectedTable !== null} onOpenChange={(open) => !open && setSelectedTable(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
