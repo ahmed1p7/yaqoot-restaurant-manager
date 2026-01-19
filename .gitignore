@@ -1,5 +1,5 @@
 ```
-# Executable file
+# Executable/binary files
 yaqoot-restaurant-manager
 
 # Dependencies
@@ -13,52 +13,46 @@ build/
 target/
 .gradle/
 
-# Logs and temporary files
-*.log
-*.tmp
-*.swp
-*.swo
-
-# Environment variables
+# Environment
 .env
 .env.local
 *.env.*
 
-# IDE specific
+# Editors
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS generated files
+# Logs and temp files
+*.log
+*.tmp
+*.bak
+
+# OS files
 .DS_Store
 Thumbs.db
 
-# Compiled files
-*.pyc
-*.class
-*.o
-*.exe
-*.dll
-*.so
-*.a
-*.obj
-*.out
-
-# Coverage reports
+# Coverage
 coverage/
 htmlcov/
 .coverage
 
 # Python specific
-__pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
 *.so
-.coverage
-coverage.xml
+
+# Build outputs
+*.exe
+*.dll
+*.so
+*.a
+*.o
+*.obj
+*.out
 
 # Compressed files
 *.zip
